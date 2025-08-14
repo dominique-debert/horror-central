@@ -1,0 +1,22 @@
+{
+  "name": "horror-central",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter \"{apps/*}\" dev --parallel",
+    "dev:web": "pnpm --filter \"@horror-central/web\" dev",
+    "dev:api": "pnpm --filter \"@horror-central/api\" dev",
+    "build": "pnpm --filter \"{apps/*}\" build",
+    "start": "pnpm --filter \"{apps/*}\" start",
+    "lint": "pnpm --filter \"{apps/*,packages/*}\" lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "devDependencies": {
+    "prettier": "latest",
+    "turbo": "latest"
+  },
+  "packageManager": "pnpm@8.14.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
