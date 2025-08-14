@@ -7,7 +7,7 @@ export default function Home() {
     <main className="min-h-screen p-6">
       <StaggerContainer className="max-w-6xl mx-auto space-y-12">
         <FadeInUp className="space-y-6 text-center">
-          <h1 className="text-5xl font-bold tracking-tight">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             Welcome to Horror Central
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -22,8 +22,8 @@ export default function Home() {
         </FadeInUp>
 
         <FadeInUp delay={0.2} className="mt-20">
-          <h2 className="text-3xl font-semibold mb-6">Featured Content</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <h2 className="text-2xl font-semibold mb-6 sm:text-3xl">Featured Content</h2>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((item) => (
               <FadeInUp 
                 key={item} 
@@ -33,8 +33,8 @@ export default function Home() {
                 <div className="h-40 bg-muted rounded-md flex items-center justify-center mb-4">
                   <Film className="h-12 w-12 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-medium">Horror Title {item}</h3>
-                <p className="text-muted-foreground mt-2">
+                <h3 className="text-lg font-medium sm:text-xl">Horror Title {item}</h3>
+                <p className="text-muted-foreground mt-2 text-sm sm:text-base">
                   A terrifying experience that will keep you up at night.
                 </p>
               </FadeInUp>

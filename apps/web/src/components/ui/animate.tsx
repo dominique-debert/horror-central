@@ -1,3 +1,5 @@
+'use client'
+
 import { motion, HTMLMotionProps, Variants } from 'framer-motion'
 import { ReactNode } from 'react'
 
