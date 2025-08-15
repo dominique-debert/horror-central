@@ -1,16 +1,13 @@
+// src/app/layout.tsx
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
+import '../styles/globals.css'
 
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Horror Central',
-  description: 'Discover the best in horror movies, TV shows, and games',
+  description: 'Your central hub for all things horror',
 }
 
 export default function RootLayout({
@@ -19,9 +16,26 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable}`}>
-      <body className="font-sans min-h-screen bg-background">
-        {children}
+    <html lang="en" className="h-full">
+      <body className={`${inter.className} h-full`}>
+        <div className="min-h-full">
+          <nav className="bg-gray-800">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="flex h-16 items-center justify-between">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <h1 className="text-white font-bold text-xl">Horror Central</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </nav>
+          <main>
+            <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+              {children}
+            </div>
+          </main>
+        </div>
       </body>
     </html>
   )

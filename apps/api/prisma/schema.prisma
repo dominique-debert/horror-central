@@ -1,0 +1,93 @@
+// This is your Prisma schema file
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User model
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  reviews       Review[]
+  watchlist     Media[]   @relation("Watchlist")
+  ratings       Rating[]
+}
+
+// Media model (for movies, TV shows, games)
+model Media {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  type          MediaType
+  releaseDate   DateTime?
+  posterUrl     String?
+  backdropUrl   String?
+  imdbId        String?
+  tmdbId        String?
+  igdbId        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  reviews       Review[]
+  ratings       Rating[]
+  genres        Genre[]
+  watchlistedBy User[]    @relation("Watchlist")
+}
+
+// Review model
+model Review {
+  id        String   @id @default(cuid())
+  content   String
+  rating    Int
+  userId    String
+  mediaId   String
+  user      User     @relation(fields: [userId], references: [id])
+  media     Media    @relation(fields: [mediaId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, mediaId])
+}
+
+// Genre model
+model Genre {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  media Media[]
+}
+
+// Rating model
+model Rating {
+  id        String   @id @default(cuid())
+  score     Int
+  userId    String
+  mediaId   String
+  user      User     @relation(fields: [userId], references: [id])
+  media     Media    @relation(fields: [mediaId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, mediaId])
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MediaType {
+  MOVIE
+  TV_SHOW
+  GAME
+}
