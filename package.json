@@ -1,5 +1,20 @@
 {
-	"devDependencies": {
-		"concurrently": "^9.2.0"
-	}
+  "name": "horror-central",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @horror-central/api dev\" \"pnpm --filter web dev\"",
+    "build": "pnpm --filter @horror-central/api build && pnpm --filter web build",
+    "start": "pnpm --filter @horror-central/api start",
+    "lint": "pnpm --filter @horror-central/api lint && pnpm --filter web lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "prettier": "^3.0.0"
+  },
+  "packageManager": "pnpm@8.14.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
