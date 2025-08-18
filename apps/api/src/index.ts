@@ -7,14 +7,26 @@ import { register, login, getMe } from './controllers/auth.controller'
 const app = new Hono()
 
 // Middleware
+app.options('*', (c) => {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': 'http://localhost:3000',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    }
+  });
+});
+
 app.use(
   '*',
   cors({
-    origin: ['http://localhost:3000'],
-    allowHeaders: ['Content-Type', 'Authorization'],
-    allowMethods: ['POST', 'GET', 'OPTIONS'],
-    exposeHeaders: ['Content-Length'],
-    maxAge: 600,
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], // Added both localhost variants
+    allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
+    exposeHeaders: ['Content-Length', 'X-Request-Id'],
+    maxAge: 86400, // Increased from 600 to 86400 (24 hours)
     credentials: true,
   })
 )
