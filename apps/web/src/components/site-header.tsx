@@ -1,4 +1,5 @@
 import Link from "next/link"
+import SearchBar from "@/components/search-bar"
 
 export default function SiteHeader() {
   const nav = [
@@ -10,7 +11,7 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
         <Link href="/" className="font-semibold tracking-tight">
           Horror Central
         </Link>
@@ -25,6 +26,9 @@ export default function SiteHeader() {
             </Link>
           ))}
         </nav>
+        <div className="ml-auto">
+          <SearchBar />
+        </div>
       </div>
     </header>
   )
