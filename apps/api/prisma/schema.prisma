@@ -22,26 +22,80 @@ model User {
   reviews       Review[]
   watchlist     Media[]   @relation("Watchlist")
   ratings       Rating[]
+  List          List[]
 }
 
 // Media model (for movies, TV shows, games)
 model Media {
   id            String    @id @default(cuid())
   title         String
+  originalTitle String? // Original title (for foreign films)
   description   String?
   type          MediaType
   releaseDate   DateTime?
   posterUrl     String?
   backdropUrl   String?
-  imdbId        String?
-  tmdbId        String?
-  igdbId        String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  trailerUrl    String? // YouTube video ID
+  runtime       Int? // in minutes
+  status        String? // Released, In Production, etc.
+
+  // External IDs
+  imdbId String? @unique
+  tmdbId String? @unique
+  igdbId String? @unique
+
+  // Content details
+  tagline          String?
+  originalLanguage String?
+  budget           BigInt? // For movies
+  revenue          BigInt? // For movies
+
+  // TV Show specific
+  numberOfSeasons  Int?
+  numberOfEpisodes Int?
+  nextEpisodeDate  DateTime?
+
+  // Game specific
+  platforms  String? // Comma-separated list
+  developers String? // Comma-separated list
+  publishers String? // Comma-separated list
+
+  // Metadata
+  adult       Boolean @default(false)
+  voteAverage Float? // 0-10 scale
+  voteCount   Int     @default(0)
+  popularity  Float? // Used for trending/sorting
+
+  // Relations
+  genres        Genre[]      @relation("MediaGenres")
+  cast          Cast[]
+  crew          Crew[]
+  videos        Video[] // Trailers, featurettes, etc.
+  images        MediaImage[]
   reviews       Review[]
   ratings       Rating[]
-  genres        Genre[]
-  watchlistedBy User[]    @relation("Watchlist")
+  watchlistedBy User[]       @relation("Watchlist")
+  lists         ListItem[]
+  mainGenre     Genre?       @relation("MainGenre", fields: [genreId], references: [id])
+  genreId       Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ListItem model for the many-to-many relationship between Media and List
+model ListItem {
+  id       String   @id @default(uuid())
+  media    Media    @relation(fields: [mediaId], references: [id])
+  mediaId  String
+  list     List     @relation(fields: [listId], references: [id])
+  listId   String
+  addedAt  DateTime @default(now())
+  position Int
+  notes    String?
+
+  @@unique([mediaId, listId])
 }
 
 // Review model
@@ -59,13 +113,6 @@ model Review {
   @@unique([userId, mediaId])
 }
 
-// Genre model
-model Genre {
-  id    String  @id @default(cuid())
-  name  String  @unique
-  media Media[]
-}
-
 // Rating model
 model Rating {
   id        String   @id @default(cuid())
@@ -78,6 +125,96 @@ model Rating {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, mediaId])
+}
+
+// Genre model
+model Genre {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  media     Media[] @relation("MediaGenres")
+  mainGenre Media[] @relation("MainGenre")
+}
+
+// Cast model
+model Cast {
+  id        String  @id @default(cuid())
+  mediaId   String
+  media     Media   @relation(fields: [mediaId], references: [id])
+  personId  String
+  person    Person  @relation(fields: [personId], references: [id])
+  character String?
+  order     Int?
+
+  @@unique([mediaId, personId, character])
+}
+
+// Crew model
+model Crew {
+  id         String  @id @default(cuid())
+  mediaId    String
+  media      Media   @relation(fields: [mediaId], references: [id])
+  personId   String
+  person     Person  @relation(fields: [personId], references: [id])
+  job        String
+  department String?
+
+  @@unique([mediaId, personId, job])
+}
+
+// Person model
+model Person {
+  id           String    @id @default(cuid())
+  name         String
+  biography    String?
+  birthday     DateTime?
+  deathday     DateTime?
+  gender       Int? // 0: Not specified, 1: Female, 2: Male, 3: Non-binary
+  placeOfBirth String?
+  profilePath  String? // URL to profile image
+  imdbId       String?   @unique
+  tmdbId       String?   @unique
+
+  cast Cast[]
+  crew Crew[]
+}
+
+// Video model
+model Video {
+  id          String    @id @default(cuid())
+  mediaId     String
+  media       Media     @relation(fields: [mediaId], references: [id])
+  name        String
+  key         String // YouTube video ID
+  site        String // e.g., "YouTube"
+  size        Int? // 360, 720, 1080, etc.
+  type        String? // Trailer, Teaser, Featurette, etc.
+  official    Boolean   @default(false)
+  publishedAt DateTime?
+}
+
+// MediaImage model
+model MediaImage {
+  id          String  @id @default(cuid())
+  mediaId     String
+  media       Media   @relation(fields: [mediaId], references: [id])
+  filePath    String
+  aspectRatio Float
+  height      Int
+  width       Int
+  voteAverage Float?
+  voteCount   Int     @default(0)
+  mediaType   String? // backdrop, poster, still, etc.
+}
+
+// List model
+model List {
+  id        String     @id @default(cuid())
+  name      String
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  items     ListItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 // Enums
