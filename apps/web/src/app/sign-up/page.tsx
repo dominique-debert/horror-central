@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 
-export default function SignInPage() {
-  const { signIn, error, loading } = useAuth();
+export default function SignUpPage() {
+  const { signUp, error, loading } = useAuth();
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -16,17 +17,27 @@ export default function SignInPage() {
     e.preventDefault();
     setFormError(null);
     try {
-      await signIn(email, password);
+      await signUp(email, password, name || undefined);
       router.push("/");
     } catch (e: any) {
-      setFormError(e?.message || "Invalid credentials");
+      setFormError(e?.message || "Registration failed");
     }
   }
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold">Sign in</h1>
+      <h1 className="mb-6 text-2xl font-bold">Create your account</h1>
       <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium" htmlFor="name">Name (optional)</label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-0 focus:border-accent"
+          />
+        </div>
         <div className="space-y-2">
           <label className="block text-sm font-medium" htmlFor="email">Email</label>
           <input
@@ -44,7 +55,7 @@ export default function SignInPage() {
           <input
             id="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -59,11 +70,11 @@ export default function SignInPage() {
           disabled={loading}
           className="w-full rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Creating account..." : "Sign up"}
         </button>
       </form>
       <p className="mt-4 text-sm text-muted-foreground">
-        Don&apos;t have an account? <Link href="/sign-up" className="underline">Register</Link>
+        Already have an account? <Link href="/sign-in" className="underline">Sign in</Link>
       </p>
     </main>
   );

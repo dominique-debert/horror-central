@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { apiLogin, apiMe, type LoginResponse, type MeResponse } from "@/lib/api";
+import { apiLogin, apiMe, apiRegister, type LoginResponse, type MeResponse } from "@/lib/api";
 
 const TOKEN_KEY = "hc_token";
 
@@ -13,6 +13,7 @@ type AuthContextValue = {
   loading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => void;
   refresh: () => Promise<void>;
 };
@@ -75,6 +76,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signUp = useCallback(async (email: string, password: string, name?: string) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const { token, user } = await apiRegister(email, password, name);
+      setUser(user);
+      setToken(token);
+      if (typeof window !== "undefined") localStorage.setItem(TOKEN_KEY, token);
+    } catch (e: any) {
+      setError(e?.message || "Registration failed");
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const signOut = useCallback(() => {
     setUser(null);
     setToken(null);
@@ -87,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(user);
   }, [token]);
 
-  const value = useMemo<AuthContextValue>(() => ({ user, token, loading, error, signIn, signOut, refresh }), [user, token, loading, error, signIn, signOut, refresh]);
+  const value = useMemo<AuthContextValue>(() => ({ user, token, loading, error, signIn, signUp, signOut, refresh }), [user, token, loading, error, signIn, signUp, signOut, refresh]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
