@@ -52,3 +52,64 @@ export async function apiMe(token: string): Promise<MeResponse> {
 
   return res.json();
 }
+
+export type UpdateProfileResponse = {
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+    image: string | null;
+    role: string;
+  };
+  token: string;
+};
+
+export type ProfileResponse = {
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+    image: string | null;
+    role: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+};
+
+export async function apiUpdateProfile(
+  token: string,
+  updates: { name?: string; image?: string }
+): Promise<UpdateProfileResponse> {
+  const res = await fetch(`${API_URL}/api/users/me`, {
+    method: 'PATCH',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(updates),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || 'Failed to update profile');
+  }
+
+  return res.json();
+}
+
+export async function apiGetProfile(token: string): Promise<ProfileResponse> {
+  const res = await fetch(`${API_URL}/api/users/me`, {
+    method: 'GET',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || 'Failed to fetch profile');
+  }
+
+  return res.json();
+}

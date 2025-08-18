@@ -100,11 +100,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     if (!token) return;
-    const { user } = await apiMe(token);
-    setUser(user);
+    try {
+      const { user } = await apiMe(token);
+      setUser(user);
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      signOut();
+    }
   }, [token]);
 
-  const value = useMemo<AuthContextValue>(() => ({ user, token, loading, error, signIn, signUp, signOut, refresh }), [user, token, loading, error, signIn, signUp, signOut, refresh]);
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      loading,
+      error,
+      signIn,
+      signUp,
+      signOut,
+      refresh,
+    }),
+    [user, token, loading, error, signIn, signUp, signOut, refresh]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

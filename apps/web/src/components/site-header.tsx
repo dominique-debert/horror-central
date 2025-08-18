@@ -6,6 +6,13 @@ import ThemeToggle from "@/components/theme-toggle"
 import { useAuth } from "@/context/auth-context"
 import { useMemo } from "react"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function SiteHeader() {
   const nav = [
@@ -16,7 +23,10 @@ export default function SiteHeader() {
   ]
 
   const { user, signOut } = useAuth()
-  const userLabel = useMemo(() => user?.name || user?.email, [user])
+  const userInitial = useMemo(
+    () => user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U",
+    [user]
+  )
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
@@ -39,12 +49,26 @@ export default function SiteHeader() {
           <SearchBar />
           <ThemeToggle />
           {user ? (
-            <div className="flex items-center gap-2">
-              <span className="hidden text-sm text-muted-foreground sm:inline">{userLabel}</span>
-              <Button size="sm" variant="outline" onClick={() => signOut()}>
-                Sign out
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                    <AvatarFallback>{userInitial}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="w-full cursor-pointer">
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button asChild size="sm">
               <Link href="/sign-in">Sign in</Link>

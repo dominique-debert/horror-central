@@ -3,6 +3,7 @@ import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { authMiddleware } from './lib/auth/jwt'
 import { register, login, getMe } from './controllers/auth.controller'
+import { userRoutes } from './routes/user.routes'
 
 const app = new Hono()
 
@@ -22,11 +23,11 @@ app.options('*', (c) => {
 app.use(
   '*',
   cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], // Added both localhost variants
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
     allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
+    allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     exposeHeaders: ['Content-Length', 'X-Request-Id'],
-    maxAge: 86400, // Increased from 600 to 86400 (24 hours)
+    maxAge: 86400,
     credentials: true,
   })
 )
@@ -43,12 +44,17 @@ app.post('/api/auth/login', login)
 // Protected routes
 const protectedRoutes = new Hono()
 protectedRoutes.use('*', authMiddleware)
+
+// Auth routes
 protectedRoutes.get('/api/auth/me', getMe)
+
+// User routes
+protectedRoutes.route('/api/users', userRoutes)
 
 app.route('/', protectedRoutes)
 
 // Start server
-const port = parseInt(process.env.PORT || '3001')
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3001
 console.log(`Server is running on port ${port}`)
 
 serve({
