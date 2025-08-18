@@ -1,13 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 
 export default function SignUpPage() {
   const { signUp, error, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams?.get("next") || "/";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,11 +20,13 @@ export default function SignUpPage() {
     setFormError(null);
     try {
       await signUp(email, password, name || undefined);
-      router.push("/");
+      router.push(next);
     } catch (e: any) {
       setFormError(e?.message || "Registration failed");
     }
   }
+
+  const signInHref = `/sign-in${next && next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`;
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
@@ -74,7 +78,7 @@ export default function SignUpPage() {
         </button>
       </form>
       <p className="mt-4 text-sm text-muted-foreground">
-        Already have an account? <Link href="/sign-in" className="underline">Sign in</Link>
+        Already have an account? <Link href={signInHref} className="underline">Sign in</Link>
       </p>
     </main>
   );

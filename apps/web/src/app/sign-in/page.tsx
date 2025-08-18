@@ -1,13 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 
 export default function SignInPage() {
   const { signIn, error, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams?.get("next") || "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -17,11 +19,13 @@ export default function SignInPage() {
     setFormError(null);
     try {
       await signIn(email, password);
-      router.push("/");
+      router.push(next);
     } catch (e: any) {
       setFormError(e?.message || "Invalid credentials");
     }
   }
+
+  const signUpHref = `/sign-up${next && next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`;
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
@@ -63,7 +67,7 @@ export default function SignInPage() {
         </button>
       </form>
       <p className="mt-4 text-sm text-muted-foreground">
-        Don&apos;t have an account? <Link href="/sign-up" className="underline">Register</Link>
+        Don&apos;t have an account? <Link href={signUpHref} className="underline">Register</Link>
       </p>
     </main>
   );
