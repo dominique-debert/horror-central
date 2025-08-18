@@ -21,7 +21,7 @@ export default function SearchBar({ placeholder = "Search horror titles..." }: {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder}
-        className="h-9 flex-1 rounded-md border bg-background px-3 text-sm outline-none ring-0 placeholder:text-muted-foreground focus:border-ring/50"
+        className="h-9 flex-1 rounded-md border border-border bg-input px-3 text-sm outline-none ring-0 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Search"
       />
       <Button type="submit" variant="default" className="h-9">Search</Button>

@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
+import { Button } from "@/components/ui/button";
 
 export default function SignUpPage() {
   const { signUp, error, loading } = useAuth();
@@ -39,7 +40,7 @@ export default function SignUpPage() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-0 focus:border-accent"
+            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none ring-0 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         <div className="space-y-2">
@@ -51,7 +52,7 @@ export default function SignUpPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-0 focus:border-accent"
+            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none ring-0 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         <div className="space-y-2">
@@ -63,19 +64,15 @@ export default function SignUpPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-0 focus:border-accent"
+            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none ring-0 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         {(formError || error) && (
-          <p className="text-sm text-red-600">{formError || error}</p>
+          <p className="text-sm text-destructive">{formError || error}</p>
         )}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background disabled:cursor-not-allowed disabled:opacity-60"
-        >
+        <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Creating account..." : "Sign up"}
-        </button>
+        </Button>
       </form>
       <p className="mt-4 text-sm text-muted-foreground">
         Already have an account? <Link href={signInHref} className="underline">Sign in</Link>

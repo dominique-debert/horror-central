@@ -5,6 +5,7 @@ import SearchBar from "@/components/search-bar"
 import ThemeToggle from "@/components/theme-toggle"
 import { useAuth } from "@/context/auth-context"
 import { useMemo } from "react"
+import { Button } from "@/components/ui/button"
 
 export default function SiteHeader() {
   const nav = [
@@ -20,15 +21,15 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
-        <Link href="/" className="font-semibold tracking-tight">
+        <Link href="/" className="font-semibold tracking-tight text-foreground">
           Horror Central
         </Link>
-        <nav className="hidden gap-2 md:flex">
+        <nav className="hidden gap-1 md:flex">
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="rounded-md px-3 py-2 text-sm text-foreground/70 transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               {item.name}
             </Link>
@@ -39,21 +40,15 @@ export default function SiteHeader() {
           <ThemeToggle />
           {user ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground hidden sm:inline">{userLabel}</span>
-              <button
-                onClick={() => signOut()}
-                className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
+              <span className="hidden text-sm text-muted-foreground sm:inline">{userLabel}</span>
+              <Button size="sm" variant="outline" onClick={() => signOut()}>
                 Sign out
-              </button>
+              </Button>
             </div>
           ) : (
-            <Link
-              href="/sign-in"
-              className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              Sign in
-            </Link>
+            <Button asChild size="sm">
+              <Link href="/sign-in">Sign in</Link>
+            </Button>
           )}
         </div>
       </div>
