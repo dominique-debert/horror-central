@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import SearchBar from "@/components/search-bar"
+import ThemeToggle from "@/components/theme-toggle"
 import { useAuth } from "@/context/auth-context"
 import { useMemo } from "react"
 
@@ -35,6 +36,7 @@ export default function SiteHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-3">
           <SearchBar />
+          <ThemeToggle />
           {user ? (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground hidden sm:inline">{userLabel}</span>
