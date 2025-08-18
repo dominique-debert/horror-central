@@ -1,5 +1,5 @@
-import Image from "next/image"
 import Link from "next/link"
+import { MediaCard } from "./MediaCard"
 
 interface Item {
   id: string
@@ -7,6 +7,9 @@ interface Item {
   href: string
   image: string
   tag: string
+  year: number
+  rating: number
+  genre: string
 }
 
 const items: Item[] = [
@@ -16,6 +19,9 @@ const items: Item[] = [
     href: "/movies",
     image: "https://placehold.co/600x900/png?text=Movie",
     tag: "Movie",
+    year: 2024,
+    rating: 8.5,
+    genre: "Horror, Thriller"
   },
   {
     id: "movie-2",
@@ -23,71 +29,72 @@ const items: Item[] = [
     href: "/movies",
     image: "https://placehold.co/600x900/png?text=Movie",
     tag: "Movie",
+    year: 2023,
+    rating: 7.8,
+    genre: "Horror, Mystery"
   },
   {
     id: "tv-1",
     title: "Nightfall: Season 1",
     href: "/tv",
-    image: "https://placehold.co/1200x675/png?text=TV+Show",
+    image: "https://placehold.co/600x900/png?text=TV+Show",
     tag: "TV",
+    year: 2024,
+    rating: 9.0,
+    genre: "Horror, Drama"
   },
   {
     id: "tv-2",
     title: "The Quiet Ones",
     href: "/tv",
-    image: "https://placehold.co/1200x675/png?text=TV+Show",
+    image: "https://placehold.co/600x900/png?text=TV+Show",
     tag: "TV",
+    year: 2023,
+    rating: 8.2,
+    genre: "Horror, Supernatural"
   },
   {
     id: "game-1",
     title: "Echoes of Dread",
     href: "/games",
-    image: "https://placehold.co/1200x675/png?text=Game",
+    image: "https://placehold.co/600x900/png?text=Game",
     tag: "Game",
+    year: 2024,
+    rating: 8.7,
+    genre: "Survival Horror"
   },
   {
     id: "game-2",
     title: "Labyrinth of Bones",
     href: "/games",
-    image: "https://placehold.co/1200x675/png?text=Game",
+    image: "https://placehold.co/600x900/png?text=Game",
     tag: "Game",
-  },
+    year: 2023,
+    rating: 9.1,
+    genre: "Action, Horror"
+  }
 ]
 
 export default function FeaturedGrid() {
   return (
-    <section className="py-12 md:py-16">
-      <div className="container mx-auto max-w-6xl px-4">
-        <div className="mb-6 flex items-end justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Featured & Trending</h2>
-            <p className="text-sm text-muted-foreground">Movies, TV shows, and games — refreshed regularly.</p>
+    <section className="py-8 w-full bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[2000px] mx-auto">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">Featured & Trending</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {items.map((item) => (
+              <MediaCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                year={item.year}
+                rating={item.rating}
+                imageUrl={item.image}
+                type={item.tag.toLowerCase()}
+                href={item.href}
+              />
+            ))}
           </div>
-          <Link href="/explore" className="text-sm text-primary hover:underline">View all</Link>
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <Link key={item.id} href={item.href} className="group overflow-hidden rounded-lg border">
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted sm:aspect-[16/9]">
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  priority={false}
-                />
-                <span className="absolute left-2 top-2 rounded-md bg-background/80 px-2 py-1 text-xs font-medium backdrop-blur">
-                  {item.tag}
-                </span>
-              </div>
-              <div className="p-3">
-                <h3 className="line-clamp-1 font-medium text-foreground">{item.title}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">Tap to see more</p>
-              </div>
-            </Link>
-          ))}
         </div>
       </div>
     </section>
