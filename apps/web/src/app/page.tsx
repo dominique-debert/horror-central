@@ -1,9 +1,11 @@
 import Hero from "@/components/hero"
+import FeaturedGrid from "@/components/featured-grid"
 
 export default function Page() {
   return (
-    <main className="p-8 space-y-4">
+    <main className="p-8 space-y-8">
       <Hero />
+      <FeaturedGrid />
     </main>
   )
 }
