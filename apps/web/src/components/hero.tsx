@@ -122,7 +122,7 @@ const RecommendedCarousel = () => {
 
   return (
     <section className="py-8">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto">
         <div className="w-full max-w-[2000px] mx-auto">
           <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">Recommended For You</h2>
           <div className="relative">
@@ -152,7 +152,7 @@ const RecommendedCarousel = () => {
             </div>
             <button 
               onClick={scrollPrev}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-accent transition-colors"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-accent hover:text-primary transition-colors"
               aria-label="Previous slide"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -161,7 +161,7 @@ const RecommendedCarousel = () => {
             </button>
             <button 
               onClick={scrollNext}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-accent transition-colors"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-accent hover:text-primary transition-colors"
               aria-label="Next slide"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -186,7 +186,7 @@ export default function Hero() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex h-full items-end pb-16 pt-32">
           <div className="w-full max-w-[2000px] mx-auto">
             <div className="max-w-3xl space-y-4">
-              <span className="inline-block rounded-full bg-primary/20 px-3 py-1 text-sm text-primary">
+              <span className="inline-block rounded-full bg-secondary px-3 py-1 text-sm text-accent">
                 Featured {featuredContent.type === 'movie' ? 'Movie' : featuredContent.type === 'tv' ? 'TV Show' : 'Game'}
               </span>
               <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">

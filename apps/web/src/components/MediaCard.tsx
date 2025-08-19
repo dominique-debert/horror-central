@@ -17,8 +17,8 @@ interface MediaCardProps {
 
 export function MediaCard({ id, title, year, rating, imageUrl, type, href, className = '' }: MediaCardProps) {
   return (
-    <Link href={href} className={`group block h-full ${className}`}>
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-muted">
+    <Link href={href} className={`group block ${className}`}>
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-secondary">
         <Image
           src={imageUrl}
           alt={title}
@@ -26,9 +26,9 @@ export function MediaCard({ id, title, year, rating, imageUrl, type, href, class
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16.66vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+            <span className="text-xs font-medium text-accent bg-secondary/10 px-2 py-1 rounded-full">
               {type === 'movie' ? 'Movie' : type === 'tv' ? 'TV Show' : 'Game'}
             </span>
             <div className="flex items-center gap-1 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-full">
