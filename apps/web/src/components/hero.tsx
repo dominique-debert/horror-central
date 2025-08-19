@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Play, Clock, Star } from "lucide-react"
+import { Play, Clock, Star, Plus } from "lucide-react"
 import Image from "next/image"
 import { motion } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -21,6 +21,7 @@ interface MediaItem {
   imageUrl: string
   trailerUrl: string
   type: MediaType
+  description?: string
 }
 
 const featuredContent: MediaItem = {
@@ -32,7 +33,8 @@ const featuredContent: MediaItem = {
   genre: "Action, Adventure, Drama",
   imageUrl: "https://image.tmdb.org/t/p/original/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg",
   trailerUrl: "https://www.youtube.com/watch?v=uLtkt8BonwM",
-  type: 'tv'
+  type: 'tv',
+  description: 'A post-apocalyptic journey of survival and hope, following Joel and Ellie as they navigate a world ravaged by a deadly infection.'
 }
 
 const recommendedContent: MediaItem[] = [
@@ -43,7 +45,7 @@ const recommendedContent: MediaItem[] = [
     rating: 8.2,
     duration: "2h 7m",
     genre: "Horror, Mystery, Thriller",
-    imageUrl: "https://image.tmdb.org/t/p/w500/lHV8HHlhwJucpfKwsAYCmfeiyJI.jpg",
+    imageUrl: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/adPCF2ltY2moH6mApha9RilvcMO.jpg",
     trailerUrl: "https://www.youtube.com/watch?v=V6wWKNij_1M",
     type: 'movie'
   },
@@ -54,7 +56,7 @@ const recommendedContent: MediaItem[] = [
     rating: 9.0,
     duration: "16h",
     genre: "Survival Horror",
-    imageUrl: "https://image.api.playstation.com/vulcan/ap/rN0DcUM7GXoZ1sWwFEtQwPmGJdTpU8XJ.png",
+    imageUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co6bo0.webp",
     trailerUrl: "https://www.youtube.com/watch?v=9ix7TUGVYIo",
     type: 'game'
   },
@@ -65,7 +67,7 @@ const recommendedContent: MediaItem[] = [
     rating: 8.6,
     duration: "10h",
     genre: "Drama, Horror, Mystery",
-    imageUrl: "https://image.tmdb.org/t/p/w500/6s7xaNqEQIdCMrG3bDrPucf3prS.jpg",
+    imageUrl: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/38PkhBGRQtmVx2drvPik3F42qHO.jpg",
     trailerUrl: "https://www.youtube.com/watch?v=3eqxXqJDmcY",
     type: 'tv'
   },
@@ -76,7 +78,7 @@ const recommendedContent: MediaItem[] = [
     rating: 8.7,
     duration: "12h",
     genre: "Survival Horror",
-    imageUrl: "https://image.api.playstation.com/vulcan/ap/rN0DcUM7GXoZ1sWwFEtQwPmGJdTpU8XJ.png",
+    imageUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5esn.webp",
     trailerUrl: "https://www.youtube.com/watch?v=u3wS-Q2KBpk",
     type: 'game'
   },
@@ -87,7 +89,7 @@ const recommendedContent: MediaItem[] = [
     rating: 9.3,
     duration: "50h",
     genre: "Action, Adventure, Fantasy",
-    imageUrl: "https://image.api.playstation.com/vulcan/ap/rN0DcUM7GXoZ1sWwFEtQwPmGJdTpU8XJ.png",
+    imageUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.webp",
     trailerUrl: "https://www.youtube.com/watch?v=V7t2IIJUz5k",
     type: 'game'
   },
@@ -98,7 +100,7 @@ const recommendedContent: MediaItem[] = [
     rating: 8.5,
     duration: "1h 52m",
     genre: "Horror, Mystery, Thriller",
-    imageUrl: "https://image.tmdb.org/t/p/w500/wVYREutTvI2tmxr6unjrO78sq2Z.jpg",
+    imageUrl: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/wVYREutTvI2tmxr6ujrHT704wGF.jpg",
     trailerUrl: "https://www.youtube.com/watch?v=k10ETZ41q5o",
     type: 'movie'
   }
@@ -177,58 +179,93 @@ const RecommendedCarousel = () => {
 
 export default function Hero() {
   return (
-    <div className="relative overflow-hidden">
-      {/* Hero Section */}
-      <div className="relative h-[60vh] min-h-[500px] w-full bg-gradient-to-br from-gray-900 to-black">
-        <div className="absolute inset-0 z-0 opacity-20">
-          <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover bg-center" />
-        </div>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex h-full items-end pb-16 pt-32">
-          <div className="w-full max-w-[2000px] mx-auto">
-            <div className="max-w-3xl space-y-4">
-              <span className="inline-block rounded-full bg-secondary px-3 py-1 text-sm text-accent">
-                Featured {featuredContent.type === 'movie' ? 'Movie' : featuredContent.type === 'tv' ? 'TV Show' : 'Game'}
-              </span>
-              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
-                {featuredContent.title}
-              </h1>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <span>{featuredContent.year}</span>
-                <span>•</span>
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                  <span>{featuredContent.rating}/10</span>
-                </div>
-                <span>•</span>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{featuredContent.duration}</span>
-                </div>
-                <span>•</span>
-                <span>{featuredContent.genre}</span>
-              </div>
-              <p className="pt-2 text-lg text-muted-foreground">
-                {featuredContent.type === 'tv' 
-                  ? 'A critically acclaimed horror series that redefines the genre with its deep storytelling and terrifying moments.'
-                  : featuredContent.type === 'game'
-                  ? 'An immersive horror experience that will keep you on the edge of your seat with its atmospheric tension and gripping narrative.'
-                  : 'A chilling story of terror, murder and unknown evil that shocked even experienced real-life paranormal investigators.'}
-              </p>
-              <div className="flex gap-4 pt-4">
-                <Button asChild size="lg" className="gap-2 px-6">
-                  <Link href={featuredContent.trailerUrl} target="_blank">
-                    <Play className="h-5 w-5" />
-                    Watch Trailer
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="gap-2 px-6">
-                  <Link href={`/${featuredContent.type}/${featuredContent.id}`}>
-                    View Details
-                  </Link>
-                </Button>
-              </div>
+    <div className="relative">
+      {/* Background Image */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent z-10" />
+        <Image
+          src={featuredContent.imageUrl}
+          alt={featuredContent.title}
+          fill
+          className="object-cover"
+          priority
+          quality={100}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 pt-32 pb-24 md:pt-48 md:pb-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            className="max-w-3xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
+              Featured {featuredContent.type === 'movie' ? 'Movie' : featuredContent.type === 'tv' ? 'TV Show' : 'Game'}
             </div>
-          </div>
+            
+            <motion.h1 
+              className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              {featuredContent.title}
+            </motion.h1>
+            
+            <motion.div 
+              className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-6"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <span>{featuredContent.year}</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                <span>{featuredContent.rating}/10</span>
+              </div>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>{featuredContent.duration}</span>
+              </div>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+              <span>{featuredContent.genre}</span>
+            </motion.div>
+            
+            <motion.p 
+              className="text-lg text-muted-foreground mb-8 max-w-2xl"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              {featuredContent.description}
+            </motion.p>
+            
+            <motion.div 
+              className="flex flex-wrap gap-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Button asChild size="lg" className="gap-2 px-8 text-base">
+                <Link href={featuredContent.trailerUrl} target="_blank">
+                  <Play className="h-5 w-5" />
+                  Watch Trailer
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="gap-2 px-8 text-base">
+                <Link href={`/${featuredContent.type}/${featuredContent.id}`}>
+                  <Plus className="h-5 w-5" />
+                  Add to Watchlist
+                </Link>
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
       

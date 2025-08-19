@@ -15,63 +15,63 @@ interface Item {
 const items: Item[] = [
   {
     id: "movie-1",
-    title: "The Haunting Shadows",
-    href: "/movies",
-    image: "https://placehold.co/600x900/png?text=Movie",
+    title: "The Conjuring",
+    href: "/movies/the-conjuring",
+    image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/wVYREutTvI2tmxr6ujrHT704wGF.jpg",
     tag: "Movie",
-    year: 2024,
-    rating: 8.5,
-    genre: "Horror, Thriller"
+    year: 2013,
+    rating: 7.5,
+    genre: "Horror, Mystery, Thriller"
   },
   {
     id: "movie-2",
-    title: "Crimson Whispers",
-    href: "/movies",
-    image: "https://placehold.co/600x900/png?text=Movie",
+    title: "Hereditary",
+    href: "/movies/hereditary",
+    image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/adPCF2ltY2moH6mApha9RilvcMO.jpg",
     tag: "Movie",
-    year: 2023,
-    rating: 7.8,
-    genre: "Horror, Mystery"
+    year: 2018,
+    rating: 7.3,
+    genre: "Horror, Mystery, Thriller"
   },
   {
     id: "tv-1",
-    title: "Nightfall: Season 1",
-    href: "/tv",
-    image: "https://placehold.co/600x900/png?text=TV+Show",
+    title: "The Haunting of Hill House",
+    href: "/tv/hill-house",
+    image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/38PkhBGRQtmVx2drvPik3F42qHO.jpg",
     tag: "TV",
-    year: 2024,
-    rating: 9.0,
-    genre: "Horror, Drama"
+    year: 2018,
+    rating: 8.6,
+    genre: "Horror, Drama, Mystery"
   },
   {
     id: "tv-2",
-    title: "The Quiet Ones",
-    href: "/tv",
-    image: "https://placehold.co/600x900/png?text=TV+Show",
+    title: "The Last of Us",
+    href: "/tv/the-last-of-us",
+    image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg",
     tag: "TV",
     year: 2023,
-    rating: 8.2,
-    genre: "Horror, Supernatural"
+    rating: 8.8,
+    genre: "Action, Adventure, Drama"
   },
   {
     id: "game-1",
-    title: "Echoes of Dread",
-    href: "/games",
-    image: "https://placehold.co/600x900/png?text=Game",
+    title: "Resident Evil 4 Remake",
+    href: "/games/resident-evil-4",
+    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co6bo0.webp",
     tag: "Game",
-    year: 2024,
-    rating: 8.7,
-    genre: "Survival Horror"
+    year: 2023,
+    rating: 9.3,
+    genre: "Survival Horror, Action"
   },
   {
     id: "game-2",
-    title: "Labyrinth of Bones",
-    href: "/games",
-    image: "https://placehold.co/600x900/png?text=Game",
+    title: "Dead Space Remake",
+    href: "/games/dead-space",
+    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5esn.webp",
     tag: "Game",
     year: 2023,
-    rating: 9.1,
-    genre: "Action, Horror"
+    rating: 9.0,
+    genre: "Survival Horror, Action"
   }
 ]
 
