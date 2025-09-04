@@ -24,7 +24,6 @@ export default function SiteHeader() {
   ]
 
   const { user, signOut } = useAuth()
-  console.log('Site header user data:', user);
   
   const userInitial = useMemo(
     () => user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U",

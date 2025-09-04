@@ -54,11 +54,8 @@ export default function AccountPage() {
 
       // Update the profile with the new data using the API function
       if (Object.keys(updates).length > 0) {
-        console.log('Updating profile with:', updates);
         await apiUpdateProfile(token, updates);
-        console.log('Profile updated, refreshing user data...');
         await refresh();
-        console.log('User data refreshed, new user:', user);
         toast({
           title: "Profile updated",
           description: "Your profile has been updated successfully.",

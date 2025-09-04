@@ -101,11 +101,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     if (!token) return;
     try {
-      console.log('Refreshing user data...');
       const { user } = await apiMe(token);
-      console.log('Received user data from API:', user);
       setUser(user);
-      console.log('User state updated');
     } catch (error) {
       console.error('Failed to refresh user:', error);
       signOut();
