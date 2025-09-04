@@ -1,6 +1,6 @@
 "use client"
 
-import MediaCard, { MediaItem } from "@/components/ui/MediaCard"
+import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
 import Link from "next/link"
 
 interface TopRatedTVShow {
@@ -134,8 +134,8 @@ export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShow
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {shows.map((show, index) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {shows.slice(0, 8).map((show) => {
             const mediaItem: MediaItem = {
               id: show.id,
               title: show.title,
@@ -155,9 +155,7 @@ export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShow
               <MediaCard
                 key={show.id}
                 item={mediaItem}
-                index={index}
                 type="tv"
-                linkPrefix="/tv-shows"
               />
             )
           })}

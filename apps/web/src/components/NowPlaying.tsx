@@ -1,6 +1,6 @@
 "use client"
 
-import MediaCard, { MediaItem } from "@/components/ui/MediaCard"
+import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
 import Link from "next/link"
 
 interface Movie {
@@ -86,7 +86,7 @@ export default function NowPlaying({ movies = nowPlayingMovies }: NowPlayingProp
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {movies.map((movie, index) => {
+          {movies.map((movie) => {
             const mediaItem: MediaItem = {
               id: movie.id,
               title: movie.title,
@@ -103,10 +103,7 @@ export default function NowPlaying({ movies = nowPlayingMovies }: NowPlayingProp
               <MediaCard
                 key={movie.id}
                 item={mediaItem}
-                index={index}
                 type="movie"
-                showRanking={false}
-                linkPrefix="/movies"
               />
             )
           })}
