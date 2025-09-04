@@ -5,7 +5,7 @@ import SiteFooter from "@/components/site-footer"
 import { Providers } from "@/components/providers"
 
 export const metadata: Metadata = {
-  title: "Horror Central",
+  title: "FreakyHub",
   description: "Your central hub for all things horror",
 }
 

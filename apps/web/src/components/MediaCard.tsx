@@ -74,7 +74,7 @@ export function MediaCard({
         </div>
         
         {/* Top content (always visible) */}
-        <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start">
+        {/* <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start">
           <span className="text-xs font-medium text-accent bg-background/80 backdrop-blur-sm px-2 py-1 rounded-full">
             {type === 'movie' ? 'MOVIE' : type === 'tv' ? 'TV SHOW' : 'GAME'}
           </span>
@@ -82,7 +82,7 @@ export function MediaCard({
             <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
             <span className="text-xs font-medium">{rating.toFixed(1)}</span>
           </div>
-        </div>
+        </div> */}
       </motion.div>
       
       {/* Title below card (visible on mobile, hidden on hover) */}

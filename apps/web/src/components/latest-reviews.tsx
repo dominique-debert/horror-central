@@ -1,7 +1,18 @@
-import Link from "next/link"
+"use client"
+
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Star } from "lucide-react"
 import { MediaCard } from "./MediaCard"
+
+interface Movie {
+  id: number
+  title: string
+  release_date: string
+  vote_average: number
+  poster_path: string
+  overview: string
+}
 
 interface ReviewItem {
   id: string
@@ -16,82 +27,98 @@ interface ReviewItem {
   content: string
 }
 
-const reviews: ReviewItem[] = [
-  {
-    id: "r1",
-    title: "Whispers in the Attic",
-    type: 'movie',
-    year: 2024,
-    rating: 4,
-    imageUrl: "https://placehold.co/600x900/png?text=Movie",
-    author: "Avery Night",
-    avatar: "https://placehold.co/64x64/png",
-    date: "2 days ago",
-    content: "A slow-burn that pays off with chilling atmosphere and a memorable finale."
-  },
-  {
-    id: "r2",
-    title: "Shadows of Ravenbrook (S1)",
-    type: 'tv',
-    year: 2024,
-    rating: 5,
-    imageUrl: "https://placehold.co/600x900/png?text=TV+Show",
-    author: "J. Vale",
-    avatar: "https://placehold.co/64x64/png",
-    date: "1 week ago",
-    content: "Character-first horror with smart pacing and eerie world-building."
-  },
-  {
-    id: "r3",
-    title: "Cathedral of Ash",
-    type: 'game',
-    year: 2023,
-    rating: 4,
-    imageUrl: "https://placehold.co/600x900/png?text=Game",
-    author: "M. Hallow",
-    avatar: "https://placehold.co/64x64/png",
-    date: "3 days ago",
-    content: "Oppressive, beautiful, and brutally rewarding survival horror."
-  },
-  {
-    id: "r4",
-    title: "The Last Lullaby",
-    type: 'movie',
-    year: 2024,
-    rating: 5,
-    imageUrl: "https://placehold.co/600x900/png?text=Movie",
-    author: "E. Graves",
-    avatar: "https://placehold.co/64x64/png",
-    date: "2 weeks ago",
-    content: "A haunting tale that lingers long after the credits roll."
-  },
-  {
-    id: "r5",
-    title: "Midnight Society",
-    type: 'tv',
-    year: 2023,
-    rating: 4,
-    imageUrl: "https://placehold.co/600x900/png?text=TV+Show",
-    author: "R. Blackwood",
-    avatar: "https://placehold.co/64x64/png",
-    date: "1 week ago",
-    content: "A fresh take on the anthology format with standout performances."
-  },
-  {
-    id: "r6",
-    title: "Asylum 23",
-    type: 'game',
-    year: 2024,
-    rating: 5,
-    imageUrl: "https://placehold.co/600x900/png?text=Game",
-    author: "T. Wraith",
-    avatar: "https://placehold.co/64x64/png",
-    date: "3 days ago",
-    content: "Psychological horror at its finest with mind-bending puzzles."
-  }
-]
-
 export default function LatestReviews() {
+  const [reviews, setReviews] = useState<ReviewItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchHorrorMovies = async () => {
+      try {
+        // You'll need to get an API key from themoviedb.org and add it to your .env file
+        const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY
+        const response = await fetch(
+          `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&with_genres=27&sort_by=popularity.desc&page=1`
+        )
+        const data = await response.json()
+        
+        // Get the first 6 horror movies
+        const movies = data.results.slice(0, 6)
+        
+        // Mock review data to match the ReviewItem interface
+        const mockReviewers = [
+          { name: 'Alex R.', avatar: 'https://i.pravatar.cc/150?img=1' },
+          { name: 'Jordan M.', avatar: 'https://i.pravatar.cc/150?img=2' },
+          { name: 'Taylor S.', avatar: 'https://i.pravatar.cc/150?img=3' },
+          { name: 'Casey B.', avatar: 'https://i.pravatar.cc/150?img=4' },
+          { name: 'Riley K.', avatar: 'https://i.pravatar.cc/150?img=5' },
+          { name: 'Morgan L.', avatar: 'https://i.pravatar.cc/150?img=6' },
+        ]
+        
+        const mockReviews = [
+          'A chilling masterpiece that will keep you up at night.',
+          'Atmospheric and terrifying with outstanding performances.',
+          'One of the best horror films in recent years. Highly recommended!',
+          'A slow burn that pays off with an unforgettable finale.',
+          'Visually stunning and genuinely scary. A must-watch for horror fans.',
+          'Keeps you on the edge of your seat from start to finish.'
+        ]
+        
+        const mockDates = [
+          '2 days ago',
+          '1 week ago',
+          '3 days ago',
+          '5 days ago',
+          '1 day ago',
+          '4 days ago'
+        ]
+        
+        const formattedReviews = movies.map((movie: Movie, index: number) => ({
+          id: `movie-${movie.id}`,
+          title: movie.title,
+          type: 'movie' as const,
+          year: new Date(movie.release_date).getFullYear(),
+          rating: Math.round(movie.vote_average / 2), // Convert 10-point scale to 5-point
+          imageUrl: movie.poster_path 
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : 'https://via.placeholder.com/500x750?text=No+Poster',
+          author: mockReviewers[index % mockReviewers.length].name,
+          avatar: mockReviewers[index % mockReviewers.length].avatar,
+          date: mockDates[index % mockDates.length],
+          content: mockReviews[index % mockReviews.length] || movie.overview
+        }))
+        
+        setReviews(formattedReviews)
+      } catch (error) {
+        console.error('Error fetching horror movies:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchHorrorMovies()
+  }, [])
+
+  if (loading) {
+    return (
+      <section className="py-6 w-full bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full max-w-[2000px] mx-auto">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">Latest Reviews</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="aspect-[2/3] w-full bg-muted rounded-lg mb-2"></div>
+                  <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-6 w-full bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -107,11 +134,11 @@ export default function LatestReviews() {
                   rating={review.rating}
                   imageUrl={review.imageUrl}
                   type={review.type}
-                  href={`/reviews/${review.id}`}
+                  href={`/movies/${review.id}`}
                 />
-                <div className="mt-2">
-                  <div className="flex items-center gap-2">
-                    <div className="relative h-6 w-6 overflow-hidden rounded-full bg-muted">
+                <div className="mt-2 p-2 bg-card rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="relative w-6 h-6 rounded-full overflow-hidden">
                       <Image
                         src={review.avatar}
                         alt={review.author}

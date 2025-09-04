@@ -3,20 +3,29 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"pnpm --filter @horror-central/api dev\" \"pnpm --filter web dev\"",
-    "build": "pnpm --filter @horror-central/api build && pnpm --filter web build",
-    "start": "pnpm --filter @horror-central/api start",
-    "lint": "pnpm --filter @horror-central/api lint && pnpm --filter web lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "dev": "concurrently \"pnpm --filter @horror-central/api dev\" \"pnpm --filter @horror-central/web dev\"",
+    "build": "pnpm --filter @horror-central/api build && pnpm --filter @horror-central/web build",
+    "start": "concurrently \"pnpm --filter @horror-central/api start\" \"pnpm --filter @horror-central/web start\"",
+    "lint": "pnpm --filter @horror-central/api lint && pnpm --filter @horror-central/web lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "prisma:generate": "pnpm --filter @horror-central/api prisma:generate",
+    "prisma:migrate": "pnpm --filter @horror-central/api prisma:migrate",
+    "prisma:studio": "pnpm --filter @horror-central/api prisma:studio"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/uuid": "^10.0.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.0",
     "postcss": "^8.5.6",
     "prettier": "^3.0.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss": "^4.1.12",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5"
   },
   "packageManager": "pnpm@8.14.0",
   "engines": {
@@ -28,12 +37,16 @@
     "@mui/icons-material": "^7.3.1",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-slot": "^1.2.3",
+    "@tailwindcss/postcss": "^4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^10.18.0",
+    "geist": "^1.4.2",
     "lucide-react": "^0.292.0",
+    "shadcn": "^3.1.0",
     "tailwind-merge": "^2.6.0",
-    "tw-animate-css": "^1.3.7"
+    "tw-animate-css": "^1.3.7",
+    "uuid": "^11.1.0"
   }
 }

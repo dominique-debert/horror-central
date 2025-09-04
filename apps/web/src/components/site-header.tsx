@@ -20,6 +20,7 @@ export default function SiteHeader() {
     { name: "Movies", href: "/movies" },
     { name: "TV Shows", href: "/tv" },
     { name: "Games", href: "/games" },
+    { name: "Books", href: "/books" },
   ]
 
   const { user, signOut } = useAuth()
@@ -32,7 +33,7 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
         <Link href="/" className="font-semibold tracking-tight text-foreground">
-          Horror Central
+          FreakyHub
         </Link>
         <nav className="hidden gap-1 md:flex">
           {nav.map((item) => (
@@ -60,7 +61,7 @@ export default function SiteHeader() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="w-full cursor-pointer">
+                  <Link href="/account" className="w-full cursor-pointer">
                     Profile
                   </Link>
                 </DropdownMenuItem>

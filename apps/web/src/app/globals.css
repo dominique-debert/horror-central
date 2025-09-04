@@ -40,6 +40,17 @@
   --toggle-track: var(--secondary);
   --toggle-knob: var(--card);
   --toggle-icon: var(--primary-foreground);
+  --color-mirage-50: #f4f6fb;
+  --color-mirage-100: #e7ecf7;
+  --color-mirage-200: #cad7ed;
+  --color-mirage-300: #9bb4de;
+  --color-mirage-400: #668dca;
+  --color-mirage-500: #426fb5;
+  --color-mirage-600: #315798;
+  --color-mirage-700: #29467b;
+  --color-mirage-800: #253c67;
+  --color-mirage-900: #233557;
+  --color-mirage-950: #101727;
 }
 
 .dark {
