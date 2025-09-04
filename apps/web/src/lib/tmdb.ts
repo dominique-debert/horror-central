@@ -120,7 +120,8 @@ class TMDBClient {
     return this.request<TMDBResponse<TMDBMovie>>('/movie/now_playing', {
       page,
       region: 'US',
-      with_original_language: 'en'
+      with_original_language: 'en',
+      'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
     })
   }
 
@@ -132,7 +133,8 @@ class TMDBClient {
       sort_by: 'vote_average.desc',
       'vote_count.gte': 100, // Minimum vote count for reliability
       include_adult: false,
-      with_original_language: 'en'
+      with_original_language: 'en',
+      'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
     })
   }
 
@@ -143,7 +145,8 @@ class TMDBClient {
       with_genres: HORROR_GENRE_ID,
       sort_by: 'popularity.desc',
       include_adult: false,
-      with_original_language: 'en'
+      with_original_language: 'en',
+      'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
     })
   }
 
@@ -188,8 +191,24 @@ class TMDBClient {
       'primary_release_date.gte': today,
       'primary_release_date.lte': oneYearFromNow,
       include_adult: false,
-      with_original_language: 'en'
+      with_original_language: 'en',
+      'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
     })
+  }
+
+  // Get featured horror movie for hero section
+  async getFeaturedHorrorMovie(): Promise<TMDBMovie> {
+    const response = await this.getTopRatedHorrorMovies(1)
+    // Get a random movie from the top results for variety
+    const randomIndex = Math.floor(Math.random() * Math.min(response.results.length, 5))
+    return response.results[randomIndex]
+  }
+
+  // Get multiple featured horror movies for hero rotation
+  async getFeaturedHorrorMovies(count: number = 10): Promise<TMDBMovie[]> {
+    const response = await this.getTopRatedHorrorMovies(1)
+    // Return up to the requested count of movies
+    return response.results.slice(0, Math.min(count, response.results.length))
   }
 
   // Get popular horror TV shows

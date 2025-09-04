@@ -1,33 +1,108 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Play, Info } from "lucide-react"
 import Image from "next/image"
+import { tmdbClient, getBackdropUrl } from "@/lib/tmdb"
+import type { TMDBMovie } from "@/lib/tmdb"
 
 interface HeroSectionProps {
-  title: string
-  description: string
-  backgroundImage: string
+  // Optional props for manual override
+  title?: string
+  description?: string
+  backgroundImage?: string
   trailerUrl?: string
   moreInfoUrl?: string
 }
 
 export default function HeroSection({
-  title,
-  description,
-  backgroundImage,
-  trailerUrl,
-  moreInfoUrl,
-}: HeroSectionProps) {
+  title: manualTitle,
+  description: manualDescription,
+  backgroundImage: manualBackgroundImage,
+  trailerUrl: manualTrailerUrl,
+  moreInfoUrl: manualMoreInfoUrl,
+}: HeroSectionProps = {}) {
+  const [featuredMovies, setFeaturedMovies] = useState<TMDBMovie[]>([])
+  const [currentMovieIndex, setCurrentMovieIndex] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchFeaturedMovies = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const movies = await tmdbClient.getFeaturedHorrorMovies(10)
+      setFeaturedMovies(movies)
+    } catch {
+      setError('Failed to load featured movies')
+      // Use manual props as fallback if provided
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    // Only fetch if no manual props provided
+    if (!manualTitle) {
+      fetchFeaturedMovies()
+    } else {
+      setLoading(false)
+    }
+  }, [manualTitle])
+
+  // Auto-rotate through movies every 8 seconds
+  useEffect(() => {
+    if (featuredMovies.length > 1 && !manualTitle) {
+      const interval = setInterval(() => {
+        setCurrentMovieIndex((prevIndex) => 
+          (prevIndex + 1) % featuredMovies.length
+        )
+      }, 8000) // Change movie every 8 seconds
+
+      return () => clearInterval(interval)
+    }
+  }, [featuredMovies.length, manualTitle])
+
+  // Get current movie from the rotation
+  const currentMovie = featuredMovies[currentMovieIndex]
+
+  // Use manual props if provided, otherwise use TMDB data
+  const title = manualTitle || currentMovie?.title || 'Loading...'
+  const description = manualDescription || currentMovie?.overview || 'Loading featured horror movies...'
+  const backgroundImage = manualBackgroundImage || (currentMovie ? getBackdropUrl(currentMovie.backdrop_path) : '')
+  const trailerUrl = manualTrailerUrl
+  const moreInfoUrl = manualMoreInfoUrl || (currentMovie ? `/movies/${currentMovie.id}` : '')
+
+  if (loading) {
+    return (
+      <section className="relative h-[30vh] min-h-[250px] w-full overflow-hidden bg-gray-900">
+        <div className="relative z-10 flex h-full items-center">
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl space-y-6">
+              <div className="h-12 bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-6 bg-gray-700 rounded animate-pulse w-3/4"></div>
+              <div className="flex gap-4">
+                <div className="h-12 w-32 bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-12 w-32 bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="relative h-[30vh] min-h-[250px] w-full overflow-hidden">
-      {/* Background Image */}
+      {/* Background Image with smooth transition */}
       <div className="absolute inset-0">
         <Image
+          key={currentMovie?.id || 'loading'} // Force re-render on movie change
           src={backgroundImage}
           alt={title}
           fill
-          className="object-cover"
+          className="object-cover transition-opacity duration-1000 ease-in-out"
           priority
         />
         {/* Dark overlay for text readability */}
