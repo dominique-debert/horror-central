@@ -3,6 +3,9 @@ import NowPlaying from "@/components/now-playing"
 import LatestNews from "@/components/latest-news"
 import ComingSoon from "@/components/coming-soon"
 import TopRated from "@/components/top-rated"
+import TopRatedTVShows from "@/components/top-rated-tv-shows"
+import TopRatedGames from "@/components/top-rated-games"
+import TopRatedBooks from "@/components/top-rated-books"
 
 export default function Page() {
   return (
@@ -18,6 +21,9 @@ export default function Page() {
         <NowPlaying />
         <ComingSoon />
         <TopRated />
+        <TopRatedTVShows />
+        <TopRatedGames />
+        <TopRatedBooks />
         <LatestNews />
       </div>
     </main>
