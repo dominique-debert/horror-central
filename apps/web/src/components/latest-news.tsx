@@ -24,7 +24,7 @@ const defaultArticles: NewsArticle[] = [
   {
     id: "1",
     title: "Scream VII Gets New Director After Creative Shake-Up",
-    excerpt: "The horror franchise continues with a fresh vision as the studio announces a new creative team for the upcoming sequel.",
+    excerpt: "The horror franchise continues with a fresh vision as the studio announces a new creative team for the upcoming sequel. This major change comes after months of speculation about the direction of the beloved slasher series.",
     imageUrl: "https://images.unsplash.com/photo-1520637736862-4d197d17c90a?w=400&h=250&fit=crop",
     author: "Sarah Mitchell",
     publishedAt: "2024-01-15",
@@ -35,7 +35,7 @@ const defaultArticles: NewsArticle[] = [
   {
     id: "2",
     title: "Jordan Peele Teases His Next Horror Project",
-    excerpt: "The acclaimed director drops hints about his upcoming film, promising another mind-bending horror experience.",
+    excerpt: "The acclaimed director drops hints about his upcoming film, promising another mind-bending horror experience that will challenge audiences' expectations. Sources close to the production suggest it will be his most ambitious work yet.",
     imageUrl: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=400&h=250&fit=crop",
     author: "Mike Thompson",
     publishedAt: "2024-01-14",
@@ -46,7 +46,7 @@ const defaultArticles: NewsArticle[] = [
   {
     id: "3",
     title: "Classic Horror Movies Getting 4K Restorations",
-    excerpt: "Several beloved horror classics from the 80s and 90s are receiving the 4K treatment for modern audiences.",
+    excerpt: "Several beloved horror classics from the 80s and 90s are receiving the 4K treatment for modern audiences. The restoration process involves painstaking work to preserve the original vision while enhancing visual quality.",
     imageUrl: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=250&fit=crop",
     author: "Lisa Chen",
     publishedAt: "2024-01-13",
@@ -57,7 +57,7 @@ const defaultArticles: NewsArticle[] = [
   {
     id: "4",
     title: "Horror Film Festival Announces 2024 Lineup",
-    excerpt: "This year's festival promises to showcase the best in independent horror cinema from around the world.",
+    excerpt: "This year's festival promises to showcase the best in independent horror cinema from around the world. The lineup includes premieres from emerging filmmakers alongside retrospectives of genre masters.",
     imageUrl: "https://images.unsplash.com/photo-1606041008023-472dfb5e530f?w=400&h=250&fit=crop",
     author: "David Rodriguez",
     publishedAt: "2024-01-12",
@@ -78,53 +78,64 @@ export default function LatestNews({ articles = defaultArticles }: LatestNewsPro
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="space-y-6">
           {articles.map((article) => (
-            <Link key={article.id} href={`/news/${article.slug}`}>
-              <Card className="bg-gray-800 border-gray-700 hover:border-red-600 transition-all duration-300 group cursor-pointer h-full">
-                <div className="relative overflow-hidden rounded-t-lg">
+            <Card key={article.id} className="bg-gray-800 border-gray-700 hover:border-red-600 transition-all duration-300 group">
+              <div className="flex h-full">
+                {/* Image Section - Left Side */}
+                <div className="relative w-1/4 min-w-[200px] overflow-hidden rounded-l-lg">
                   <Image
                     src={article.imageUrl}
                     alt={article.title}
                     width={400}
                     height={250}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute top-3 left-3">
-                    <Badge variant="secondary" className="bg-red-600 text-white">
-                      {article.category}
-                    </Badge>
-                  </div>
                 </div>
                 
-                <CardContent className="p-4 flex flex-col flex-grow">
-                  <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2 group-hover:text-red-400 transition-colors">
-                    {article.title}
-                  </h3>
+                {/* Content Section - Right Side */}
+                <CardContent className="flex-1 p-6 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="text-white font-semibold text-xl group-hover:text-red-400 transition-colors flex-1 mr-3">
+                        {article.title}
+                      </h3>
+                      <Badge variant="secondary" className="bg-red-600 text-white text-xs flex-shrink-0">
+                        {article.category}
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-gray-400 text-base mb-4 leading-relaxed">
+                      {article.excerpt}
+                    </p>
+                  </div>
                   
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-3 flex-grow">
-                    {article.excerpt}
-                  </p>
-                  
-                  <div className="flex items-center justify-between text-xs text-gray-500 mt-auto">
-                    <div className="flex items-center space-x-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
                       <div className="flex items-center space-x-1">
-                        <User className="w-3 h-3" />
+                        <User className="w-4 h-4" />
                         <span>{article.author}</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3" />
+                        <Clock className="w-4 h-4" />
                         <span>{article.readTime}</span>
                       </div>
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
-                    </div>
+                    
+                    <Link 
+                      href={`/news/${article.slug}`}
+                      className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Read More
+                    </Link>
                   </div>
                 </CardContent>
-              </Card>
-            </Link>
+              </div>
+            </Card>
           ))}
         </div>
 
