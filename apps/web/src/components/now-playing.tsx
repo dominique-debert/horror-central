@@ -1,6 +1,7 @@
 "use client"
 
-import MovieCard from "@/components/movie-card"
+import MediaCard, { MediaItem } from "@/components/ui/media-card"
+import Link from "next/link"
 
 interface Movie {
   id: string
@@ -10,7 +11,8 @@ interface Movie {
   year: number
   duration: string
   description: string
-  genre: string
+  genre: string[]
+  slug: string
 }
 
 const nowPlayingMovies: Movie[] = [
@@ -22,7 +24,8 @@ const nowPlayingMovies: Movie[] = [
     year: 2023,
     duration: "123 min",
     description: "In the sixth installment of the Scream franchise, Ghostface is back and terrorizing a new group of teenagers.",
-    genre: "Horror"
+    genre: ["Slasher", "Horror"],
+    slug: "scream-vi"
   },
   {
     id: "2",
@@ -32,7 +35,8 @@ const nowPlayingMovies: Movie[] = [
     year: 2023,
     duration: "96 min",
     description: "Two estranged sisters' reunion is cut short by the rise of flesh-possessing demons, thrusting them into a primal battle for survival.",
-    genre: "Horror"
+    genre: ["Supernatural", "Horror"],
+    slug: "evil-dead-rise"
   },
   {
     id: "3",
@@ -42,7 +46,8 @@ const nowPlayingMovies: Movie[] = [
     year: 2023,
     duration: "110 min",
     description: "The Nun II follows Sister Irene as she once again confronts the demonic forces of evil.",
-    genre: "Horror"
+    genre: ["Supernatural", "Religious Horror"],
+    slug: "the-nun-ii"
   },
   {
     id: "4",
@@ -52,39 +57,60 @@ const nowPlayingMovies: Movie[] = [
     year: 2023,
     duration: "107 min",
     description: "The Lamberts, once again, must face their darkest fears in order to rescue their son from The Further.",
-    genre: "Horror"
+    genre: ["Supernatural", "Psychological Horror"],
+    slug: "insidious-the-red-door"
   }
 ]
 
-export default function NowPlaying() {
-  const handleMovieClick = (movieId: string) => {
-    // Navigate to movie detail page
-    window.location.href = `/movies/${movieId}`
-  }
+interface NowPlayingProps {
+  movies?: Movie[]
+}
 
+export default function NowPlaying({ movies = nowPlayingMovies }: NowPlayingProps) {
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold text-foreground">Now Playing</h2>
-        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          View All
-        </button>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {nowPlayingMovies.map((movie) => (
-          <MovieCard
-            key={movie.id}
-            title={movie.title}
-            poster={movie.poster}
-            rating={movie.rating}
-            year={movie.year}
-            duration={movie.duration}
-            description={movie.description}
-            genre={movie.genre}
-            onClick={() => handleMovieClick(movie.id)}
-          />
-        ))}
+    <section className="py-16 bg-gray-950">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h2 className="text-4xl font-bold text-white mb-4">Now Playing</h2>
+            <p className="text-gray-400 text-lg">
+              Currently showing in theaters - the latest horror releases
+            </p>
+          </div>
+          <Link 
+            href="/now-playing" 
+            className="text-red-400 hover:text-red-300 transition-colors font-medium"
+          >
+            View All
+          </Link>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {movies.map((movie, index) => {
+            const mediaItem: MediaItem = {
+              id: movie.id,
+              title: movie.title,
+              posterUrl: movie.poster,
+              rating: movie.rating,
+              year: movie.year,
+              duration: movie.duration,
+              description: movie.description,
+              genre: movie.genre,
+              slug: movie.slug
+            }
+            
+            return (
+              <MediaCard
+                key={movie.id}
+                item={mediaItem}
+                index={index}
+                type="movie"
+                showRanking={false}
+                linkPrefix="/movies"
+              />
+            )
+          })}
+        </div>
       </div>
     </section>
   )

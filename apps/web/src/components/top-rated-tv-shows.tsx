@@ -1,8 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Star, Award, Calendar, Clock, Tv } from "lucide-react"
-import Image from "next/image"
+"use client"
+
+import MediaCard, { MediaItem } from "@/components/ui/media-card"
 import Link from "next/link"
 
 interface TopRatedTVShow {
@@ -125,13 +123,6 @@ const defaultShows: TopRatedTVShow[] = [
   }
 ]
 
-function getRatingColor(rating: number): string {
-  if (rating >= 9.0) return "text-green-400"
-  if (rating >= 8.0) return "text-yellow-400"
-  if (rating >= 7.0) return "text-orange-400"
-  return "text-red-400"
-}
-
 export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShowsProps) {
   return (
     <section className="py-16 bg-gray-900">
@@ -144,91 +135,32 @@ export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShow
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {shows.map((show, index) => (
-            <Card key={show.id} className="bg-gray-800 border-gray-700 hover:border-red-600 transition-all duration-300 group relative">
-              {index < 3 && (
-                <div className="absolute bottom-3 left-3 z-10">
-                  <div className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                    {index + 1}
-                  </div>
-                </div>
-              )}
-              
-              <div className="relative overflow-hidden">
-                <Image
-                  src={show.posterUrl}
-                  alt={show.title}
-                  width={300}
-                  height={450}
-                  className="w-full h-64 object-cover rounded-t-lg"
-                />
-              </div>
-              
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-white font-bold text-lg group-hover:text-red-400 transition-colors line-clamp-1">
-                    {show.title}
-                  </h3>
-                  <div className="flex items-center ml-2">
-                    <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                    <span className={`font-bold ${getRatingColor(show.rating)}`}>
-                      {show.rating}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center text-gray-400 text-sm mb-2">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  <span className="mr-3">{show.year}</span>
-                  <Tv className="w-3 h-3 mr-1" />
-                  <span>{show.seasons} Season{show.seasons > 1 ? 's' : ''}</span>
-                </div>
-                
-                <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                  {show.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {show.genre.slice(0, 2).map((g) => (
-                    <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
-                      {g}
-                    </Badge>
-                  ))}
-                </div>
-                
-                {show.awards && show.awards.length > 0 && (
-                  <div className="flex items-center mb-3">
-                    <Award className="w-3 h-3 text-yellow-400 mr-1" />
-                    <span className="text-xs text-yellow-400 truncate">
-                      {show.awards[0]}
-                    </span>
-                  </div>
-                )}
-                
-                {(show.criticsScore || show.audienceScore) && (
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                    {show.criticsScore && (
-                      <span>Critics: {show.criticsScore}%</span>
-                    )}
-                    {show.audienceScore && (
-                      <span>Audience: {show.audienceScore}%</span>
-                    )}
-                  </div>
-                )}
-                
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full border-gray-600 text-gray-300 hover:bg-red-600 hover:border-red-600 hover:text-white"
-                  asChild
-                >
-                  <Link href={`/tv-shows/${show.slug}`}>
-                    View Details
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          {shows.map((show, index) => {
+            const mediaItem: MediaItem = {
+              id: show.id,
+              title: show.title,
+              posterUrl: show.posterUrl,
+              rating: show.rating,
+              year: show.year,
+              seasons: show.seasons,
+              description: show.description,
+              genre: show.genre,
+              awards: show.awards,
+              criticsScore: show.criticsScore,
+              audienceScore: show.audienceScore,
+              slug: show.slug
+            }
+            
+            return (
+              <MediaCard
+                key={show.id}
+                item={mediaItem}
+                index={index}
+                type="tv"
+                linkPrefix="/tv-shows"
+              />
+            )
+          })}
         </div>
 
         <div className="text-center mt-12">

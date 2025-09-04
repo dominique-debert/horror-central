@@ -1,8 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Star, Award, Calendar, Clock } from "lucide-react"
-import Image from "next/image"
+"use client"
+
+import MediaCard, { MediaItem } from "@/components/ui/media-card"
 import Link from "next/link"
 
 interface TopRatedMovie {
@@ -13,9 +11,8 @@ interface TopRatedMovie {
   rating: number
   year: number
   duration: string
-  director: string
   genre: string[]
-  awards?: string[]
+  awards: string[]
   criticsScore?: number
   audienceScore?: number
   slug: string
@@ -34,7 +31,6 @@ const defaultMovies: TopRatedMovie[] = [
     rating: 9.1,
     year: 1973,
     duration: "122 min",
-    director: "William Friedkin",
     genre: ["Supernatural", "Horror", "Drama"],
     awards: ["Academy Award Winner", "Golden Globe Winner"],
     criticsScore: 84,
@@ -49,7 +45,6 @@ const defaultMovies: TopRatedMovie[] = [
     rating: 8.7,
     year: 2018,
     duration: "127 min",
-    director: "Ari Aster",
     genre: ["Psychological Horror", "Drama"],
     awards: ["Critics Choice Award"],
     criticsScore: 89,
@@ -64,7 +59,6 @@ const defaultMovies: TopRatedMovie[] = [
     rating: 8.5,
     year: 2014,
     duration: "94 min",
-    director: "Jennifer Kent",
     genre: ["Psychological Horror", "Drama"],
     awards: ["AACTA Award Winner"],
     criticsScore: 98,
@@ -79,7 +73,6 @@ const defaultMovies: TopRatedMovie[] = [
     rating: 8.3,
     year: 2015,
     duration: "92 min",
-    director: "Robert Eggers",
     genre: ["Period Horror", "Supernatural"],
     awards: ["Sundance Film Festival Winner"],
     criticsScore: 90,
@@ -94,7 +87,6 @@ const defaultMovies: TopRatedMovie[] = [
     rating: 8.1,
     year: 2019,
     duration: "148 min",
-    director: "Ari Aster",
     genre: ["Folk Horror", "Drama"],
     awards: ["Saturn Award Winner"],
     criticsScore: 83,
@@ -109,7 +101,6 @@ const defaultMovies: TopRatedMovie[] = [
     rating: 8.9,
     year: 2017,
     duration: "104 min",
-    director: "Jordan Peele",
     genre: ["Psychological Horror", "Thriller"],
     awards: ["Academy Award Winner", "BAFTA Winner"],
     criticsScore: 98,
@@ -118,12 +109,6 @@ const defaultMovies: TopRatedMovie[] = [
   }
 ]
 
-function getRatingColor(rating: number): string {
-  if (rating >= 9.0) return "text-green-400"
-  if (rating >= 8.0) return "text-yellow-400"
-  if (rating >= 7.0) return "text-orange-400"
-  return "text-red-400"
-}
 
 export default function TopRated({ movies = defaultMovies }: TopRatedProps) {
   return (
@@ -137,91 +122,32 @@ export default function TopRated({ movies = defaultMovies }: TopRatedProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {movies.map((movie, index) => (
-            <Card key={movie.id} className="bg-gray-900 border-gray-700 hover:border-red-600 transition-all duration-300 group relative">
-              {index < 3 && (
-                <div className="absolute bottom-3 left-3 z-10">
-                  <div className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                    {index + 1}
-                  </div>
-                </div>
-              )}
-              
-              <div className="relative overflow-hidden">
-                <Image
-                  src={movie.posterUrl}
-                  alt={movie.title}
-                  width={300}
-                  height={450}
-                  className="w-full h-64 object-cover rounded-t-lg"
-                />
-              </div>
-              
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-white font-bold text-lg group-hover:text-red-400 transition-colors line-clamp-1">
-                    {movie.title}
-                  </h3>
-                  <div className="flex items-center ml-2">
-                    <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                    <span className={`font-bold ${getRatingColor(movie.rating)}`}>
-                      {movie.rating}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center text-gray-400 text-sm mb-2">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  <span className="mr-3">{movie.year}</span>
-                  <Clock className="w-3 h-3 mr-1" />
-                  <span>{movie.duration}</span>
-                </div>
-                
-                <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                  {movie.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {movie.genre.slice(0, 2).map((g) => (
-                    <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
-                      {g}
-                    </Badge>
-                  ))}
-                </div>
-                
-                {movie.awards && movie.awards.length > 0 && (
-                  <div className="flex items-center mb-3">
-                    <Award className="w-3 h-3 text-yellow-400 mr-1" />
-                    <span className="text-xs text-yellow-400 truncate">
-                      {movie.awards[0]}
-                    </span>
-                  </div>
-                )}
-                
-                {(movie.criticsScore || movie.audienceScore) && (
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                    {movie.criticsScore && (
-                      <span>Critics: {movie.criticsScore}%</span>
-                    )}
-                    {movie.audienceScore && (
-                      <span>Audience: {movie.audienceScore}%</span>
-                    )}
-                  </div>
-                )}
-                
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full border-gray-600 text-gray-300 hover:bg-red-600 hover:border-red-600 hover:text-white"
-                  asChild
-                >
-                  <Link href={`/movies/${movie.slug}`}>
-                    View Details
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          {movies.map((movie, index) => {
+            const mediaItem: MediaItem = {
+              id: movie.id,
+              title: movie.title,
+              posterUrl: movie.posterUrl,
+              rating: movie.rating,
+              year: movie.year,
+              duration: movie.duration,
+              description: movie.description,
+              genre: movie.genre,
+              awards: movie.awards,
+              criticsScore: movie.criticsScore,
+              audienceScore: movie.audienceScore,
+              slug: movie.slug
+            }
+            
+            return (
+              <MediaCard
+                key={movie.id}
+                item={mediaItem}
+                index={index}
+                type="movie"
+                linkPrefix="/movies"
+              />
+            )
+          })}
         </div>
 
         <div className="text-center mt-12">

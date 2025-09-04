@@ -1,20 +1,7 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, User } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
+"use client"
 
-interface NewsArticle {
-  id: string
-  title: string
-  excerpt: string
-  imageUrl: string
-  author: string
-  publishedAt: string
-  readTime: string
-  category: string
-  slug: string
-}
+import NewsCard, { NewsArticle } from "@/components/ui/news-card"
+import Link from "next/link"
 
 interface LatestNewsProps {
   articles?: NewsArticle[]
@@ -79,64 +66,27 @@ export default function LatestNews({ articles = defaultArticles }: LatestNewsPro
         </div>
 
         <div className="space-y-6">
-          {articles.map((article) => (
-            <Card key={article.id} className="bg-gray-800 border-gray-700 hover:border-red-600 transition-all duration-300 group">
-              <div className="flex h-full">
-                {/* Image Section - Left Side */}
-                <div className="relative w-1/4 min-w-[200px] overflow-hidden rounded-l-lg">
-                  <Image
-                    src={article.imageUrl}
-                    alt={article.title}
-                    width={400}
-                    height={250}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                
-                {/* Content Section - Right Side */}
-                <CardContent className="flex-1 p-6 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-white font-semibold text-xl group-hover:text-red-400 transition-colors flex-1 mr-3">
-                        {article.title}
-                      </h3>
-                      <Badge variant="secondary" className="bg-red-600 text-white text-xs flex-shrink-0">
-                        {article.category}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-gray-400 text-base mb-4 leading-relaxed">
-                      {article.excerpt}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <User className="w-4 h-4" />
-                        <span>{article.author}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{article.readTime}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    
-                    <Link 
-                      href={`/news/${article.slug}`}
-                      className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      Read More
-                    </Link>
-                  </div>
-                </CardContent>
-              </div>
-            </Card>
-          ))}
+          {articles.map((article) => {
+            const newsArticle: NewsArticle = {
+              id: article.id,
+              title: article.title,
+              excerpt: article.excerpt,
+              imageUrl: article.imageUrl,
+              author: article.author,
+              publishedAt: article.publishedAt,
+              readTime: article.readTime,
+              category: article.category,
+              slug: article.slug
+            }
+            
+            return (
+              <NewsCard
+                key={article.id}
+                article={newsArticle}
+                layout="horizontal"
+              />
+            )
+          })}
         </div>
 
         <div className="text-center mt-12">

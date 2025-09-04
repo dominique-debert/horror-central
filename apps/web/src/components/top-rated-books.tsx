@@ -1,8 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Star, Award, Calendar, BookOpen, User } from "lucide-react"
-import Image from "next/image"
+"use client"
+
+import MediaCard, { MediaItem } from "@/components/ui/media-card"
 import Link from "next/link"
 
 interface TopRatedBook {
@@ -118,12 +116,6 @@ const defaultBooks: TopRatedBook[] = [
   }
 ]
 
-function getRatingColor(rating: number): string {
-  if (rating >= 9.0) return "text-green-400"
-  if (rating >= 8.0) return "text-yellow-400"
-  if (rating >= 7.0) return "text-orange-400"
-  return "text-red-400"
-}
 
 export default function TopRatedBooks({ books = defaultBooks }: TopRatedBooksProps) {
   return (
@@ -137,95 +129,33 @@ export default function TopRatedBooks({ books = defaultBooks }: TopRatedBooksPro
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {books.map((book, index) => (
-            <Card key={book.id} className="bg-gray-900 border-gray-700 hover:border-red-600 transition-all duration-300 group relative">
-              {index < 3 && (
-                <div className="absolute bottom-3 left-3 z-10">
-                  <div className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                    {index + 1}
-                  </div>
-                </div>
-              )}
-              
-              <div className="relative overflow-hidden">
-                <Image
-                  src={book.coverUrl}
-                  alt={book.title}
-                  width={300}
-                  height={450}
-                  className="w-full h-64 object-cover rounded-t-lg"
-                />
-              </div>
-              
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-white font-bold text-lg group-hover:text-red-400 transition-colors line-clamp-1">
-                    {book.title}
-                  </h3>
-                  <div className="flex items-center ml-2">
-                    <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                    <span className={`font-bold ${getRatingColor(book.rating)}`}>
-                      {book.rating}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center text-gray-400 text-sm mb-2">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  <span className="mr-3">{book.year}</span>
-                  <BookOpen className="w-3 h-3 mr-1" />
-                  <span>{book.pages} pages</span>
-                </div>
-                
-                <p className="text-gray-400 text-sm mb-2">
-                  by <span className="text-white">{book.author}</span>
-                </p>
-                
-                <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                  {book.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {book.genre.slice(0, 2).map((g) => (
-                    <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
-                      {g}
-                    </Badge>
-                  ))}
-                </div>
-                
-                {book.awards && book.awards.length > 0 && (
-                  <div className="flex items-center mb-3">
-                    <Award className="w-3 h-3 text-yellow-400 mr-1" />
-                    <span className="text-xs text-yellow-400 truncate">
-                      {book.awards[0]}
-                    </span>
-                  </div>
-                )}
-                
-                {(book.criticsScore || book.audienceScore) && (
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                    {book.criticsScore && (
-                      <span>Critics: {book.criticsScore}%</span>
-                    )}
-                    {book.audienceScore && (
-                      <span>Readers: {book.audienceScore}%</span>
-                    )}
-                  </div>
-                )}
-                
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full border-gray-600 text-gray-300 hover:bg-red-600 hover:border-red-600 hover:text-white"
-                  asChild
-                >
-                  <Link href={`/books/${book.slug}`}>
-                    View Details
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          {books.map((book, index) => {
+            const mediaItem: MediaItem = {
+              id: book.id,
+              title: book.title,
+              coverUrl: book.coverUrl,
+              rating: book.rating,
+              year: book.year,
+              pages: book.pages,
+              author: book.author,
+              description: book.description,
+              genre: book.genre,
+              awards: book.awards,
+              criticsScore: book.criticsScore,
+              audienceScore: book.audienceScore,
+              slug: book.slug
+            }
+            
+            return (
+              <MediaCard
+                key={book.id}
+                item={mediaItem}
+                index={index}
+                type="book"
+                linkPrefix="/books"
+              />
+            )
+          })}
         </div>
 
         <div className="text-center mt-12">
