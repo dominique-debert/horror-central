@@ -1,9 +1,14 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, Star, Bell } from "lucide-react"
+import { Calendar, Bell } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { tmdbClient, tmdbMovieToMediaItem } from "@/lib/tmdb"
+import type { MediaItem } from "@/components/ui/MediaCard"
 
 interface ComingSoonMovie {
   id: string
@@ -89,6 +94,45 @@ function getDaysUntilRelease(dateString: string): number {
 }
 
 export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) {
+  const [upcomingMovies, setUpcomingMovies] = useState<MediaItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchUpcomingMovies = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const [moviesResponse, genresResponse] = await Promise.all([
+          tmdbClient.getUpcomingHorrorMovies(1),
+          tmdbClient.getMovieGenres()
+        ])
+        const mediaItems = moviesResponse.results.slice(0, 4).map(movie => 
+          tmdbMovieToMediaItem(movie, genresResponse.genres)
+        )
+        setUpcomingMovies(mediaItems)
+      } catch {
+        setError('Failed to load upcoming movies. Please try again later.')
+        // Fallback to mock data converted to MediaItem format
+        const fallbackItems = movies.slice(0, 4).map(movie => ({
+          id: movie.id,
+          title: movie.title,
+          posterUrl: movie.posterUrl,
+          rating: movie.anticipationScore,
+          year: new Date(movie.releaseDate).getFullYear(),
+          description: movie.description,
+          genre: movie.genre,
+          slug: movie.slug
+        }))
+        setUpcomingMovies(fallbackItems)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUpcomingMovies()
+  }, [movies])
+
   return (
     <section className="py-16 bg-black">
       <div className="container mx-auto px-4">
@@ -99,108 +143,99 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {movies.map((movie) => {
-            const daysUntil = getDaysUntilRelease(movie.releaseDate)
-            const isReleased = daysUntil <= 0
-            
-            return (
-              <Card key={movie.id} className="bg-gray-900 border-gray-700 hover:border-red-600 transition-all duration-300 group">
-                <div className="relative overflow-hidden rounded-t-lg">
-                  <Image
-                    src={movie.posterUrl}
-                    alt={movie.title}
-                    width={300}
-                    height={450}
-                    className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  
-                  <div className="absolute top-3 left-3 flex flex-col gap-2">
-                    {isReleased ? (
-                      <Badge className="bg-green-600 text-white">Now Available</Badge>
-                    ) : (
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-gray-900 rounded-lg animate-pulse h-96" />
+            ))}
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center py-8">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {upcomingMovies.map((movie) => {
+              // For TMDB data, we don't have release dates in the same format
+              // So we'll use a generic "Coming Soon" approach
+              
+              return (
+                <Card key={movie.id} className="bg-gray-900 border-gray-700 hover:border-red-600 transition-all duration-300 group">
+                  <div className="relative overflow-hidden rounded-t-lg">
+                    <Image
+                      src={movie.posterUrl || '/placeholder-movie-poster.jpg'}
+                      alt={movie.title}
+                      width={300}
+                      height={450}
+                      className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    
+                    <div className="absolute top-3 left-3 flex flex-col gap-2">
                       <Badge className="bg-red-600 text-white">
-                        {daysUntil} days left
+                        Coming Soon
                       </Badge>
-                    )}
-                  </div>
-
-                  <div className="absolute top-3 right-3">
-                    <div className="flex items-center bg-black/70 rounded px-2 py-1">
-                      <Star className="w-3 h-3 text-yellow-400 mr-1" />
-                      <span className="text-white text-xs font-semibold">
-                        {movie.anticipationScore}/10
-                      </span>
                     </div>
-                  </div>
 
-                  {movie.trailerUrl && (
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  </div>
+                  
+                  <CardContent className="p-4">
+                    <h3 className="text-white font-bold text-lg mb-2 group-hover:text-red-400 transition-colors">
+                      {movie.title}
+                    </h3>
+                    
+                    <div className="flex items-center text-gray-400 text-sm mb-3">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      <span>{movie.year}</span>
+                    </div>
+                    
+                    <p className="text-gray-400 text-sm mb-3 line-clamp-3">
+                      {movie.description}
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {movie.genre.map((g) => (
+                        <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
+                          {g}
+                        </Badge>
+                      ))}
+                    </div>
+                    
+                    <div className="flex gap-2">
                       <Button 
-                        variant="secondary" 
-                        size="sm"
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 border-gray-600 text-gray-300 hover:bg-red-600 hover:border-red-600 hover:text-white"
+                      >
+                        <Bell className="w-3 h-3 mr-1" />
+                        Notify Me
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-gray-600 text-gray-300 hover:bg-gray-700"
                         asChild
                       >
-                        <Link href={movie.trailerUrl} target="_blank">
-                          Watch Trailer
+                        <Link href={`/movies/${movie.slug}`}>
+                          More Info
                         </Link>
                       </Button>
                     </div>
-                  )}
-                </div>
-                
-                <CardContent className="p-4">
-                  <h3 className="text-white font-bold text-lg mb-2 group-hover:text-red-400 transition-colors">
-                    {movie.title}
-                  </h3>
-                  
-                  <div className="flex items-center text-gray-400 text-sm mb-3">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    <span>{formatReleaseDate(movie.releaseDate)}</span>
-                  </div>
-                  
-                  <p className="text-gray-400 text-sm mb-3 line-clamp-3">
-                    {movie.description}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {movie.genre.map((g) => (
-                      <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
-                        {g}
-                      </Badge>
-                    ))}
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                    <span>Director: {movie.director}</span>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="flex-1 border-gray-600 text-gray-300 hover:bg-red-600 hover:border-red-600 hover:text-white"
-                    >
-                      <Bell className="w-3 h-3 mr-1" />
-                      Notify Me
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                      asChild
-                    >
-                      <Link href={`/movies/${movie.slug}`}>
-                        More Info
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
 
         <div className="text-center mt-12">
           <Link 

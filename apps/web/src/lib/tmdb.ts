@@ -4,7 +4,8 @@ import { MediaItem } from "@/components/ui/MediaCard"
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p'
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY
-const HORROR_GENRE_ID = 27 // Horror genre ID in TMDB
+const HORROR_GENRE_ID = 27
+const HORROR_TV_GENRE_IDS = [10765, 9648] // Sci-Fi & Fantasy, Mystery (closest to horror for TV) // Horror genre ID in TMDB
 
 // TMDB API Response Types
 export interface TMDBMovie {
@@ -114,12 +115,12 @@ class TMDBClient {
     return response.json()
   }
 
-  // Get horror movies that are currently playing
+  // Get now playing horror movies
   async getNowPlayingHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
     return this.request<TMDBResponse<TMDBMovie>>('/movie/now_playing', {
       page,
-      with_genres: HORROR_GENRE_ID,
-      region: 'US'
+      region: 'US',
+      with_original_language: 'en'
     })
   }
 
@@ -130,7 +131,8 @@ class TMDBClient {
       with_genres: HORROR_GENRE_ID,
       sort_by: 'vote_average.desc',
       'vote_count.gte': 100, // Minimum vote count for reliability
-      include_adult: false
+      include_adult: false,
+      with_original_language: 'en'
     })
   }
 
@@ -140,17 +142,53 @@ class TMDBClient {
       page,
       with_genres: HORROR_GENRE_ID,
       sort_by: 'popularity.desc',
-      include_adult: false
+      include_adult: false,
+      with_original_language: 'en'
     })
   }
 
   // Get top-rated horror TV shows
   async getTopRatedHorrorTVShows(page: number = 1): Promise<TMDBResponse<TMDBTVShow>> {
-    return this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
+    // Since TMDB doesn't have a horror genre for TV, we'll search for popular horror TV shows
+    // and filter by keywords or use a curated list approach
+    const response = await this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
+      with_genres: HORROR_TV_GENRE_IDS.join(','), // Sci-Fi & Fantasy, Mystery
+      sort_by: 'vote_average.desc',
+      'vote_count.gte': 50, // Lower threshold for TV shows
+      with_keywords: '158718|210024|9715', // Horror, supernatural, thriller keywords
+      with_original_language: 'en',
+      page
+    })
+    
+    // Filter results to prioritize shows with horror-related keywords in overview
+    const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'scary', 'terror', 'evil', 'dark', 'sinister']
+    const filteredResults = response.results.filter(show => {
+      const overview = show.overview.toLowerCase()
+      const name = show.name.toLowerCase()
+      return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword))
+    })
+    
+    return {
+      ...response,
+      results: filteredResults.length > 0 ? filteredResults : response.results
+    }
+  }
+
+  // Get upcoming horror movies
+  async getUpcomingHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
+    const today = new Date().toISOString().split('T')[0]
+    const futureDate = new Date()
+    futureDate.setFullYear(futureDate.getFullYear() + 1)
+    const oneYearFromNow = futureDate.toISOString().split('T')[0]
+    
+    return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', {
       page,
       with_genres: HORROR_GENRE_ID,
-      sort_by: 'vote_average.desc',
-      'vote_count.gte': 50
+      sort_by: 'release_date.desc',
+      'primary_release_date.gte': today,
+      'primary_release_date.lte': oneYearFromNow,
+      include_adult: false,
+      with_original_language: 'en'
     })
   }
 
