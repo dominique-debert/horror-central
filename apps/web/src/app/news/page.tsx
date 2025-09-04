@@ -1,6 +1,6 @@
 "use client"
 
-import NewsList from "@/components/news-list"
+import NewsList from "@/components/NewsList"
 
 export default function NewsPage() {
   return <NewsList />

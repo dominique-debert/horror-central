@@ -1,6 +1,6 @@
 "use client"
 
-import NewsCard, { NewsArticle } from "@/components/ui/news-card"
+import NewsCard, { NewsArticle } from "@/components/ui/NewsCard"
 import Link from "next/link"
 
 interface LatestNewsProps {

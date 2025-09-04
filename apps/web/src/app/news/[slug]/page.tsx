@@ -1,4 +1,4 @@
-import NewsArticle from "@/components/news-article"
+import NewsArticle from "@/components/NewsArticle"
 import { notFound } from "next/navigation"
 
 // Sample article data - in a real app, this would come from a database or CMS

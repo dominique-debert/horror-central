@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import AuthGuard from "@/components/auth-guard";
+import AuthGuard from "@/components/AuthGuard";
 import { apiUpdateProfile, apiUploadFile } from "@/lib/api";
 
 export default function AccountPage() {

@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import SearchBar from "@/components/search-bar"
-import ThemeToggle from "@/components/theme-toggle"
+import SearchBar from "@/components/SearchBar"
+import ThemeToggle from "@/components/ThemeToggle"
 import { useAuth } from "@/context/auth-context"
 import { useMemo } from "react"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/DropdownMenu"
 
 export default function SiteHeader() {
   const nav = [

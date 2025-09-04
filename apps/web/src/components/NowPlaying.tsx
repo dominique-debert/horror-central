@@ -1,6 +1,6 @@
 "use client"
 
-import MediaCard, { MediaItem } from "@/components/ui/media-card"
+import MediaCard, { MediaItem } from "@/components/ui/MediaCard"
 import Link from "next/link"
 
 interface Movie {

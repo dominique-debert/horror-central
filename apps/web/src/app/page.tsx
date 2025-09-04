@@ -1,11 +1,11 @@
-import HeroSection from "@/components/hero-section"
-import NowPlaying from "@/components/now-playing"
-import LatestNews from "@/components/latest-news"
-import ComingSoon from "@/components/coming-soon"
-import TopRated from "@/components/top-rated"
-import TopRatedTVShows from "@/components/top-rated-tv-shows"
-import TopRatedGames from "@/components/top-rated-games"
-import TopRatedBooks from "@/components/top-rated-books"
+import HeroSection from "@/components/HeroSection"
+import NowPlaying from "@/components/NowPlaying"
+import LatestNews from "@/components/LatestNews"
+import ComingSoon from "@/components/ComingSoon"
+import TopRated from "@/components/TopRated"
+import TopRatedTVShows from "@/components/TopRatedTvShows"
+import TopRatedGames from "@/components/TopRatedGames"
+import TopRatedBooks from "@/components/TopRatedBooks"
 
 export default function Page() {
   return (
