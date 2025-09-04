@@ -104,14 +104,6 @@ export function MediaCard({ item, type }: MediaCardProps) {
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-110"
         />
-        
-        {/* Rating overlay - hidden for games */}
-        {type !== 'game' && (
-          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            <span>{item.rating.toFixed(1)}</span>
-          </div>
-        )}
 
         {/* Genre badge */}
         {item.genre && item.genre.length > 0 && (

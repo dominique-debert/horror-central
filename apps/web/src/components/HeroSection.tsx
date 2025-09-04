@@ -83,7 +83,7 @@ export default function HeroSection({
 
   if (loading) {
     return (
-      <section className="relative h-[30vh] min-h-[250px] w-full overflow-hidden bg-gray-900">
+      <section className="relative h-[40vh] min-h-[250px] w-full overflow-hidden bg-gray-900">
         <div className="relative z-10 flex h-full items-center">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl space-y-6">
@@ -101,7 +101,7 @@ export default function HeroSection({
   }
 
   return (
-    <section className="relative h-[30vh] min-h-[250px] w-full overflow-hidden">
+    <section className="relative h-[40vh] min-h-[250px] w-full overflow-hidden">
       {/* Background Image with smooth transition */}
       <div className="absolute inset-0">
         <Image
