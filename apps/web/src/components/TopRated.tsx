@@ -1,7 +1,10 @@
 "use client"
 
-import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
+import { useState, useEffect } from 'react'
+import { MediaCard } from "@/components/ui/MediaCard"
 import Link from "next/link"
+import { tmdbClient, tmdbMovieToMediaItem } from "@/lib/tmdb"
+import type { MediaItem } from "@/components/ui/MediaCard"
 
 interface TopRatedMovie {
   id: string
@@ -111,6 +114,46 @@ const defaultMovies: TopRatedMovie[] = [
 
 
 export default function TopRated({ movies = defaultMovies }: TopRatedProps) {
+  const [topRatedMovies, setTopRatedMovies] = useState<MediaItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchTopRatedMovies = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const [moviesResponse, genresResponse] = await Promise.all([
+          tmdbClient.getTopRatedHorrorMovies(1),
+          tmdbClient.getMovieGenres()
+        ])
+        const mediaItems = moviesResponse.results.slice(0, 8).map(movie => 
+          tmdbMovieToMediaItem(movie, genresResponse.genres)
+        )
+        setTopRatedMovies(mediaItems)
+      } catch {
+        setError('Failed to load top rated movies. Please try again later.')
+        // Fallback to mock data converted to MediaItem format
+        const fallbackItems = movies.slice(0, 8).map(movie => ({
+          id: movie.id,
+          title: movie.title,
+          posterUrl: movie.posterUrl,
+          rating: movie.rating,
+          year: movie.year,
+          duration: movie.duration,
+          description: movie.description,
+          genre: movie.genre,
+          slug: movie.slug
+        }))
+        setTopRatedMovies(fallbackItems)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTopRatedMovies()
+  }, [movies])
+
   return (
     <section className="py-16 bg-gray-950">
       <div className="container mx-auto px-4">
@@ -121,32 +164,37 @@ export default function TopRated({ movies = defaultMovies }: TopRatedProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {movies.slice(0, 8).map((movie) => {
-            const mediaItem: MediaItem = {
-              id: movie.id,
-              title: movie.title,
-              posterUrl: movie.posterUrl,
-              rating: movie.rating,
-              year: movie.year,
-              duration: movie.duration,
-              description: movie.description,
-              genre: movie.genre,
-              awards: movie.awards,
-              criticsScore: movie.criticsScore,
-              audienceScore: movie.audienceScore,
-              slug: movie.slug
-            }
-            
-            return (
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-96" />
+            ))}
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center py-8">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {topRatedMovies.map((movie) => (
               <MediaCard
                 key={movie.id}
-                item={mediaItem}
+                item={movie}
                 type="movie"
               />
-            )
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className="text-center mt-12">
           <Link 

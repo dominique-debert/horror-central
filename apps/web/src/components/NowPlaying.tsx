@@ -2,71 +2,63 @@
 
 import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
 import Link from "next/link"
-
-interface Movie {
-  id: string
-  title: string
-  poster: string
-  rating: number
-  year: number
-  duration: string
-  description: string
-  genre: string[]
-  slug: string
-}
-
-const nowPlayingMovies: Movie[] = [
-  {
-    id: "1",
-    title: "Scream VI",
-    poster: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop",
-    rating: 8.2,
-    year: 2023,
-    duration: "123 min",
-    description: "In the sixth installment of the Scream franchise, Ghostface is back and terrorizing a new group of teenagers.",
-    genre: ["Slasher", "Horror"],
-    slug: "scream-vi"
-  },
-  {
-    id: "2",
-    title: "Evil Dead Rise",
-    poster: "https://images.unsplash.com/photo-1489599510025-c4e5c6b9a8b7?w=400&h=600&fit=crop",
-    rating: 7.8,
-    year: 2023,
-    duration: "96 min",
-    description: "Two estranged sisters' reunion is cut short by the rise of flesh-possessing demons, thrusting them into a primal battle for survival.",
-    genre: ["Supernatural", "Horror"],
-    slug: "evil-dead-rise"
-  },
-  {
-    id: "3",
-    title: "The Nun II",
-    poster: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=600&fit=crop",
-    rating: 6.9,
-    year: 2023,
-    duration: "110 min",
-    description: "The Nun II follows Sister Irene as she once again confronts the demonic forces of evil.",
-    genre: ["Supernatural", "Religious Horror"],
-    slug: "the-nun-ii"
-  },
-  {
-    id: "4",
-    title: "Insidious: The Red Door",
-    poster: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=600&fit=crop",
-    rating: 7.1,
-    year: 2023,
-    duration: "107 min",
-    description: "The Lamberts, once again, must face their darkest fears in order to rescue their son from The Further.",
-    genre: ["Supernatural", "Psychological Horror"],
-    slug: "insidious-the-red-door"
-  }
-]
+import { useEffect, useState } from "react"
+import { tmdbClient, tmdbMovieToMediaItem } from "@/lib/tmdb"
 
 interface NowPlayingProps {
-  movies?: Movie[]
+  initialMovies?: MediaItem[]
 }
 
-export default function NowPlaying({ movies = nowPlayingMovies }: NowPlayingProps) {
+export default function NowPlaying({ initialMovies }: NowPlayingProps) {
+  const [movies, setMovies] = useState<MediaItem[]>(initialMovies || [])
+  const [loading, setLoading] = useState(!initialMovies)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (initialMovies) return
+
+    const fetchNowPlayingMovies = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Fetch genres first for proper mapping
+        const [moviesResponse, genresResponse] = await Promise.all([
+          tmdbClient.getNowPlayingHorrorMovies(1),
+          tmdbClient.getMovieGenres()
+        ])
+
+        // Convert TMDB movies to MediaItem format
+        const mediaItems = moviesResponse.results
+          .slice(0, 8) // Limit to 8 movies
+          .map(movie => tmdbMovieToMediaItem(movie, genresResponse.genres))
+
+        setMovies(mediaItems)
+      } catch (err) {
+        console.error('Error fetching now playing movies:', err)
+        setError('Failed to load movies. Please try again later.')
+        
+        // Fallback to mock data if API fails
+        setMovies([
+          {
+            id: "1",
+            title: "Scream VI",
+            posterUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop",
+            rating: 8.2,
+            year: 2023,
+            duration: "123 min",
+            description: "In the sixth installment of the Scream franchise, Ghostface is back and terrorizing a new group of teenagers.",
+            genre: ["Slasher", "Horror"],
+            slug: "scream-vi"
+          }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNowPlayingMovies()
+  }, [initialMovies])
   return (
     <section className="py-16 bg-gray-950">
       <div className="container mx-auto px-4">
@@ -85,29 +77,37 @@ export default function NowPlaying({ movies = nowPlayingMovies }: NowPlayingProp
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {movies.map((movie) => {
-            const mediaItem: MediaItem = {
-              id: movie.id,
-              title: movie.title,
-              posterUrl: movie.poster,
-              rating: movie.rating,
-              year: movie.year,
-              duration: movie.duration,
-              description: movie.description,
-              genre: movie.genre,
-              slug: movie.slug
-            }
-            
-            return (
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-96" />
+            ))}
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center py-8">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {movies.map((movie) => (
               <MediaCard
                 key={movie.id}
-                item={mediaItem}
+                item={movie}
                 type="movie"
               />
-            )
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

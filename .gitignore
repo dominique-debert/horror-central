@@ -19,7 +19,7 @@ build
 
 # Local env files
 .env*.local
-.env
+# .env
 !.env.example
 
 # IDE

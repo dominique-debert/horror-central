@@ -1,7 +1,10 @@
 "use client"
 
-import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
+import { useState, useEffect } from 'react'
+import { MediaCard } from "@/components/ui/MediaCard"
 import Link from "next/link"
+import { tmdbClient, tmdbTVToMediaItem } from "@/lib/tmdb"
+import type { MediaItem } from "@/components/ui/MediaCard"
 
 interface TopRatedTVShow {
   id: string
@@ -124,6 +127,45 @@ const defaultShows: TopRatedTVShow[] = [
 ]
 
 export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShowsProps) {
+  const [topRatedShows, setTopRatedShows] = useState<MediaItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchTopRatedShows = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const [showsResponse, genresResponse] = await Promise.all([
+          tmdbClient.getTopRatedHorrorTVShows(1),
+          tmdbClient.getTVGenres()
+        ])
+        const mediaItems = showsResponse.results.slice(0, 8).map(show => 
+          tmdbTVToMediaItem(show, genresResponse.genres)
+        )
+        setTopRatedShows(mediaItems)
+      } catch {
+        setError('Failed to load top rated TV shows. Please try again later.')
+        // Fallback to mock data converted to MediaItem format
+        const fallbackItems = shows.slice(0, 8).map(show => ({
+          id: show.id,
+          title: show.title,
+          posterUrl: show.posterUrl,
+          rating: show.rating,
+          year: show.year,
+          description: show.description,
+          genre: show.genre,
+          slug: show.slug
+        }))
+        setTopRatedShows(fallbackItems)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTopRatedShows()
+  }, [shows])
+
   return (
     <section className="py-16 bg-gray-900">
       <div className="container mx-auto px-4">
@@ -134,32 +176,37 @@ export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShow
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {shows.slice(0, 8).map((show) => {
-            const mediaItem: MediaItem = {
-              id: show.id,
-              title: show.title,
-              posterUrl: show.posterUrl,
-              rating: show.rating,
-              year: show.year,
-              seasons: show.seasons,
-              description: show.description,
-              genre: show.genre,
-              awards: show.awards,
-              criticsScore: show.criticsScore,
-              audienceScore: show.audienceScore,
-              slug: show.slug
-            }
-            
-            return (
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-96" />
+            ))}
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center py-8">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {topRatedShows.map((show) => (
               <MediaCard
                 key={show.id}
-                item={mediaItem}
+                item={show}
                 type="tv"
               />
-            )
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className="text-center mt-12">
           <Link 
