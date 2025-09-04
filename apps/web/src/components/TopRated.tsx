@@ -37,7 +37,7 @@ export default function TopRated() {
   }, [])
 
   return (
-    <section className="py-16 bg-gray-950">
+    <section className="py-10">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-12">
           <div>

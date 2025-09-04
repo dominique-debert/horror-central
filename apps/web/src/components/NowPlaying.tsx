@@ -43,21 +43,6 @@ export default function NowPlaying({ initialMovies }: NowPlayingProps) {
       } catch (err) {
         console.error('Error fetching now playing movies:', err)
         setError('Failed to load movies. Please try again later.')
-        
-        // Fallback to mock data if API fails
-        setMovies([
-          {
-            id: "1",
-            title: "Scream VI",
-            posterUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop",
-            rating: 8.2,
-            year: 2023,
-            duration: "123 min",
-            description: "In the sixth installment of the Scream franchise, Ghostface is back and terrorizing a new group of teenagers.",
-            genre: ["Slasher", "Horror"],
-            slug: "scream-vi"
-          }
-        ])
       } finally {
         setLoading(false)
       }
@@ -66,7 +51,7 @@ export default function NowPlaying({ initialMovies }: NowPlayingProps) {
     fetchNowPlayingMovies()
   }, [initialMovies])
   return (
-    <section className="py-16 bg-gray-950">
+    <section className="py-10">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-12">
           <div>

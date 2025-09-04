@@ -77,7 +77,6 @@ const defaultMovies: ComingSoonMovie[] = [
   }
 ]
 
-
 export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) {
   const [upcomingMovies, setUpcomingMovies] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -169,7 +168,7 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
   }, [movies])
 
   return (
-    <section className="py-16 bg-black">
+    <section className="py-10">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-12">
           <div>

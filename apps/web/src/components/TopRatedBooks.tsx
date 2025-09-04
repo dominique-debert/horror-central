@@ -120,7 +120,7 @@ const defaultBooks: TopRatedBook[] = [
 
 export default function TopRatedBooks({ books = defaultBooks }: TopRatedBooksProps) {
   return (
-    <section className="py-16 bg-gray-900">
+    <section className="py-10">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-12">
           <div>
