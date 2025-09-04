@@ -16,43 +16,43 @@ interface Movie {
 const nowPlayingMovies: Movie[] = [
   {
     id: "1",
-    title: "The Haunting of Willow Creek",
+    title: "Scream VI",
     poster: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop",
     rating: 8.2,
-    year: 2024,
-    duration: "118 min",
-    description: "A family moves into an old Victorian house, only to discover that the previous residents never truly left. As supernatural events escalate, they must uncover the dark secrets hidden within the walls.",
+    year: 2023,
+    duration: "123 min",
+    description: "In the sixth installment of the Scream franchise, Ghostface is back and terrorizing a new group of teenagers.",
     genre: "Horror"
   },
   {
     id: "2",
-    title: "Shadows of the Past",
-    poster: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=600&fit=crop",
+    title: "Evil Dead Rise",
+    poster: "https://images.unsplash.com/photo-1489599510025-c4e5c6b9a8b7?w=400&h=600&fit=crop",
     rating: 7.8,
-    year: 2024,
-    duration: "105 min",
-    description: "When a detective investigates a series of mysterious disappearances, she uncovers a connection to an ancient curse that threatens to consume everyone in its path.",
-    genre: "Thriller"
+    year: 2023,
+    duration: "96 min",
+    description: "Two estranged sisters' reunion is cut short by the rise of flesh-possessing demons, thrusting them into a primal battle for survival.",
+    genre: "Horror"
   },
   {
     id: "3",
-    title: "Whispers in the Dark",
-    poster: "https://images.unsplash.com/photo-1520637836862-4d197d17c90a?w=400&h=600&fit=crop",
-    rating: 8.5,
-    year: 2024,
-    duration: "92 min",
-    description: "A young woman inherits her grandmother's isolated cabin, but soon realizes she's not alone. Something sinister lurks in the surrounding woods, waiting for the perfect moment to strike.",
+    title: "The Nun II",
+    poster: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=600&fit=crop",
+    rating: 6.9,
+    year: 2023,
+    duration: "110 min",
+    description: "The Nun II follows Sister Irene as she once again confronts the demonic forces of evil.",
     genre: "Horror"
   },
   {
     id: "4",
-    title: "The Devil's Hour",
-    poster: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=400&h=600&fit=crop",
-    rating: 7.9,
-    year: 2024,
-    duration: "110 min",
-    description: "Every night at 3:33 AM, Sarah wakes up to find her world slightly different. As reality begins to blur, she must discover the truth before she loses herself completely.",
-    genre: "Supernatural"
+    title: "Insidious: The Red Door",
+    poster: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=600&fit=crop",
+    rating: 7.1,
+    year: 2023,
+    duration: "107 min",
+    description: "The Lamberts, once again, must face their darkest fears in order to rescue their son from The Further.",
+    genre: "Horror"
   }
 ]
 

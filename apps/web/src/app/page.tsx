@@ -1,7 +1,5 @@
 import HeroSection from "@/components/hero-section"
 import NowPlaying from "@/components/now-playing"
-import FeaturedGrid from "@/components/featured-grid"
-import LatestReviews from "@/components/latest-reviews"
 import LatestNews from "@/components/latest-news"
 import ComingSoon from "@/components/coming-soon"
 import TopRated from "@/components/top-rated"
@@ -21,8 +19,6 @@ export default function Page() {
         <ComingSoon />
         <TopRated />
         <LatestNews />
-        <FeaturedGrid />
-        <LatestReviews />
       </div>
     </main>
   )

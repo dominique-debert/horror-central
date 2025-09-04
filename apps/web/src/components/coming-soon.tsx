@@ -27,7 +27,7 @@ const defaultMovies: ComingSoonMovie[] = [
     id: "1",
     title: "The Conjuring 4",
     description: "The Warrens return for their most terrifying case yet, investigating a series of supernatural events that threaten to tear apart a small town.",
-    posterUrl: "/api/placeholder/300/450",
+    posterUrl: "https://images.unsplash.com/photo-1520637736862-4d197d17c90a?w=300&h=450&fit=crop",
     releaseDate: "2024-10-31",
     director: "James Wan",
     genre: ["Supernatural", "Horror"],
@@ -39,7 +39,7 @@ const defaultMovies: ComingSoonMovie[] = [
     id: "2",
     title: "Evil Dead Rise 2",
     description: "The deadites return in this highly anticipated sequel that promises to push the boundaries of horror even further.",
-    posterUrl: "/api/placeholder/300/450",
+    posterUrl: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=300&h=450&fit=crop",
     releaseDate: "2024-08-15",
     director: "Lee Cronin",
     genre: ["Horror", "Thriller"],
@@ -51,7 +51,7 @@ const defaultMovies: ComingSoonMovie[] = [
     id: "3",
     title: "Hereditary 2: Bloodline",
     description: "Ari Aster returns with a chilling continuation that explores the dark family legacy left behind.",
-    posterUrl: "/api/placeholder/300/450",
+    posterUrl: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=300&h=450&fit=crop",
     releaseDate: "2024-12-20",
     director: "Ari Aster",
     genre: ["Psychological Horror", "Drama"],
@@ -62,7 +62,7 @@ const defaultMovies: ComingSoonMovie[] = [
     id: "4",
     title: "The Nun 3",
     description: "Sister Irene faces her most dangerous encounter yet as the demonic nun returns with vengeance.",
-    posterUrl: "/api/placeholder/300/450",
+    posterUrl: "https://images.unsplash.com/photo-1606041008023-472dfb5e530f?w=300&h=450&fit=crop",
     releaseDate: "2024-09-13",
     director: "Michael Chaves",
     genre: ["Supernatural", "Horror"],
@@ -123,7 +123,9 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
                         {daysUntil} days left
                       </Badge>
                     )}
-                    
+                  </div>
+
+                  <div className="absolute top-3 right-3">
                     <div className="flex items-center bg-black/70 rounded px-2 py-1">
                       <Star className="w-3 h-3 text-yellow-400 mr-1" />
                       <span className="text-white text-xs font-semibold">
