@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { Star } from "lucide-react"
-import { MediaCard } from "./MediaCard"
+import Link from "next/link"
+import { MediaCard } from "@/components/ui/MediaCard"
 
 interface Movie {
   id: number
@@ -123,7 +124,19 @@ export default function LatestReviews() {
     <section className="py-6 w-full bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-[2000px] mx-auto">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">Latest Reviews</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">Latest Reviews</h2>
+              <p className="text-muted-foreground text-sm">
+                Read what critics and audiences are saying about the latest horror releases
+              </p>
+            </div>
+            <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+              <Link href="/reviews">
+                View All
+              </Link>
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {reviews.map((review) => (
               <div key={review.id} className="group">

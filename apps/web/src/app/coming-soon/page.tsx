@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Calendar, Clock, Star, Filter, Search, SortAsc, SortDesc, Tv, Film } from 'lucide-react'
+import { Search, Filter, Calendar, Clock, Film, Tv, SortAsc, SortDesc, TrendingUp } from 'lucide-react'
 import { tmdbClient, getImageUrl } from '@/lib/tmdb'
 import type { TMDBMovie, TMDBTVShow } from '@/lib/tmdb'
 import Image from 'next/image'
@@ -73,13 +73,20 @@ export default function ComingSoonPage() {
             }
           })
 
-        // Convert TV shows to ComingSoonItem format
+        // Convert TV shows to ComingSoonItem format with more lenient filtering
+        console.log('TV Shows Response:', tvShowsResponse.results.length, 'shows')
         const tvItems: ComingSoonItem[] = tvShowsResponse.results
           .filter(show => {
+            // Much more lenient filtering - include shows from horror-adjacent genres
             const overview = show.overview.toLowerCase()
             const name = show.name.toLowerCase()
-            const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'scary', 'terror', 'evil', 'dark', 'sinister']
-            return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword))
+            const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'scary', 'terror', 'evil', 'dark', 'sinister', 'mystery', 'thriller', 'crime', 'fantasy', 'sci-fi', 'suspense', 'psychological', 'drama', 'action']
+            const hasKeyword = horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword))
+            
+            // Also include shows with horror-adjacent genre IDs (10765: Sci-Fi & Fantasy, 9648: Mystery)
+            const hasHorrorGenre = show.genre_ids.some(id => [10765, 9648, 18, 80].includes(id))
+            
+            return hasKeyword || hasHorrorGenre
           })
           .slice(0, 8)
           .map(show => {
@@ -100,6 +107,8 @@ export default function ComingSoonPage() {
             }
           })
 
+        console.log('Filtered TV Items:', tvItems.length, 'shows')
+        console.log('Movie Items:', movieItems.length, 'movies')
         setComingSoonItems([...movieItems, ...tvItems])
       } catch (err) {
         console.error('Error fetching coming soon content:', err)
@@ -348,7 +357,7 @@ export default function ComingSoonPage() {
               const daysUntil = getDaysUntilRelease(item.releaseDate)
               
               return (
-                <Card key={item.id} className="bg-gray-900 border-gray-800 hover:border-red-500 transition-colors group">
+                <Card key={item.id} className="bg-gray-900 border-gray-800 hover:border-red-500 transition-colors group flex flex-col h-full">
                   <div className="relative">
                     <Image
                       src={item.poster}
@@ -364,9 +373,9 @@ export default function ComingSoonPage() {
                       </Badge>
                     </div>
                     <div className="absolute top-2 right-2">
-                      <Badge className="bg-red-600 text-white">
-                        <Star className="h-3 w-3 mr-1" />
-                        {item.anticipationScore}
+                      <Badge className="bg-green-600 text-white">
+                        <TrendingUp className="h-3 w-3 mr-1" />
+                        Upcoming
                       </Badge>
                     </div>
                     {daysUntil > 0 && (
@@ -387,7 +396,7 @@ export default function ComingSoonPage() {
                     </div>
                   </CardHeader>
                   
-                  <CardContent>
+                  <CardContent className="flex flex-col flex-grow">
                     <p className="text-gray-300 text-sm mb-4 line-clamp-3">
                       {item.description}
                     </p>
@@ -400,9 +409,11 @@ export default function ComingSoonPage() {
                       ))}
                     </div>
                     
-                    <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
-                      More Info
-                    </Button>
+                    <div className="mt-auto">
+                      <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                        More Info
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )

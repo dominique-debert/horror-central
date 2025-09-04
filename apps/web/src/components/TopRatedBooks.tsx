@@ -1,6 +1,7 @@
 "use client"
 
 import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 interface TopRatedBook {
@@ -121,11 +122,18 @@ export default function TopRatedBooks({ books = defaultBooks }: TopRatedBooksPro
   return (
     <section className="py-16 bg-gray-900">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Discover the most influential and terrifying horror literature that has shaped the genre for generations
-          </p>
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h2>
+            <p className="text-gray-400 text-lg">
+              Discover the most influential and terrifying horror literature that has shaped the genre for generations
+            </p>
+          </div>
+          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+            <Link href="/books">
+              View All
+            </Link>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -156,14 +164,6 @@ export default function TopRatedBooks({ books = defaultBooks }: TopRatedBooksPro
           })}
         </div>
 
-        <div className="text-center mt-12">
-          <Link 
-            href="/books" 
-            className="inline-flex items-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-          >
-            View All Horror Books
-          </Link>
-        </div>
       </div>
     </section>
   )

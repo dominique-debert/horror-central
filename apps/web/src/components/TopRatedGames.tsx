@@ -1,6 +1,7 @@
 "use client"
 
 import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 interface TopRatedGame {
@@ -121,11 +122,18 @@ export default function TopRatedGames({ games = defaultGames }: TopRatedGamesPro
   return (
     <section className="py-16 bg-gray-950">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror Games</h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Experience the most terrifying and acclaimed horror games that have redefined interactive fear
-          </p>
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror Games</h2>
+            <p className="text-gray-400 text-lg">
+              Experience the most terrifying and acclaimed horror games that have redefined interactive fear
+            </p>
+          </div>
+          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+            <Link href="/games">
+              View All
+            </Link>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -153,15 +161,6 @@ export default function TopRatedGames({ games = defaultGames }: TopRatedGamesPro
               />
             )
           })}
-        </div>
-
-        <div className="text-center mt-12">
-          <Link 
-            href="/games" 
-            className="inline-flex items-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-          >
-            View All Horror Games
-          </Link>
         </div>
       </div>
     </section>

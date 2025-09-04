@@ -3,6 +3,7 @@
 import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
 import { tmdbClient, tmdbMovieToMediaItem } from "@/lib/tmdb"
 
 interface NowPlayingProps {
@@ -74,12 +75,11 @@ export default function NowPlaying({ initialMovies }: NowPlayingProps) {
               Currently showing in theaters - the latest horror releases
             </p>
           </div>
-          <Link 
-            href="/now-playing" 
-            className="text-red-400 hover:text-red-300 transition-colors font-medium"
-          >
-            View All
-          </Link>
+          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+            <Link href="/now-playing">
+              View All
+            </Link>
+          </Button>
         </div>
         
         {loading && (

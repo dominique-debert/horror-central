@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { MediaCard } from "./MediaCard"
 
 interface Item {
@@ -80,7 +81,19 @@ export default function FeaturedGrid() {
     <section className="py-8 w-full bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-[2000px] mx-auto">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">Featured & Trending</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">Featured & Trending</h2>
+              <p className="text-muted-foreground text-sm">
+                Discover the most popular horror content across movies, TV shows, books, and games
+              </p>
+            </div>
+            <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+              <Link href="/featured">
+                View All
+              </Link>
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {items.map((item) => (
               <MediaCard
@@ -90,7 +103,7 @@ export default function FeaturedGrid() {
                 year={item.year}
                 rating={item.rating}
                 imageUrl={item.image}
-                type={item.tag.toLowerCase()}
+                type="movie"
                 href={item.href}
               />
             ))}

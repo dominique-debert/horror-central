@@ -1,7 +1,8 @@
 "use client"
 
-import NewsCard, { NewsArticle } from "@/components/ui/NewsCard"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import NewsCard, { NewsArticle } from "@/components/ui/NewsCard"
 
 interface LatestNewsProps {
   articles?: NewsArticle[]
@@ -58,11 +59,18 @@ export default function LatestNews({ articles = defaultArticles }: LatestNewsPro
   return (
     <section className="py-16 bg-gray-900">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">Latest News</h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Stay up to date with the latest horror movie news, reviews, and industry updates
-          </p>
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h2 className="text-4xl font-bold text-white mb-4">Latest News</h2>
+            <p className="text-gray-400 text-lg">
+              Stay up to date with the latest horror movie news, reviews, and industry updates
+            </p>
+          </div>
+          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+            <Link href="/news">
+              View All
+            </Link>
+          </Button>
         </div>
 
         <div className="space-y-6">
@@ -89,14 +97,6 @@ export default function LatestNews({ articles = defaultArticles }: LatestNewsPro
           })}
         </div>
 
-        <div className="text-center mt-12">
-          <Link 
-            href="/news" 
-            className="inline-flex items-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-          >
-            View All News
-          </Link>
-        </div>
       </div>
     </section>
   )

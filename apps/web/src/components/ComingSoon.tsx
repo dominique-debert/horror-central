@@ -171,11 +171,18 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
   return (
     <section className="py-16 bg-black">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">Coming Soon</h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Get ready for the most anticipated horror movies and TV shows coming soon
-          </p>
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h2 className="text-4xl font-bold text-white mb-4">Coming Soon</h2>
+            <p className="text-gray-400 text-lg">
+              Get ready for the most anticipated horror movies and TV shows coming soon
+            </p>
+          </div>
+          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+            <Link href="/coming-soon">
+              View All
+            </Link>
+          </Button>
         </div>
 
         {loading && (
@@ -272,14 +279,6 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
           </div>
         )}
 
-        <div className="text-center mt-12">
-          <Link 
-            href="/coming-soon" 
-            className="inline-flex items-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-          >
-View All Coming Soon
-          </Link>
-        </div>
       </div>
     </section>
   )

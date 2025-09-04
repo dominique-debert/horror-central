@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { MediaCard } from "@/components/ui/MediaCard"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
 import { tmdbClient, tmdbTVToMediaItem } from "@/lib/tmdb"
-import type { MediaItem } from "@/components/ui/MediaCard"
 
 interface TopRatedTVShow {
   id: string
@@ -169,11 +169,18 @@ export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShow
   return (
     <section className="py-16 bg-gray-900">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror TV Shows</h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Discover the most acclaimed horror television series that have captivated audiences worldwide
-          </p>
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror TV Shows</h2>
+            <p className="text-gray-400 text-lg">
+              Discover the most acclaimed horror television series that have captivated audiences worldwide
+            </p>
+          </div>
+          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+            <Link href="/top-rated-tv">
+              View All
+            </Link>
+          </Button>
         </div>
 
         {loading && (
@@ -207,15 +214,6 @@ export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShow
             ))}
           </div>
         )}
-
-        <div className="text-center mt-12">
-          <Link 
-            href="/tv-shows" 
-            className="inline-flex items-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-          >
-            View All Horror TV Shows
-          </Link>
-        </div>
       </div>
     </section>
   )
