@@ -30,7 +30,8 @@ export default function NowPlaying({ initialMovies }: NowPlayingProps) {
 
         // Filter and convert TMDB movies to MediaItem format
         const horrorMovies = moviesResponse.results.filter(movie => 
-          movie.genre_ids.includes(27) // Ensure horror genre ID 27
+          movie.genre_ids.includes(27) && // Ensure horror genre ID 27
+          !movie.genre_ids.includes(16) // Exclude animation genre ID 16
         )
         
         const mediaItems = horrorMovies

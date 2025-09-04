@@ -34,9 +34,10 @@ export default function HeroSection({
       setError(null)
       const movies = await tmdbClient.getFeaturedHorrorMovies(10)
       
-      // Double-check that all movies are horror movies (genre ID 27)
+      // Double-check that all movies are horror movies (genre ID 27) and not animated (genre ID 16)
       const horrorMovies = movies.filter(movie => 
-        movie.genre_ids.includes(27)
+        movie.genre_ids.includes(27) && // Must be horror
+        !movie.genre_ids.includes(16) // Must not be animation
       )
       
       setFeaturedMovies(horrorMovies)

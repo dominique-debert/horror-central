@@ -77,21 +77,6 @@ const defaultMovies: ComingSoonMovie[] = [
   }
 ]
 
-function formatReleaseDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  })
-}
-
-function getDaysUntilRelease(dateString: string): number {
-  const releaseDate = new Date(dateString)
-  const today = new Date()
-  const diffTime = releaseDate.getTime() - today.getTime()
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-}
 
 export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) {
   const [upcomingMovies, setUpcomingMovies] = useState<MediaItem[]>([])
@@ -99,20 +84,70 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchUpcomingMovies = async () => {
+    const fetchUpcomingContent = async () => {
       try {
         setLoading(true)
         setError(null)
-        const [moviesResponse, genresResponse] = await Promise.all([
+        
+        const [moviesResponse, tvShowsResponse, movieGenres, tvGenres] = await Promise.all([
           tmdbClient.getUpcomingHorrorMovies(1),
-          tmdbClient.getMovieGenres()
+          tmdbClient.getUpcomingHorrorTVShows(1),
+          tmdbClient.getMovieGenres(),
+          tmdbClient.getTVGenres()
         ])
-        const mediaItems = moviesResponse.results.slice(0, 4).map(movie => 
-          tmdbMovieToMediaItem(movie, genresResponse.genres)
-        )
-        setUpcomingMovies(mediaItems)
+
+        // Convert movies to MediaItem format
+        const movieItems = moviesResponse.results
+          .filter(movie => 
+            movie.genre_ids.includes(27) && // Must be horror
+            !movie.genre_ids.includes(16) // Must not be animation
+          )
+          .slice(0, 2)
+          .map(movie => tmdbMovieToMediaItem(movie, movieGenres.genres))
+
+        // Convert TV shows to MediaItem format with more lenient filtering
+        const tvItems = tvShowsResponse.results
+          .filter(show => {
+            const overview = show.overview.toLowerCase()
+            const name = show.name.toLowerCase()
+            const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'scary', 'terror', 'evil', 'dark', 'sinister', 'mystery', 'thriller', 'crime', 'fantasy', 'sci-fi']
+            return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword))
+          })
+          .slice(0, 2)
+          .map(show => ({
+            id: show.id.toString(),
+            title: show.name,
+            posterUrl: `https://image.tmdb.org/t/p/w500${show.poster_path}`,
+            rating: show.vote_average,
+            year: new Date(show.first_air_date).getFullYear(),
+            description: show.overview,
+            genre: tvGenres.genres
+              .filter(genre => show.genre_ids.includes(genre.id))
+              .map(g => g.name)
+              .slice(0, 3),
+            slug: show.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+          }))
+
+        // Ensure we have exactly 4 items total
+        const allItems = [...movieItems, ...tvItems]
+        
+        // If we don't have enough items, fill with additional movies
+        if (allItems.length < 4) {
+          const additionalMovies = moviesResponse.results
+            .filter(movie => 
+              movie.genre_ids.includes(27) && // Must be horror
+              !movie.genre_ids.includes(16) && // Must not be animation
+              !movieItems.some(existing => existing.id === movie.id.toString()) // Not already included
+            )
+            .slice(0, 4 - allItems.length)
+            .map(movie => tmdbMovieToMediaItem(movie, movieGenres.genres))
+          
+          allItems.push(...additionalMovies)
+        }
+
+        setUpcomingMovies(allItems.slice(0, 4))
       } catch {
-        setError('Failed to load upcoming movies. Please try again later.')
+        setError('Failed to load upcoming content. Please try again later.')
         // Fallback to mock data converted to MediaItem format
         const fallbackItems = movies.slice(0, 4).map(movie => ({
           id: movie.id,
@@ -130,7 +165,7 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
       }
     }
 
-    fetchUpcomingMovies()
+    fetchUpcomingContent()
   }, [movies])
 
   return (
@@ -139,7 +174,7 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-white mb-4">Coming Soon</h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Get ready for the most anticipated horror movies hitting theaters soon
+            Get ready for the most anticipated horror movies and TV shows coming soon
           </p>
         </div>
 
@@ -242,7 +277,7 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
             href="/coming-soon" 
             className="inline-flex items-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
           >
-            View All Upcoming Movies
+View All Coming Soon
           </Link>
         </div>
       </div>
