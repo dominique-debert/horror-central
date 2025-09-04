@@ -140,8 +140,8 @@ export default function TopRated({ movies = defaultMovies }: TopRatedProps) {
           {movies.map((movie, index) => (
             <Card key={movie.id} className="bg-gray-900 border-gray-700 hover:border-red-600 transition-all duration-300 group relative">
               {index < 3 && (
-                <div className="absolute -top-2 -left-2 z-10">
-                  <div className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                <div className="absolute bottom-3 left-3 z-10">
+                  <div className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
                     {index + 1}
                   </div>
                 </div>

@@ -20,7 +20,7 @@ export default function HeroSection({
   moreInfoUrl,
 }: HeroSectionProps) {
   return (
-    <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden">
+    <section className="relative h-[30vh] min-h-[250px] w-full overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
