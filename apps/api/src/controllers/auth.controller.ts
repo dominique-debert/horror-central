@@ -77,7 +77,7 @@ export const getMe = async (c: Context) => {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, role: true }
+      select: { id: true, email: true, name: true, image: true, role: true }
     })
 
     if (!user) {

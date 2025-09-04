@@ -37,7 +37,15 @@ export async function apiRegister(email: string, password: string, name?: string
   return res.json();
 }
 
-export type MeResponse = { user: { id: string; email: string; name?: string | null; role?: string | null } };
+export type MeResponse = {
+  user: {
+   id: string; 
+   email: string; 
+   name?: string | null; 
+   image?: string | null; 
+   role?: string | null 
+  } 
+};
 
 export async function apiMe(token: string): Promise<MeResponse> {
   const res = await fetch(`${API_URL}/api/auth/me`, {
@@ -112,4 +120,25 @@ export async function apiGetProfile(token: string): Promise<ProfileResponse> {
   }
 
   return res.json();
+}
+
+export async function apiUploadFile(token: string, file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || 'Failed to upload file');
+  }
+
+  const { url } = await res.json();
+  return url;
 }

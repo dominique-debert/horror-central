@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { apiLogin, apiMe, apiRegister, type LoginResponse, type MeResponse } from "@/lib/api";
+import { apiLogin, apiRegister, apiMe, type LoginResponse, type MeResponse } from "@/lib/api";
 
 const TOKEN_KEY = "hc_token";
 
@@ -101,13 +101,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     if (!token) return;
     try {
+      console.log('Refreshing user data...');
       const { user } = await apiMe(token);
+      console.log('Received user data from API:', user);
       setUser(user);
+      console.log('User state updated');
     } catch (error) {
       console.error('Failed to refresh user:', error);
       signOut();
     }
-  }, [token]);
+  }, [token, signOut]);
 
   const value = useMemo(
     () => ({

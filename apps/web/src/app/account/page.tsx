@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import AuthGuard from "@/components/auth-guard";
+import { apiUpdateProfile, apiUploadFile } from "@/lib/api";
 
 export default function AccountPage() {
   const { user, token, refresh } = useAuth();
@@ -47,41 +48,17 @@ export default function AccountPage() {
 
       // If there's a new avatar file, upload it first
       if (avatarFile) {
-        const formData = new FormData();
-        formData.append("file", avatarFile);
-        
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          throw new Error("Failed to upload avatar");
-        }
-
-        const { url } = await uploadRes.json();
+        const url = await apiUploadFile(token, avatarFile);
         updates.image = url;
       }
 
-      // Update the profile with the new data
+      // Update the profile with the new data using the API function
       if (Object.keys(updates).length > 0) {
-        const response = await fetch("/api/users/me", {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updates),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to update profile");
-        }
-
+        console.log('Updating profile with:', updates);
+        await apiUpdateProfile(token, updates);
+        console.log('Profile updated, refreshing user data...');
         await refresh();
+        console.log('User data refreshed, new user:', user);
         toast({
           title: "Profile updated",
           description: "Your profile has been updated successfully.",

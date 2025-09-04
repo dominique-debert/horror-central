@@ -24,6 +24,8 @@ export default function SiteHeader() {
   ]
 
   const { user, signOut } = useAuth()
+  console.log('Site header user data:', user);
+  
   const userInitial = useMemo(
     () => user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U",
     [user]
@@ -54,7 +56,10 @@ export default function SiteHeader() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                    <AvatarImage 
+                      src={user.image ? `${user.image}?t=${Date.now()}` : ""} 
+                      alt={user.name || ""} 
+                    />
                     <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>
                 </Button>
