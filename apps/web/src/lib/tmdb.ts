@@ -117,11 +117,20 @@ class TMDBClient {
 
   // Get now playing horror movies
   async getNowPlayingHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
-    return this.request<TMDBResponse<TMDBMovie>>('/movie/now_playing', {
+    // Use discover endpoint to properly filter by horror genre
+    const today = new Date()
+    const twoMonthsAgo = new Date()
+    twoMonthsAgo.setMonth(today.getMonth() - 2)
+    
+    return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', {
       page,
-      region: 'US',
+      with_genres: HORROR_GENRE_ID,
+      'primary_release_date.gte': twoMonthsAgo.toISOString().split('T')[0],
+      'primary_release_date.lte': today.toISOString().split('T')[0],
+      sort_by: 'release_date.desc',
       with_original_language: 'en',
-      'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
+      'with_runtime.gte': 60,
+      include_adult: false
     })
   }
 

@@ -28,8 +28,12 @@ export default function NowPlaying({ initialMovies }: NowPlayingProps) {
           tmdbClient.getMovieGenres()
         ])
 
-        // Convert TMDB movies to MediaItem format
-        const mediaItems = moviesResponse.results
+        // Filter and convert TMDB movies to MediaItem format
+        const horrorMovies = moviesResponse.results.filter(movie => 
+          movie.genre_ids.includes(27) // Ensure horror genre ID 27
+        )
+        
+        const mediaItems = horrorMovies
           .slice(0, 8) // Limit to 8 movies
           .map(movie => tmdbMovieToMediaItem(movie, genresResponse.genres))
 

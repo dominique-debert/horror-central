@@ -33,7 +33,13 @@ export default function HeroSection({
       setLoading(true)
       setError(null)
       const movies = await tmdbClient.getFeaturedHorrorMovies(10)
-      setFeaturedMovies(movies)
+      
+      // Double-check that all movies are horror movies (genre ID 27)
+      const horrorMovies = movies.filter(movie => 
+        movie.genre_ids.includes(27)
+      )
+      
+      setFeaturedMovies(horrorMovies)
     } catch {
       setError('Failed to load featured movies')
       // Use manual props as fallback if provided
