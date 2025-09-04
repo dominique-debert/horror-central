@@ -118,19 +118,39 @@ class IGDBServerClient {
   }
 
   async getTopRatedHorrorGames(limit: number = 8): Promise<IGDBGame[]> {
+    // Horror theme ID is 19, but we also want to include horror-related genres
+    // Genre IDs: Horror = 8, Survival = 32, Thriller = 20
     const query = `
       fields name, summary, cover.url, first_release_date, rating, rating_count, 
              genres.name, platforms.name, platforms.abbreviation, 
              involved_companies.company.name, involved_companies.developer, 
              themes.name;
-      where themes = (19) & rating >= 75 & rating_count >= 50 & cover != null;
+      where (themes = (19) | genres = (8)) & rating >= 70 & rating_count >= 20 & cover != null;
       sort rating desc;
-      limit ${limit};
+      limit ${limit * 2};
     `
 
     try {
       const games = await this.makeRequest('games', query)
-      return games || []
+      
+      // Additional client-side filtering to ensure horror content
+      const horrorGames = games.filter(game => {
+        const hasHorrorTheme = game.themes?.some(theme => theme.name.toLowerCase().includes('horror'))
+        const hasHorrorGenre = game.genres?.some(genre => 
+          genre.name.toLowerCase().includes('horror') ||
+          genre.name.toLowerCase().includes('survival') ||
+          genre.name.toLowerCase().includes('thriller')
+        )
+        const hasHorrorInName = game.name.toLowerCase().includes('horror') ||
+                               game.name.toLowerCase().includes('evil') ||
+                               game.name.toLowerCase().includes('dead') ||
+                               game.name.toLowerCase().includes('fear') ||
+                               game.name.toLowerCase().includes('nightmare')
+        
+        return hasHorrorTheme || hasHorrorGenre || hasHorrorInName
+      })
+      
+      return horrorGames.slice(0, limit)
     } catch (error) {
       console.error('Error fetching top rated horror games:', error)
       return []

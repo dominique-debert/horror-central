@@ -2,7 +2,8 @@
 
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
-import { Star, Calendar, Clock, Tv, Gamepad2, BookOpen } from "lucide-react"
+import { Star, Calendar, Clock, Tv, Gamepad2, BookOpen, Monitor, Smartphone, Zap } from "lucide-react"
+import { LucideIcon } from "lucide-react"
 
 export interface MediaItem {
   id: string
@@ -51,6 +52,30 @@ const getMetadataIcon = (type: MediaType) => {
   }
 }
 
+const getPlatformIcons = (platform: string | string[]): LucideIcon[] => {
+  const platforms = Array.isArray(platform) ? platform : [platform]
+  const icons: LucideIcon[] = []
+  
+  platforms.slice(0, 2).forEach(p => {
+    const platformName = p.toLowerCase()
+    if (platformName.includes('pc') || platformName.includes('windows') || platformName.includes('steam')) {
+      icons.push(Monitor)
+    } else if (platformName.includes('playstation') || platformName.includes('ps')) {
+      icons.push(Gamepad2)
+    } else if (platformName.includes('xbox')) {
+      icons.push(Zap)
+    } else if (platformName.includes('nintendo') || platformName.includes('switch')) {
+      icons.push(Tv)
+    } else if (platformName.includes('mobile') || platformName.includes('ios') || platformName.includes('android')) {
+      icons.push(Smartphone)
+    } else {
+      icons.push(Monitor) // Default to PC icon
+    }
+  })
+  
+  return icons.length > 0 ? icons : [Monitor]
+}
+
 const getMetadataText = (item: MediaItem, type: MediaType): string => {
   switch (type) {
     case 'movie':
@@ -80,11 +105,13 @@ export function MediaCard({ item, type }: MediaCardProps) {
           className="object-cover transition-transform duration-300 group-hover:scale-110"
         />
         
-        {/* Rating overlay */}
-        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
-          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-          <span>{item.rating.toFixed(1)}</span>
-        </div>
+        {/* Rating overlay - hidden for games */}
+        {type !== 'game' && (
+          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
+            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+            <span>{item.rating.toFixed(1)}</span>
+          </div>
+        )}
 
         {/* Genre badge */}
         {item.genre && item.genre.length > 0 && (
@@ -129,6 +156,13 @@ export function MediaCard({ item, type }: MediaCardProps) {
           <div className="flex items-center gap-1">
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
             <span>{item.rating.toFixed(1)}</span>
+            {type === 'game' && item.platform && (
+              <div className="ml-1 flex items-center gap-1">
+                {getPlatformIcons(item.platform).map((IconComponent: LucideIcon, index: number) => (
+                  <IconComponent key={index} className="h-3 w-3 text-muted-foreground" />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
