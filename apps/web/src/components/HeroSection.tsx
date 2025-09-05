@@ -54,17 +54,17 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
         setLoading(true)
         
         // Fetch multiple pages to get more content
-        const [nowPlayingMovies1, nowPlayingMovies2, topRatedTVShows1, topRatedTVShows2] = await Promise.all([
-          tmdbClient.getNowPlayingHorrorMovies(1),
-          tmdbClient.getNowPlayingHorrorMovies(2),
-          tmdbClient.getTopRatedHorrorTVShows(1),
-          tmdbClient.getTopRatedHorrorTVShows(2)
+        const [popularMovies1, popularMovies2, topRatedTVShows1, topRatedTVShows2] = await Promise.all([
+          tmdbClient.getPopularHorrorMovies(1),
+          tmdbClient.getPopularHorrorMovies(2),
+          tmdbClient.getAllTimeTopRatedHorrorTVShows({ page: 1 }),
+          tmdbClient.getAllTimeTopRatedHorrorTVShows({ page: 2 })
         ])
 
         // Convert movies to HeroMedia format
         const movieMedia: HeroMedia[] = [
-          ...nowPlayingMovies1.results, 
-          ...nowPlayingMovies2.results
+          ...popularMovies1.results, 
+          ...popularMovies2.results
         ]
           .filter((movie, index, self) => 
             index === self.findIndex(m => m.id === movie.id)
@@ -234,8 +234,8 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
             </p>
 
             <div className="flex items-center gap-3 mb-4">
-              <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                NOW PLAYING
+              <span className="bg-green-800 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                TRENDING
               </span>
               <div className="flex gap-2">
                 <MediaTypeBadge type={currentMedia.type} />
