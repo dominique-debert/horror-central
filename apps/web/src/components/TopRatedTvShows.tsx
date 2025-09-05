@@ -140,6 +140,7 @@ export default function TopRatedTVShows({ shows = defaultShows }: TopRatedTVShow
           tmdbClient.getTopRatedHorrorTVShows(1),
           tmdbClient.getTVGenres()
         ])
+        
         const mediaItems = showsResponse.results.slice(0, 8).map(show => 
           tmdbTVToMediaItem(show, genresResponse.genres)
         )

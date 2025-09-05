@@ -22,6 +22,7 @@ export default function TopRated() {
           tmdbClient.getTopRatedHorrorMovies(1),
           tmdbClient.getMovieGenres()
         ])
+        
         const mediaItems = moviesResponse.results.slice(0, 8).map(movie => 
           tmdbMovieToMediaItem(movie, genresResponse.genres)
         )

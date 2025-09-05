@@ -76,6 +76,26 @@ export interface TMDBTVDetails extends TMDBTVShow {
   status: string
 }
 
+export interface TMDBWatchProvider {
+  display_priority: number
+  logo_path: string
+  provider_id: number
+  provider_name: string
+}
+
+export interface TMDBWatchProviderRegion {
+  link?: string
+  flatrate?: TMDBWatchProvider[]
+  rent?: TMDBWatchProvider[]
+  buy?: TMDBWatchProvider[]
+  ads?: TMDBWatchProvider[]
+}
+
+export interface TMDBWatchProvidersResponse {
+  id: number
+  results: Record<string, TMDBWatchProviderRegion>
+}
+
 export interface TMDBResponse<T> {
   page: number
   results: T[]
@@ -133,7 +153,7 @@ class TMDBClient {
       'primary_release_date.gte': twoMonthsAgo.toISOString().split('T')[0],
       'primary_release_date.lte': today.toISOString().split('T')[0],
       sort_by: 'release_date.desc',
-      with_original_language: 'en',
+      with_original_language: 'en|ko|es|de|sv|da',
       'with_runtime.gte': 60,
       include_adult: false
     })
@@ -148,12 +168,12 @@ class TMDBClient {
       page,
       with_genres: HORROR_GENRE_ID,
       without_genres: ANIMATION_GENRE_ID,
-      sort_by: 'vote_average.desc',
+      sort_by: 'primary_release_date.desc',
       'vote_count.gte': 100, // Minimum vote count for reliability
       'primary_release_date.gte': `${startYear}-01-01`,
       'primary_release_date.lte': `${currentYear}-12-31`,
       include_adult: false,
-      with_original_language: 'en',
+      with_original_language: 'en|ko|es|de|sv|da',
       'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
     })
   }
@@ -166,7 +186,7 @@ class TMDBClient {
       without_genres: ANIMATION_GENRE_ID,
       sort_by: 'popularity.desc',
       include_adult: false,
-      with_original_language: 'en',
+      with_original_language: 'en|ko|es|de|sv|da',
       'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
     })
   }
@@ -184,7 +204,7 @@ class TMDBClient {
         sort_by: 'first_air_date.desc',
         'vote_count.gte': 10, // Lower threshold for more results
         with_keywords: '158718|210024|9715|9951|12339|9882|180547|14544|162846|9663|9717|4565|9672|4344|9840', // Horror, supernatural, thriller, vampire, witch, ghost, zombie, demon, occult, paranormal, mystery, slasher, gothic, dark fantasy, cult keywords
-        'with_original_language': 'en|ko|es', // English, Korean, Japanese, Spanish
+        'with_original_language': 'en|ko|es|de|sv|da', // English, Korean, Spanish, German, Swedish, Danish
         page: 1
       })
       allShows.push(...response1.results)
@@ -246,9 +266,13 @@ class TMDBClient {
              show.vote_average >= 7.5 // Include highly rated shows even if keywords don't match perfectly
     })
     
-    // Sort by rating (highest first) and return
+    // Sort by first air date (newest first) and return
     const sortedResults = filteredResults
-      .sort((a, b) => b.vote_average - a.vote_average)
+      .sort((a, b) => {
+        const dateA = new Date(a.first_air_date || '1900-01-01').getTime()
+        const dateB = new Date(b.first_air_date || '1900-01-01').getTime()
+        return dateB - dateA // Newest first
+      })
       .slice(0, 20) // Get top 20 for pagination
     
     return {
@@ -274,7 +298,7 @@ class TMDBClient {
       'primary_release_date.gte': today,
       'primary_release_date.lte': oneYearFromNow,
       include_adult: false,
-      with_original_language: 'en',
+      with_original_language: 'en|ko|es|de|sv|da',
       'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
     })
   }
@@ -306,7 +330,7 @@ class TMDBClient {
       'first_air_date.gte': today.toISOString().split('T')[0],
       'first_air_date.lte': futureDate.toISOString().split('T')[0],
       sort_by: 'first_air_date.asc',
-      with_original_language: 'en',
+      with_original_language: 'en|ko|es|de|sv|da',
       with_keywords: '158718|210024|9715' // Horror, supernatural, thriller keywords
     })
   }
@@ -328,6 +352,39 @@ class TMDBClient {
   // Get TV show details
   async getTVDetails(tvId: number): Promise<TMDBTVDetails> {
     return this.request<TMDBTVDetails>(`/tv/${tvId}`)
+  }
+
+  // Get movie watch providers
+  async getMovieWatchProviders(movieId: number): Promise<TMDBWatchProvidersResponse> {
+    return this.request<TMDBWatchProvidersResponse>(`/movie/${movieId}/watch/providers`)
+  }
+
+  // Get TV show watch providers
+  async getTVWatchProviders(tvId: number): Promise<TMDBWatchProvidersResponse> {
+    return this.request<TMDBWatchProvidersResponse>(`/tv/${tvId}/watch/providers`)
+  }
+
+  // Get available watch provider regions
+  async getWatchProviderRegions(): Promise<{ results: Array<{ iso_3166_1: string, english_name: string, native_name: string }> }> {
+    return this.request<{ results: Array<{ iso_3166_1: string, english_name: string, native_name: string }> }>('/watch/providers/regions')
+  }
+
+  // Get all available movie watch providers
+  async getMovieWatchProvidersList(region?: string): Promise<{ results: TMDBWatchProvider[] }> {
+    const params: Record<string, string> = {}
+    if (region) {
+      params.watch_region = region
+    }
+    return this.request<{ results: TMDBWatchProvider[] }>('/watch/providers/movie', params)
+  }
+
+  // Get all available TV watch providers
+  async getTVWatchProvidersList(region?: string): Promise<{ results: TMDBWatchProvider[] }> {
+    const params: Record<string, string> = {}
+    if (region) {
+      params.watch_region = region
+    }
+    return this.request<{ results: TMDBWatchProvider[] }>('/watch/providers/tv', params)
   }
 
   // Search for horror movies
@@ -401,7 +458,8 @@ export const tmdbMovieToMediaItem = (movie: TMDBMovie, genres: TMDBGenre[] = [])
     description: movie.overview,
     genre: movieGenres.length > 0 ? movieGenres : ['Horror'],
     slug: movie.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''),
-    duration: undefined // Will be filled when getting detailed info
+    duration: undefined, // Will be filled when getting detailed info
+    originalLanguage: movie.original_language
   }
 }
 
@@ -418,7 +476,8 @@ export const tmdbTVToMediaItem = (show: TMDBTVShow, genres: TMDBGenre[] = []): M
     description: show.overview,
     genre: showGenres.length > 0 ? showGenres : ['Horror'],
     slug: show.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''),
-    seasons: undefined // Will be filled when getting detailed info
+    seasons: undefined, // Will be filled when getting detailed info
+    originalLanguage: show.original_language
   }
 }
 

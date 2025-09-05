@@ -4,6 +4,7 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star, Calendar, Clock, Tv, Gamepad2, BookOpen, Monitor, Smartphone, Zap } from "lucide-react"
 import { LucideIcon } from "lucide-react"
+import { LanguageBadge } from "@/components/ui/LanguageBadge"
 
 export interface MediaItem {
   id: string
@@ -28,6 +29,8 @@ export interface MediaItem {
   // Book specific
   author?: string
   pages?: number
+  // Language specific
+  originalLanguage?: string
 }
 
 type MediaType = 'movie' | 'tv' | 'game' | 'book'
@@ -111,6 +114,14 @@ export function MediaCard({ item, type }: MediaCardProps) {
             {item.genre[0]}
           </div>
         )}
+
+        {/* Language badge */}
+        {item.originalLanguage && (
+          <div className="absolute right-2 top-2">
+            <LanguageBadge language={item.originalLanguage} />
+          </div>
+        )}
+
 
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />

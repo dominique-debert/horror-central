@@ -9,6 +9,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { tmdbClient, tmdbMovieToMediaItem } from "@/lib/tmdb"
 import type { MediaItem } from "@/components/ui/MediaCard"
+import { LanguageBadge } from "@/components/ui/LanguageBadge"
 
 interface ComingSoonMovie {
   id: string
@@ -124,7 +125,8 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
               .filter(genre => show.genre_ids.includes(genre.id))
               .map(g => g.name)
               .slice(0, 3),
-            slug: show.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+            slug: show.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+            originalLanguage: show.original_language
           }))
 
         // Ensure we have exactly 4 items total
@@ -226,6 +228,12 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
                         Coming Soon
                       </Badge>
                     </div>
+                    
+                    {movie.originalLanguage && (
+                      <div className="absolute top-3 right-3">
+                        <LanguageBadge language={movie.originalLanguage} />
+                      </div>
+                    )}
 
                   </div>
                   
