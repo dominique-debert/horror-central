@@ -162,6 +162,116 @@ class IGDBServerClient {
       return []
     }
   }
+
+  async getAllTimeTopRatedHorrorGames(params?: {
+    page?: number
+    minYear?: number
+    maxYear?: number
+    platforms?: string[]
+    sortBy?: 'rating.desc' | 'first_release_date.desc' | 'name.asc'
+  }): Promise<{ games: IGDBGame[], total: number, page: number, totalPages: number }> {
+    const { page = 1, minYear, maxYear, platforms, sortBy = 'rating.desc' } = params || {}
+    const limit = 20
+    const offset = (page - 1) * limit
+    
+    // Build date filters
+    let dateFilter = ''
+    if (minYear && maxYear) {
+      const startTimestamp = Math.floor(new Date(`${minYear}-01-01`).getTime() / 1000)
+      const endTimestamp = Math.floor(new Date(`${maxYear}-12-31`).getTime() / 1000)
+      dateFilter = `& first_release_date >= ${startTimestamp} & first_release_date <= ${endTimestamp}`
+    } else if (minYear) {
+      const startTimestamp = Math.floor(new Date(`${minYear}-01-01`).getTime() / 1000)
+      dateFilter = `& first_release_date >= ${startTimestamp}`
+    } else if (maxYear) {
+      const endTimestamp = Math.floor(new Date(`${maxYear}-12-31`).getTime() / 1000)
+      dateFilter = `& first_release_date <= ${endTimestamp}`
+    }
+    
+    // Build platform filter
+    let platformFilter = ''
+    if (platforms && platforms.length > 0) {
+      // Common platform IDs: PC = 6, PlayStation = 8, Xbox = 9, Nintendo = 7, Mobile = 34
+      const platformMap: Record<string, number[]> = {
+        'PC': [6],
+        'PlayStation': [8, 9, 48, 167, 165], // PS1, PS2, PS4, PS5, PS3
+        'Xbox': [11, 12, 49, 169], // Xbox, Xbox 360, Xbox One, Xbox Series
+        'Nintendo': [7, 37, 41, 130], // Nintendo, 3DS, Wii U, Switch
+        'Mobile': [34, 39] // Android, iOS
+      }
+      
+      const platformIds = platforms.flatMap(p => platformMap[p] || [])
+      if (platformIds.length > 0) {
+        platformFilter = `& platforms = (${platformIds.join(',')})`
+      }
+    }
+    
+    // Determine sort order
+    let sortOrder = 'rating desc'
+    if (sortBy === 'first_release_date.desc') sortOrder = 'first_release_date desc'
+    else if (sortBy === 'name.asc') sortOrder = 'name asc'
+    
+    // Horror theme ID is 19, Horror genre ID is 8, Survival = 32, Thriller = 20
+    const query = `
+      fields name, summary, cover.url, first_release_date, rating, rating_count, 
+             genres.name, platforms.name, platforms.abbreviation, 
+             involved_companies.company.name, involved_companies.developer, 
+             themes.name;
+      where (themes = (19) | genres = (8, 32, 20)) & rating >= 60 & rating_count >= 10 & cover != null ${dateFilter} ${platformFilter};
+      sort ${sortOrder};
+      limit ${limit * 3};
+      offset ${offset};
+    `
+
+    try {
+      const games = await this.makeRequest('games', query)
+      
+      // Additional client-side filtering to ensure horror content
+      const horrorGames = games.filter(game => {
+        const hasHorrorTheme = game.themes?.some(theme => theme.name.toLowerCase().includes('horror'))
+        const hasHorrorGenre = game.genres?.some(genre => 
+          genre.name.toLowerCase().includes('horror') ||
+          genre.name.toLowerCase().includes('survival') ||
+          genre.name.toLowerCase().includes('thriller') ||
+          genre.name.toLowerCase().includes('action') && game.name.toLowerCase().includes('dead') ||
+          genre.name.toLowerCase().includes('adventure') && game.name.toLowerCase().includes('evil')
+        )
+        const hasHorrorInName = game.name.toLowerCase().includes('horror') ||
+                               game.name.toLowerCase().includes('evil') ||
+                               game.name.toLowerCase().includes('dead') ||
+                               game.name.toLowerCase().includes('fear') ||
+                               game.name.toLowerCase().includes('nightmare') ||
+                               game.name.toLowerCase().includes('silent hill') ||
+                               game.name.toLowerCase().includes('resident evil') ||
+                               game.name.toLowerCase().includes('outlast') ||
+                               game.name.toLowerCase().includes('amnesia') ||
+                               game.name.toLowerCase().includes('phasmophobia') ||
+                               game.name.toLowerCase().includes('alien') ||
+                               game.name.toLowerCase().includes('zombie')
+        
+        return hasHorrorTheme || hasHorrorGenre || hasHorrorInName
+      })
+      
+      const finalGames = horrorGames.slice(0, limit)
+      const totalGames = Math.min(horrorGames.length * 10, 1000) // Estimate total for pagination
+      const totalPages = Math.ceil(totalGames / limit)
+      
+      return {
+        games: finalGames,
+        total: totalGames,
+        page,
+        totalPages
+      }
+    } catch (error) {
+      console.error('Error fetching all-time top rated horror games:', error)
+      return {
+        games: [],
+        total: 0,
+        page: 1,
+        totalPages: 1
+      }
+    }
+  }
 }
 
 function igdbGameToGameItem(game: IGDBGame): GameItem {
@@ -203,22 +313,44 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') || 'top-rated'
     const limit = parseInt(searchParams.get('limit') || '8')
+    const page = parseInt(searchParams.get('page') || '1')
+    const minYear = searchParams.get('minYear') ? parseInt(searchParams.get('minYear')!) : undefined
+    const maxYear = searchParams.get('maxYear') ? parseInt(searchParams.get('maxYear')!) : undefined
+    const platforms = searchParams.get('platforms')?.split(',').filter(Boolean)
+    const sortBy = searchParams.get('sortBy') as 'rating.desc' | 'first_release_date.desc' | 'name.asc' || 'rating.desc'
 
     const client = new IGDBServerClient()
     
-    let games: IGDBGame[] = []
-    
     switch (type) {
       case 'top-rated':
-        games = await client.getTopRatedHorrorGames(limit)
-        break
+        const games = await client.getTopRatedHorrorGames(limit)
+        const gameItems = games.map(game => igdbGameToGameItem(game))
+        return NextResponse.json({ games: gameItems })
+        
+      case 'all-time':
+        const result = await client.getAllTimeTopRatedHorrorGames({
+          page,
+          minYear,
+          maxYear,
+          platforms,
+          sortBy
+        })
+        const allTimeGameItems = result.games.map(game => igdbGameToGameItem(game))
+        return NextResponse.json({
+          games: allTimeGameItems,
+          pagination: {
+            page: result.page,
+            totalPages: result.totalPages,
+            total: result.total,
+            hasMore: result.page < result.totalPages
+          }
+        })
+        
       default:
-        games = await client.getTopRatedHorrorGames(limit)
+        const defaultGames = await client.getTopRatedHorrorGames(limit)
+        const defaultGameItems = defaultGames.map(game => igdbGameToGameItem(game))
+        return NextResponse.json({ games: defaultGameItems })
     }
-
-    const gameItems = games.map(game => igdbGameToGameItem(game))
-    
-    return NextResponse.json({ games: gameItems })
   } catch (error) {
     console.error('Error in games API route:', error)
     return NextResponse.json(

@@ -15,6 +15,12 @@ interface GameItem {
 
 interface GamesApiResponse {
   games: GameItem[]
+  pagination?: {
+    page: number
+    totalPages: number
+    total: number
+    hasMore: boolean
+  }
 }
 
 class IGDBClient {
@@ -65,6 +71,46 @@ class IGDBClient {
     } catch (error) {
       console.error('Error searching horror games:', error)
       return []
+    }
+  }
+
+  async getAllTimeTopRatedHorrorGames(params?: {
+    page?: number
+    minYear?: number
+    maxYear?: number
+    platforms?: string[]
+    sortBy?: 'rating.desc' | 'first_release_date.desc' | 'name.asc'
+  }): Promise<{ games: GameItem[], pagination: { page: number, totalPages: number, total: number, hasMore: boolean } }> {
+    try {
+      const { page = 1, minYear, maxYear, platforms, sortBy = 'rating.desc' } = params || {}
+      
+      const queryParams = new URLSearchParams({
+        type: 'all-time',
+        page: page.toString(),
+        sortBy
+      })
+      
+      if (minYear) queryParams.append('minYear', minYear.toString())
+      if (maxYear) queryParams.append('maxYear', maxYear.toString())
+      if (platforms && platforms.length > 0) queryParams.append('platforms', platforms.join(','))
+      
+      const response = await fetch(`${this.baseUrl}?${queryParams}`)
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data: GamesApiResponse = await response.json()
+      return {
+        games: data.games || [],
+        pagination: data.pagination || { page: 1, totalPages: 1, total: 0, hasMore: false }
+      }
+    } catch (error) {
+      console.error('Error fetching all-time top rated horror games:', error)
+      return {
+        games: [],
+        pagination: { page: 1, totalPages: 1, total: 0, hasMore: false }
+      }
     }
   }
 }
