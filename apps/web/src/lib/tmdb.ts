@@ -47,14 +47,31 @@ export interface TMDBGenre {
   name: string
 }
 
+export interface TMDBMovieCredits {
+  cast: Array<{
+    id: number
+    name: string
+    character: string
+    profile_path: string | null
+  }>
+  crew: Array<{
+    id: number
+    name: string
+    job: string
+    department: string
+    profile_path: string | null
+  }>
+}
+
 export interface TMDBMovieDetails extends TMDBMovie {
-  runtime: number | null
+  runtime: number
   genres: TMDBGenre[]
   production_companies: Array<{
     id: number
     name: string
     logo_path: string | null
   }>
+  credits?: TMDBMovieCredits
   budget: number
   revenue: number
   tagline: string | null
@@ -178,6 +195,50 @@ class TMDBClient {
     })
   }
 
+  // Get all-time top-rated horror movies with flexible filtering
+  async getAllTimeTopRatedHorrorMovies(params?: {
+    page?: number
+    minYear?: number
+    maxYear?: number
+    genreIds?: number[]
+    sortBy?: 'vote_average.desc' | 'primary_release_date.desc' | 'title.asc'
+  }): Promise<TMDBResponse<TMDBMovie>> {
+    const {
+      page = 1,
+      minYear,
+      maxYear,
+      genreIds,
+      sortBy = 'vote_average.desc'
+    } = params || {}
+
+    const requestParams: Record<string, string | number | boolean> = {
+      page,
+      with_genres: genreIds ? genreIds.join(',') : HORROR_GENRE_ID,
+      without_genres: ANIMATION_GENRE_ID,
+      sort_by: sortBy,
+      'vote_count.gte': 50, // Lower threshold for more results
+      include_adult: false,
+      with_original_language: 'en|ko|es|de|sv|da',
+      'with_runtime.gte': 60
+    }
+
+    if (minYear) {
+      requestParams['primary_release_date.gte'] = `${minYear}-01-01`
+    }
+    if (maxYear) {
+      requestParams['primary_release_date.lte'] = `${maxYear}-12-31`
+    }
+
+    return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', requestParams)
+  }
+
+  // Get movie details including runtime and director
+  async getMovieDetailsWithCredits(movieId: number): Promise<TMDBMovieDetails> {
+    return this.request<TMDBMovieDetails>(`/movie/${movieId}`, {
+      append_to_response: 'credits'
+    })
+  }
+
   // Get popular horror movies
   async getPopularHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
     return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', {
@@ -192,7 +253,7 @@ class TMDBClient {
   }
 
   // Get top-rated horror TV shows of all time
-  async getTopRatedHorrorTVShows(page: number = 1): Promise<TMDBResponse<TMDBTVShow>> {
+  async getTopRatedHorrorTVShows(): Promise<TMDBResponse<TMDBTVShow>> {
     // Use multiple strategies to get comprehensive horror TV results
     const allShows: TMDBTVShow[] = []
     
