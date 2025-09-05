@@ -98,7 +98,7 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
             movie.genre_ids.includes(27) && // Must be horror
             !movie.genre_ids.includes(16) // Must not be animation
           )
-          .slice(0, 2)
+          .slice(0, 4)
           .map(movie => ({
             ...tmdbMovieToMediaItem(movie, movieGenres.genres),
             releaseDate: movie.release_date
@@ -112,7 +112,7 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
             const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'scary', 'terror', 'evil', 'dark', 'sinister', 'mystery', 'thriller', 'crime', 'fantasy', 'sci-fi']
             return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword))
           })
-          .slice(0, 2)
+          .slice(0, 4)
           .map(show => ({
             id: show.id.toString(),
             title: show.name,
@@ -129,18 +129,18 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
             releaseDate: show.first_air_date
           }))
 
-        // Ensure we have exactly 4 items total
+        // Ensure we have exactly 8 items total
         const allItems = [...movieItems, ...tvItems]
         
         // If we don't have enough items, fill with additional movies
-        if (allItems.length < 4) {
+        if (allItems.length < 8) {
           const additionalMovies = moviesResponse.results
             .filter(movie => 
               movie.genre_ids.includes(27) && // Must be horror
               !movie.genre_ids.includes(16) && // Must not be animation
               !movieItems.some(existing => existing.id === movie.id.toString()) // Not already included
             )
-            .slice(0, 4 - allItems.length)
+            .slice(0, 8 - allItems.length)
             .map(movie => ({
               ...tmdbMovieToMediaItem(movie, movieGenres.genres),
               releaseDate: movie.release_date
@@ -149,11 +149,11 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
           allItems.push(...additionalMovies)
         }
 
-        setUpcomingMovies(allItems.slice(0, 4))
+        setUpcomingMovies(allItems.slice(0, 8))
       } catch {
         setError('Failed to load upcoming content. Please try again later.')
         // Fallback to mock data converted to MediaItem format
-        const fallbackItems = movies.slice(0, 4).map(movie => ({
+        const fallbackItems = movies.slice(0, 8).map(movie => ({
           id: movie.id,
           title: movie.title,
           posterUrl: movie.posterUrl,
@@ -192,7 +192,7 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
 
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-gray-900 rounded-lg animate-pulse h-96" />
             ))}
           </div>
@@ -211,7 +211,7 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
         )}
 
         {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
             {upcomingMovies.map((movie) => {
               // Create a modified movie item with Coming Soon badge in genre and no rating
               const comingSoonMovie = {
