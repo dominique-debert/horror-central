@@ -39,14 +39,14 @@ export default function MovieCard({
         />
         
         {/* Rating overlay */}
-        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
+        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-xs text-white">
           <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
           <span>{rating.toFixed(1)}</span>
         </div>
 
         {/* Genre badge */}
         {genre && (
-          <div className="absolute left-2 top-2 rounded-full bg-red-600 px-2 py-1 text-xs font-medium text-white">
+          <div className="absolute left-2 top-2 rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-white">
             {genre}
           </div>
         )}

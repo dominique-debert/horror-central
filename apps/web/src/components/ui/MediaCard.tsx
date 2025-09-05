@@ -113,7 +113,7 @@ export function MediaCard({ item, type }: MediaCardProps) {
 
         {/* Genre badge */}
         {item.genre && item.genre.length > 0 && (
-          <div className="absolute left-2 top-2 rounded-full bg-red-600 px-2 py-1 text-xs font-medium text-white">
+          <div className="absolute left-2 top-2 rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-white">
             {item.genre[0]}
           </div>
         )}

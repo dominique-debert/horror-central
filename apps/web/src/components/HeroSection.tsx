@@ -234,7 +234,7 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
             </p>
 
             <div className="flex items-center gap-3 mb-4">
-              <span className="bg-green-800 text-white px-3 py-1 rounded-full text-sm font-semibold">
+              <span className="bg-green-800 text-white px-3 py-1 rounded-md text-sm font-semibold">
                 TRENDING
               </span>
               <div className="flex gap-2">
@@ -242,7 +242,7 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
                 {displayGenres.map((genre, index) => (
                   <span 
                     key={index}
-                    className="bg-gray-800/80 text-white px-3 py-1 rounded-full text-sm font-medium border border-gray-600"
+                    className="bg-gray-800/80 text-white px-3 py-1 rounded-md text-sm font-medium border border-gray-600"
                   >
                     {genre}
                   </span>
