@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star, Calendar, Clock, Tv, Gamepad2, BookOpen, Monitor, Smartphone, Zap } from "lucide-react"
 import { LucideIcon } from "lucide-react"
@@ -100,7 +101,8 @@ export function MediaCard({ item, type }: MediaCardProps) {
   const MetadataIcon = getMetadataIcon(type)
   
   return (
-    <Card className="group cursor-pointer overflow-hidden bg-card transition-all duration-300 hover:scale-105 hover:shadow-lg">
+    <Link href={`/details/${type}/${item.id}`}>
+      <Card className="group cursor-pointer overflow-hidden bg-card transition-all duration-300 hover:scale-105 hover:shadow-lg">
       <div className="relative aspect-[2/3] overflow-hidden">
         <Image
           src={imageUrl}
@@ -186,5 +188,6 @@ export function MediaCard({ item, type }: MediaCardProps) {
         </div>
       </CardContent>
     </Card>
+    </Link>
   )
 }

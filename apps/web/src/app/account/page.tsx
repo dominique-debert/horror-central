@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/context/auth-context";
 import { useCallback, useState, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,9 +84,11 @@ export default function AccountPage() {
             <div className="flex items-center gap-6">
               <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border">
                 {avatarPreview ? (
-                  <img
+                  <Image
                     src={avatarPreview}
                     alt="Profile"
+                    width={96}
+                    height={96}
                     className="h-full w-full object-cover"
                   />
                 ) : (

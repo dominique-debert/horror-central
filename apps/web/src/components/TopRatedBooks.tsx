@@ -110,7 +110,7 @@ export default function TopRatedBooks({ books: initialBooks }: TopRatedBooksProp
         setLoading(true)
         setError(null)
         
-        const fetchedBooks = await openLibraryClient.getTopRatedHorrorBooks(12)
+        const fetchedBooks = await openLibraryClient.getTopRatedBooks(12)
         
         if (fetchedBooks.length > 0) {
           setBooks(fetchedBooks)

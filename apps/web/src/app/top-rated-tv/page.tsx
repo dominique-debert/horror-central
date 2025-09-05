@@ -287,7 +287,7 @@ export default function TopRatedTVPage() {
         {/* TV Shows Grid */}
         {!loading && !error && (
           <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedShows.map((show, index) => (
                 <Card key={show.id} className="bg-gray-900 border-gray-700 hover:border-red-600 transition-all duration-300 group relative">
               {index < 3 && (
@@ -366,7 +366,7 @@ export default function TopRatedTVPage() {
                   className="w-full border-gray-600 text-gray-300 hover:bg-red-600 hover:border-red-600 hover:text-white"
                   asChild
                 >
-                  <Link href={`/tv/${show.slug}`}>
+                  <Link href={`/details/tv/${show.id}`}>
                     View Details
                   </Link>
                 </Button>

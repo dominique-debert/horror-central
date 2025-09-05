@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Star, Calendar, User, BookOpen, Loader2 } from 'lucide-react'
+import { Star, Calendar, User, BookOpen, Loader2, Eye } from 'lucide-react'
 // Removed openLibraryClient import - using API route instead
 
 interface BookItem {
@@ -253,51 +255,63 @@ export default function BooksPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {books.map((book, index) => (
           <Card key={`${book.id}-${index}`} className="bg-gray-800 border-gray-700 hover:border-red-500 transition-colors group">
-            <div className="relative">
-              <img
-                src={book.posterUrl}
-                alt={book.title}
-                className="w-full aspect-[2/3] object-cover rounded-t-lg"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.src = '/placeholder-book-cover.jpg'
-                }}
-              />
-              <div className="absolute top-2 right-2">
-                <Badge variant="secondary" className="bg-black/70 text-white flex items-center gap-1">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  {book.rating.toFixed(1)}
-                </Badge>
-              </div>
-            </div>
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-white mb-2 line-clamp-2 group-hover:text-red-400 transition-colors">
-                {book.title}
-              </h3>
-              <div className="space-y-1 text-sm text-gray-400">
-                <div className="flex items-center gap-1">
-                  <User className="w-3 h-3" />
-                  <span>{book.author}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  <span>{book.year}</span>
-                </div>
-                {book.pages > 0 && (
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="w-3 h-3" />
-                    <span>{book.pages} pages</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {book.genre.slice(0, 2).map((g) => (
-                  <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
-                    {g}
+            <Link href={`/details/book/${book.id}`} className="block">
+              <div className="relative">
+                <Image
+                  src={book.posterUrl}
+                  alt={book.title}
+                  width={300}
+                  height={450}
+                  className="w-full aspect-[2/3] object-cover rounded-t-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.src = '/placeholder-book-cover.jpg'
+                  }}
+                />
+                <div className="absolute top-2 right-2">
+                  <Badge variant="secondary" className="bg-black/70 text-white flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    {book.rating.toFixed(1)}
                   </Badge>
-                ))}
+                </div>
               </div>
-            </CardContent>
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-white mb-2 line-clamp-2 group-hover:text-red-400 transition-colors">
+                  {book.title}
+                </h3>
+                <div className="space-y-1 text-sm text-gray-400">
+                  <div className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    <span>{book.author}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    <span>{book.year}</span>
+                  </div>
+                  {book.pages > 0 && (
+                    <div className="flex items-center gap-1">
+                      <BookOpen className="w-3 h-3" />
+                      <span>{book.pages} pages</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1 mt-2 mb-3">
+                  {book.genre.slice(0, 2).map((g) => (
+                    <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
+                      {g}
+                    </Badge>
+                  ))}
+                </div>
+                <Button 
+                  size="sm" 
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Details
+                </Button>
+              </CardContent>
+            </Link>
           </Card>
         ))}
       </div>
