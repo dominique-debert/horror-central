@@ -148,7 +148,7 @@ class TMDBClient {
       page,
       with_genres: HORROR_GENRE_ID,
       without_genres: ANIMATION_GENRE_ID,
-      sort_by: 'primary_release_date.desc',
+      sort_by: 'vote_average.desc',
       'vote_count.gte': 100, // Minimum vote count for reliability
       'primary_release_date.gte': `${startYear}-01-01`,
       'primary_release_date.lte': `${currentYear}-12-31`,
@@ -246,13 +246,9 @@ class TMDBClient {
              show.vote_average >= 7.5 // Include highly rated shows even if keywords don't match perfectly
     })
     
-    // Sort by first air date (newest first) and return
+    // Sort by rating (highest first) and return
     const sortedResults = filteredResults
-      .sort((a, b) => {
-        const dateA = new Date(a.first_air_date || '1900-01-01').getTime()
-        const dateB = new Date(b.first_air_date || '1900-01-01').getTime()
-        return dateB - dateA // Newest first
-      })
+      .sort((a, b) => b.vote_average - a.vote_average)
       .slice(0, 20) // Get top 20 for pagination
     
     return {

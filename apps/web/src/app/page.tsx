@@ -1,5 +1,4 @@
 import HeroSection from "@/components/HeroSection"
-import NowPlaying from "@/components/NowPlaying"
 import LatestNews from "@/components/LatestNews"
 import ComingSoon from "@/components/ComingSoon"
 import TopRated from "@/components/TopRated"
@@ -12,7 +11,6 @@ export default function Page() {
     <main className="space-y-0">
       <HeroSection />
       <div className="p-8 space-y-12">
-        <NowPlaying />
         <ComingSoon />
         <TopRated />
         <TopRatedTVShows />

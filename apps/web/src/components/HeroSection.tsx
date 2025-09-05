@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Play, Info } from "lucide-react"
+import { Play, Info, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import { tmdbClient, getBackdropUrl } from "@/lib/tmdb"
 import type { TMDBMovie } from "@/lib/tmdb"
@@ -28,21 +28,21 @@ export default function HeroSection({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchFeaturedMovies = async () => {
+  const fetchNowPlayingMovies = async () => {
     try {
       setLoading(true)
       setError(null)
-      const movies = await tmdbClient.getFeaturedHorrorMovies(10)
+      const response = await tmdbClient.getNowPlayingHorrorMovies(1)
       
       // Double-check that all movies are horror movies (genre ID 27) and not animated (genre ID 16)
-      const horrorMovies = movies.filter(movie => 
+      const horrorMovies = response.results.filter(movie => 
         movie.genre_ids.includes(27) && // Must be horror
         !movie.genre_ids.includes(16) // Must not be animation
       )
       
       setFeaturedMovies(horrorMovies)
     } catch {
-      setError('Failed to load featured movies')
+      setError('Failed to load now playing movies')
       // Use manual props as fallback if provided
     } finally {
       setLoading(false)
@@ -52,11 +52,24 @@ export default function HeroSection({
   useEffect(() => {
     // Only fetch if no manual props provided
     if (!manualTitle) {
-      fetchFeaturedMovies()
+      fetchNowPlayingMovies()
     } else {
       setLoading(false)
     }
   }, [manualTitle])
+
+  // Manual navigation functions
+  const goToPrevious = () => {
+    setCurrentMovieIndex((prevIndex) => 
+      prevIndex === 0 ? featuredMovies.length - 1 : prevIndex - 1
+    )
+  }
+
+  const goToNext = () => {
+    setCurrentMovieIndex((prevIndex) => 
+      (prevIndex + 1) % featuredMovies.length
+    )
+  }
 
   // Auto-rotate through movies every 8 seconds
   useEffect(() => {
@@ -65,7 +78,7 @@ export default function HeroSection({
         setCurrentMovieIndex((prevIndex) => 
           (prevIndex + 1) % featuredMovies.length
         )
-      }, 8000) // Change movie every 8 seconds
+      }, 5000) // Change movie every 5 seconds
 
       return () => clearInterval(interval)
     }
@@ -76,7 +89,7 @@ export default function HeroSection({
 
   // Use manual props if provided, otherwise use TMDB data
   const title = manualTitle || currentMovie?.title || 'Loading...'
-  const description = manualDescription || currentMovie?.overview || 'Loading featured horror movies...'
+  const description = manualDescription || currentMovie?.overview || 'Loading now playing horror movies...'
   const backgroundImage = manualBackgroundImage || (currentMovie ? getBackdropUrl(currentMovie.backdrop_path) : '')
   const trailerUrl = manualTrailerUrl
   const moreInfoUrl = manualMoreInfoUrl || (currentMovie ? `/movies/${currentMovie.id}` : '')
@@ -87,6 +100,7 @@ export default function HeroSection({
         <div className="relative z-10 flex h-full items-center">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl space-y-6">
+              <div className="h-8 bg-gray-700 rounded animate-pulse w-32 mb-2"></div>
               <div className="h-12 bg-gray-700 rounded animate-pulse"></div>
               <div className="h-6 bg-gray-700 rounded animate-pulse w-3/4"></div>
               <div className="flex gap-4">
@@ -116,10 +130,41 @@ export default function HeroSection({
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
       </div>
 
+      {/* Navigation Chevrons */}
+      {featuredMovies.length > 1 && (
+        <>
+          <button
+            onClick={goToPrevious}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+            aria-label="Previous movie"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            onClick={goToNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+            aria-label="Next movie"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </>
+      )}
+
       {/* Content */}
       <div className="relative z-10 flex h-full items-center">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl space-y-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                NOW PLAYING
+              </span>
+              {featuredMovies.length > 1 && (
+                <span className="text-white/70 text-sm">
+                  {currentMovieIndex + 1} of {featuredMovies.length}
+                </span>
+              )}
+            </div>
+            
             <h1 className="text-5xl font-bold text-white md:text-6xl lg:text-7xl">
               {title}
             </h1>

@@ -132,7 +132,7 @@ class IGDBServerClient {
              themes.name;
       where (themes = (19) | genres = (8)) & rating >= 70 & rating_count >= 20 & cover != null 
             & first_release_date >= ${startTimestamp} & first_release_date <= ${endTimestamp};
-      sort first_release_date desc;
+      sort rating desc;
       limit ${limit * 2};
     `
 
