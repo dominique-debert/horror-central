@@ -263,11 +263,6 @@ export default function BooksPage() {
                   target.src = '/placeholder-book-cover.jpg'
                 }}
               />
-              <div className="absolute top-2 left-2">
-                <Badge variant="secondary" className="bg-red-600 text-white">
-                  #{index + 1}
-                </Badge>
-              </div>
               <div className="absolute top-2 right-2">
                 <Badge variant="secondary" className="bg-black/70 text-white flex items-center gap-1">
                   <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
