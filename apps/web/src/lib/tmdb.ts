@@ -6,6 +6,9 @@ const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p'
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY
 const HORROR_GENRE_ID = 27
 const ANIMATION_GENRE_ID = 16
+const CRIME_GENRE_ID = 80
+const COMEDY_GENRE_ID = 35
+const DRAMA_GENRE_ID = 18
 const HORROR_TV_GENRE_IDS = [10765, 9648] // Sci-Fi & Fantasy, Mystery (closest to horror for TV)
 
 // TMDB API Response Types
@@ -138,12 +141,17 @@ class TMDBClient {
 
   // Get top-rated horror movies
   async getTopRatedHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
+    const currentYear = new Date().getFullYear()
+    const startYear = currentYear - 1
+    
     return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', {
       page,
       with_genres: HORROR_GENRE_ID,
       without_genres: ANIMATION_GENRE_ID,
-      sort_by: 'vote_average.desc',
+      sort_by: 'primary_release_date.desc',
       'vote_count.gte': 100, // Minimum vote count for reliability
+      'primary_release_date.gte': `${startYear}-01-01`,
+      'primary_release_date.lte': `${currentYear}-12-31`,
       include_adult: false,
       with_original_language: 'en',
       'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
@@ -163,30 +171,95 @@ class TMDBClient {
     })
   }
 
-  // Get top-rated horror TV shows
+  // Get top-rated horror TV shows of all time
   async getTopRatedHorrorTVShows(page: number = 1): Promise<TMDBResponse<TMDBTVShow>> {
-    // Since TMDB doesn't have a horror genre for TV, we'll search for popular horror TV shows
-    // and filter by keywords or use a curated list approach
-    const response = await this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
-      with_genres: HORROR_TV_GENRE_IDS.join(','), // Sci-Fi & Fantasy, Mystery
-      sort_by: 'vote_average.desc',
-      'vote_count.gte': 50, // Lower threshold for TV shows
-      with_keywords: '158718|210024|9715', // Horror, supernatural, thriller keywords
-      with_original_language: 'en',
-      page
-    })
+    // Use multiple strategies to get comprehensive horror TV results
+    const allShows: TMDBTVShow[] = []
     
-    // Filter results to prioritize shows with horror-related keywords in overview
-    const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'scary', 'terror', 'evil', 'dark', 'sinister']
-    const filteredResults = response.results.filter(show => {
+    // Strategy 1: Sci-Fi & Fantasy + Mystery genres with horror keywords
+    try {
+      const response1 = await this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
+        with_genres: HORROR_TV_GENRE_IDS.join(','), // Sci-Fi & Fantasy, Mystery
+        without_genres: `${ANIMATION_GENRE_ID},${CRIME_GENRE_ID},${COMEDY_GENRE_ID},${DRAMA_GENRE_ID}`, // Exclude animation, crime, comedy, and drama
+        sort_by: 'first_air_date.desc',
+        'vote_count.gte': 10, // Lower threshold for more results
+        with_keywords: '158718|210024|9715|9951|12339|9882|180547|14544|162846|9663|9717|4565|9672|4344|9840', // Horror, supernatural, thriller, vampire, witch, ghost, zombie, demon, occult, paranormal, mystery, slasher, gothic, dark fantasy, cult keywords
+        'with_original_language': 'en|ko|es', // English, Korean, Japanese, Spanish
+        page: 1
+      })
+      allShows.push(...response1.results)
+    } catch (error) {
+      console.error('Strategy 1 failed:', error)
+    }
+
+    // Strategy 2: Search for specific horror shows by name
+    const horrorShowSearches = [
+      'buffy vampire slayer',
+      'supernatural',
+      'american horror story', 
+      'walking dead',
+      'stranger things',
+      'haunting hill house',
+      'penny dreadful',
+      'true blood',
+      'vampire diaries',
+      'grimm',
+      'sleepy hollow',
+      'bates motel',
+      'hannibal',
+      'dexter',
+      'twin peaks'
+    ]
+
+    for (const searchTerm of horrorShowSearches.slice(0, 5)) { // Limit to avoid too many requests
+      try {
+        const searchResponse = await this.request<TMDBResponse<TMDBTVShow>>('/search/tv', {
+          query: searchTerm,
+          page: 1
+        })
+        // Add top result if it has good ratings
+        const topResult = searchResponse.results[0]
+        if (topResult && topResult.vote_average >= 6.5 && topResult.vote_count >= 50) {
+          allShows.push(topResult)
+        }
+      } catch (error) {
+        console.error(`Search for "${searchTerm}" failed:`, error)
+      }
+    }
+
+    // Strategy 3: Removed - was using Drama genre which is now excluded
+    
+    // Remove duplicates and filter for horror content
+    const uniqueShows = allShows.reduce((acc, show) => {
+      if (!acc.find(existing => existing.id === show.id)) {
+        acc.push(show)
+      }
+      return acc
+    }, [] as TMDBTVShow[])
+
+    // Filter results to prioritize shows with horror-related content
+    const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'terror', 'evil', 'dark', 'sinister', 'slayer', 'undead', 'occult', 'paranormal']
+    const filteredResults = uniqueShows.filter(show => {
       const overview = show.overview.toLowerCase()
       const name = show.name.toLowerCase()
-      return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword))
+      return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword)) ||
+             show.vote_average >= 7.5 // Include highly rated shows even if keywords don't match perfectly
     })
     
+    // Sort by first air date (newest first) and return
+    const sortedResults = filteredResults
+      .sort((a, b) => {
+        const dateA = new Date(a.first_air_date || '1900-01-01').getTime()
+        const dateB = new Date(b.first_air_date || '1900-01-01').getTime()
+        return dateB - dateA // Newest first
+      })
+      .slice(0, 20) // Get top 20 for pagination
+    
     return {
-      ...response,
-      results: filteredResults.length > 0 ? filteredResults : response.results
+      page: 1,
+      results: sortedResults,
+      total_pages: 1,
+      total_results: sortedResults.length
     }
   }
 

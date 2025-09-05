@@ -118,6 +118,11 @@ class IGDBServerClient {
   }
 
   async getTopRatedHorrorGames(limit: number = 8): Promise<IGDBGame[]> {
+    const currentYear = new Date().getFullYear()
+    const startYear = currentYear - 1
+    const startTimestamp = Math.floor(new Date(`${startYear}-01-01`).getTime() / 1000)
+    const endTimestamp = Math.floor(new Date(`${currentYear}-12-31`).getTime() / 1000)
+    
     // Horror theme ID is 19, but we also want to include horror-related genres
     // Genre IDs: Horror = 8, Survival = 32, Thriller = 20
     const query = `
@@ -125,8 +130,9 @@ class IGDBServerClient {
              genres.name, platforms.name, platforms.abbreviation, 
              involved_companies.company.name, involved_companies.developer, 
              themes.name;
-      where (themes = (19) | genres = (8)) & rating >= 70 & rating_count >= 20 & cover != null;
-      sort rating desc;
+      where (themes = (19) | genres = (8)) & rating >= 70 & rating_count >= 20 & cover != null 
+            & first_release_date >= ${startTimestamp} & first_release_date <= ${endTimestamp};
+      sort first_release_date desc;
       limit ${limit * 2};
     `
 
