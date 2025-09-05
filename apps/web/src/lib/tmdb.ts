@@ -252,65 +252,104 @@ class TMDBClient {
     })
   }
 
-  // Get top-rated horror TV shows of all time
-  async getTopRatedHorrorTVShows(): Promise<TMDBResponse<TMDBTVShow>> {
+  // Get all-time top-rated horror TV shows with flexible filtering
+  async getAllTimeTopRatedHorrorTVShows(params?: {
+    page?: number
+    minYear?: number
+    maxYear?: number
+    genreIds?: number[]
+    sortBy?: 'vote_average.desc' | 'first_air_date.desc' | 'name.asc'
+  }): Promise<TMDBResponse<TMDBTVShow>> {
+    const {
+      page = 1,
+      minYear,
+      maxYear,
+      genreIds,
+      sortBy = 'vote_average.desc'
+    } = params || {}
+
     // Use multiple strategies to get comprehensive horror TV results
     const allShows: TMDBTVShow[] = []
     
-    // Strategy 1: Sci-Fi & Fantasy + Mystery genres with horror keywords
-    try {
-      const response1 = await this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
-        with_genres: HORROR_TV_GENRE_IDS.join(','), // Sci-Fi & Fantasy, Mystery
-        without_genres: `${ANIMATION_GENRE_ID},${CRIME_GENRE_ID},${COMEDY_GENRE_ID},${DRAMA_GENRE_ID}`, // Exclude animation, crime, comedy, and drama
-        sort_by: 'first_air_date.desc',
-        'vote_count.gte': 10, // Lower threshold for more results
-        with_keywords: '158718|210024|9715|9951|12339|9882|180547|14544|162846|9663|9717|4565|9672|4344|9840', // Horror, supernatural, thriller, vampire, witch, ghost, zombie, demon, occult, paranormal, mystery, slasher, gothic, dark fantasy, cult keywords
-        'with_original_language': 'en|ko|es|de|sv|da', // English, Korean, Spanish, German, Swedish, Danish
-        page: 1
-      })
-      allShows.push(...response1.results)
-    } catch (error) {
-      console.error('Strategy 1 failed:', error)
+    // Strategy 1: Discover with Sci-Fi & Fantasy + Mystery genres
+    for (let discoverPage = 1; discoverPage <= 5; discoverPage++) {
+      try {
+        const requestParams: Record<string, string | number | boolean> = {
+          page: discoverPage,
+          with_genres: genreIds ? genreIds.join(',') : HORROR_TV_GENRE_IDS.join(','),
+          without_genres: `${ANIMATION_GENRE_ID},${COMEDY_GENRE_ID}`,
+          sort_by: sortBy,
+          'vote_count.gte': 5,
+          with_keywords: '158718|210024|9715|9951|12339|9882|180547|14544|162846|9663|9717|4565|9672|4344|9840',
+          'with_original_language': 'en|ko|es|de|sv|da',
+          include_adult: false
+        }
+
+        if (minYear) {
+          requestParams['first_air_date.gte'] = `${minYear}-01-01`
+        }
+        if (maxYear) {
+          requestParams['first_air_date.lte'] = `${maxYear}-12-31`
+        }
+
+        const response = await this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', requestParams)
+        allShows.push(...response.results)
+        
+        if (response.results.length === 0) break
+      } catch (error) {
+        console.error(`Discover page ${discoverPage} failed:`, error)
+        break
+      }
     }
 
     // Strategy 2: Search for specific horror shows by name
     const horrorShowSearches = [
-      'buffy vampire slayer',
-      'supernatural',
-      'american horror story', 
-      'walking dead',
-      'stranger things',
-      'haunting hill house',
-      'penny dreadful',
-      'true blood',
-      'vampire diaries',
-      'grimm',
-      'sleepy hollow',
-      'bates motel',
-      'hannibal',
-      'dexter',
-      'twin peaks'
+      'american horror story', 'walking dead', 'stranger things', 'supernatural',
+      'haunting hill house', 'penny dreadful', 'true blood', 'vampire diaries',
+      'buffy vampire slayer', 'grimm', 'sleepy hollow', 'bates motel', 'hannibal',
+      'dexter', 'twin peaks', 'x-files', 'tales from the crypt', 'twilight zone',
+      'black mirror', 'evil', 'lovecraft country', 'castle rock', 'channel zero',
+      'ash vs evil dead', 'preacher', 'outcast', 'fear the walking dead',
+      'van helsing', 'z nation', 'hemlock grove', 'salem', 'american gothic',
+      'harper island', 'the strain', 'midnight mass', 'marianne', 'dark',
+      'the witcher', 'chilling adventures sabrina', 'locke key', 'the umbrella academy'
     ]
 
-    for (const searchTerm of horrorShowSearches.slice(0, 5)) { // Limit to avoid too many requests
+    for (const searchTerm of horrorShowSearches) {
       try {
         const searchResponse = await this.request<TMDBResponse<TMDBTVShow>>('/search/tv', {
           query: searchTerm,
           page: 1
         })
-        // Add top result if it has good ratings
-        const topResult = searchResponse.results[0]
-        if (topResult && topResult.vote_average >= 6.5 && topResult.vote_count >= 50) {
-          allShows.push(topResult)
-        }
+        
+        // Add top 2 results if they have good ratings
+        const goodResults = searchResponse.results
+          .slice(0, 2)
+          .filter(show => show.vote_average >= 6.0 && show.vote_count >= 20)
+        
+        allShows.push(...goodResults)
       } catch (error) {
         console.error(`Search for "${searchTerm}" failed:`, error)
       }
     }
 
-    // Strategy 3: Removed - was using Drama genre which is now excluded
+    // Strategy 3: Additional discover calls with different parameters
+    try {
+      const additionalResponse = await this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
+        page: 1,
+        with_genres: '18,80', // Drama, Crime (often have horror elements)
+        with_keywords: '158718|9715|12339|9882|180547|14544|162846|9663|9717|4565|9672|4344|9840',
+        'vote_average.gte': 7.0,
+        'vote_count.gte': 100,
+        'with_original_language': 'en|ko|es|de|sv|da',
+        sort_by: 'vote_average.desc'
+      })
+      allShows.push(...additionalResponse.results)
+    } catch (error) {
+      console.error('Additional discover failed:', error)
+    }
     
-    // Remove duplicates and filter for horror content
+    // Remove duplicates
     const uniqueShows = allShows.reduce((acc, show) => {
       if (!acc.find(existing => existing.id === show.id)) {
         acc.push(show)
@@ -319,29 +358,67 @@ class TMDBClient {
     }, [] as TMDBTVShow[])
 
     // Filter results to prioritize shows with horror-related content
-    const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'terror', 'evil', 'dark', 'sinister', 'slayer', 'undead', 'occult', 'paranormal']
+    const horrorKeywords = [
+      'horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 
+      'haunted', 'terror', 'evil', 'dark', 'sinister', 'slayer', 'undead', 'occult', 
+      'paranormal', 'thriller', 'mystery', 'murder', 'killer', 'death', 'blood',
+      'nightmare', 'fear', 'scary', 'creepy', 'monster', 'beast', 'creature',
+      'apocalypse', 'survival', 'infection', 'virus', 'pandemic', 'outbreak'
+    ]
+    
     const filteredResults = uniqueShows.filter(show => {
-      const overview = show.overview.toLowerCase()
+      const overview = (show.overview || '').toLowerCase()
       const name = show.name.toLowerCase()
-      return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword)) ||
-             show.vote_average >= 7.5 // Include highly rated shows even if keywords don't match perfectly
+      
+      // Check for horror keywords
+      const hasHorrorKeywords = horrorKeywords.some(keyword => 
+        overview.includes(keyword) || name.includes(keyword)
+      )
+      
+      // Include shows with horror keywords or high ratings
+      return hasHorrorKeywords || show.vote_average >= 7.8
     })
     
-    // Sort by first air date (newest first) and return
-    const sortedResults = filteredResults
-      .sort((a, b) => {
+    // Apply additional filtering based on parameters
+    let finalResults = filteredResults
+    
+    if (minYear || maxYear) {
+      finalResults = finalResults.filter(show => {
+        const year = new Date(show.first_air_date || '1900-01-01').getFullYear()
+        if (minYear && year < minYear) return false
+        if (maxYear && year > maxYear) return false
+        return true
+      })
+    }
+    
+    // Sort results
+    finalResults.sort((a, b) => {
+      if (sortBy === 'vote_average.desc') return b.vote_average - a.vote_average
+      if (sortBy === 'first_air_date.desc') {
         const dateA = new Date(a.first_air_date || '1900-01-01').getTime()
         const dateB = new Date(b.first_air_date || '1900-01-01').getTime()
-        return dateB - dateA // Newest first
-      })
-      .slice(0, 20) // Get top 20 for pagination
+        return dateB - dateA
+      }
+      if (sortBy === 'name.asc') return a.name.localeCompare(b.name)
+      return 0
+    })
+    
+    // Implement pagination
+    const startIndex = (page - 1) * 20
+    const endIndex = startIndex + 20
+    const paginatedResults = finalResults.slice(startIndex, endIndex)
     
     return {
-      page: 1,
-      results: sortedResults,
-      total_pages: 1,
-      total_results: sortedResults.length
+      page,
+      results: paginatedResults,
+      total_pages: Math.ceil(finalResults.length / 20),
+      total_results: finalResults.length
     }
+  }
+
+  // Legacy method for backward compatibility
+  async getTopRatedHorrorTVShows(): Promise<TMDBResponse<TMDBTVShow>> {
+    return this.getAllTimeTopRatedHorrorTVShows({ page: 1, sortBy: 'vote_average.desc' })
   }
 
   // Get upcoming horror movies
@@ -360,19 +437,11 @@ class TMDBClient {
       'primary_release_date.lte': oneYearFromNow,
       include_adult: false,
       with_original_language: 'en|ko|es|de|sv|da',
-      'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
+      'with_runtime.gte': 60
     })
   }
 
-  // Get featured horror movie for hero section
-  async getFeaturedHorrorMovie(): Promise<TMDBMovie> {
-    const response = await this.getTopRatedHorrorMovies(1)
-    // Get a random movie from the top results for variety
-    const randomIndex = Math.floor(Math.random() * Math.min(response.results.length, 5))
-    return response.results[randomIndex]
-  }
-
-  // Get multiple featured horror movies for hero rotation
+  // Get featured horror movies
   async getFeaturedHorrorMovies(count: number = 10): Promise<TMDBMovie[]> {
     const response = await this.getTopRatedHorrorMovies(1)
     // Return up to the requested count of movies
