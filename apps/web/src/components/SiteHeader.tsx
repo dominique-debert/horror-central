@@ -17,8 +17,8 @@ import {
 export default function SiteHeader() {
   const nav = [
     { name: "Home", href: "/" },
-    { name: "Movies", href: "/movies" },
-    { name: "TV Shows", href: "/tv" },
+    { name: "Movies", href: "/top-rated" },
+    { name: "TV Shows", href: "/top-rated-tv" },
     { name: "Games", href: "/games" },
     { name: "Books", href: "/books" },
   ]

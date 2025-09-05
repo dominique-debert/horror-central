@@ -369,52 +369,7 @@ class OpenLibraryClient {
     } else if (sortBy === 'title.asc') {
       filteredBooks.sort((a, b) => a.title.localeCompare(b.title))
     }
-    
-    console.log(`Books after filtering and sorting: ${filteredBooks.length}`)
-    
-    // If no books found, add some temporary fallback data for testing
-    if (filteredBooks.length === 0) {
-      console.log('No books found from Open Library, using temporary fallback')
-      filteredBooks = [
-        {
-          id: 'temp-1',
-          title: 'The Shining',
-          posterUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=450&fit=crop',
-          rating: 8.7,
-          year: 1977,
-          author: 'Stephen King',
-          pages: 447,
-          description: 'A family heads to an isolated hotel for the winter where a sinister presence influences the father into violence.',
-          genre: ['Psychological Horror', 'Supernatural'],
-          slug: 'the-shining'
-        },
-        {
-          id: 'temp-2',
-          title: 'Dracula',
-          posterUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=450&fit=crop',
-          rating: 8.5,
-          year: 1897,
-          author: 'Bram Stoker',
-          pages: 418,
-          description: 'The classic vampire novel that defined the genre for generations.',
-          genre: ['Gothic Horror', 'Vampire'],
-          slug: 'dracula'
-        },
-        {
-          id: 'temp-3',
-          title: 'The Exorcist',
-          posterUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=450&fit=crop',
-          rating: 8.3,
-          year: 1971,
-          author: 'William Peter Blatty',
-          pages: 340,
-          description: 'A young girl becomes possessed by a demonic entity.',
-          genre: ['Supernatural Horror', 'Religious Horror'],
-          slug: 'the-exorcist'
-        }
-      ]
-    }
-    
+
     // Pagination
     const totalBooks = filteredBooks.length
     const totalPages = Math.ceil(totalBooks / limit)
