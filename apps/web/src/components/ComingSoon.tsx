@@ -1,15 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Bell } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { tmdbClient, tmdbMovieToMediaItem } from "@/lib/tmdb"
 import type { MediaItem } from "@/components/ui/MediaCard"
-import { LanguageBadge } from "@/components/ui/LanguageBadge"
+import { MediaCard } from "@/components/ui/MediaCard"
 
 interface ComingSoonMovie {
   id: string
@@ -103,7 +99,10 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
             !movie.genre_ids.includes(16) // Must not be animation
           )
           .slice(0, 2)
-          .map(movie => tmdbMovieToMediaItem(movie, movieGenres.genres))
+          .map(movie => ({
+            ...tmdbMovieToMediaItem(movie, movieGenres.genres),
+            releaseDate: movie.release_date
+          }))
 
         // Convert TV shows to MediaItem format with more lenient filtering
         const tvItems = tvShowsResponse.results
@@ -126,7 +125,8 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
               .map(g => g.name)
               .slice(0, 3),
             slug: show.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-            originalLanguage: show.original_language
+            originalLanguage: show.original_language,
+            releaseDate: show.first_air_date
           }))
 
         // Ensure we have exactly 4 items total
@@ -141,7 +141,10 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
               !movieItems.some(existing => existing.id === movie.id.toString()) // Not already included
             )
             .slice(0, 4 - allItems.length)
-            .map(movie => tmdbMovieToMediaItem(movie, movieGenres.genres))
+            .map(movie => ({
+              ...tmdbMovieToMediaItem(movie, movieGenres.genres),
+              releaseDate: movie.release_date
+            }))
           
           allItems.push(...additionalMovies)
         }
@@ -158,7 +161,8 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
           year: new Date(movie.releaseDate).getFullYear(),
           description: movie.description,
           genre: movie.genre,
-          slug: movie.slug
+          slug: movie.slug,
+          releaseDate: movie.releaseDate
         }))
         setUpcomingMovies(fallbackItems)
       } finally {
@@ -209,78 +213,19 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {upcomingMovies.map((movie) => {
-              // For TMDB data, we don't have release dates in the same format
-              // So we'll use a generic "Coming Soon" approach
+              // Create a modified movie item with Coming Soon badge in genre and no rating
+              const comingSoonMovie = {
+                ...movie,
+                genre: ['Coming Soon', ...movie.genre.slice(0, 2)], // Add "Coming Soon" as first genre
+                rating: 0 // Remove rating display
+              }
               
               return (
-                <Card key={movie.id} className="bg-gray-900 border-gray-700 hover:border-red-600 transition-all duration-300 group">
-                  <div className="relative overflow-hidden rounded-t-lg">
-                    <Image
-                      src={movie.posterUrl || '/placeholder-movie-poster.jpg'}
-                      alt={movie.title}
-                      width={300}
-                      height={450}
-                      className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    
-                    <div className="absolute top-3 left-3 flex flex-col gap-2">
-                      <Badge className="bg-red-600 text-white">
-                        Coming Soon
-                      </Badge>
-                    </div>
-                    
-                    {movie.originalLanguage && (
-                      <div className="absolute top-3 right-3">
-                        <LanguageBadge language={movie.originalLanguage} />
-                      </div>
-                    )}
-
-                  </div>
-                  
-                  <CardContent className="p-4">
-                    <h3 className="text-white font-bold text-lg mb-2 group-hover:text-red-400 transition-colors">
-                      {movie.title}
-                    </h3>
-                    
-                    <div className="flex items-center text-gray-400 text-sm mb-3">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      <span>{movie.year}</span>
-                    </div>
-                    
-                    <p className="text-gray-400 text-sm mb-3 line-clamp-3">
-                      {movie.description}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {movie.genre.map((g) => (
-                        <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
-                          {g}
-                        </Badge>
-                      ))}
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="flex-1 border-gray-600 text-gray-300 hover:bg-red-600 hover:border-red-600 hover:text-white"
-                      >
-                        <Bell className="w-3 h-3 mr-1" />
-                        Notify Me
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                        asChild
-                      >
-                        <Link href={`/movies/${movie.slug}`}>
-                          More Info
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <MediaCard 
+                  key={movie.id}
+                  item={comingSoonMovie}
+                  type="movie"
+                />
               )
             })}
           </div>

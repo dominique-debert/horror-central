@@ -20,6 +20,7 @@ export interface MediaItem {
   criticsScore?: number
   audienceScore?: number
   slug: string
+  releaseDate?: string
   // Movie specific
   // TV Show specific
   seasons?: number
@@ -157,8 +158,23 @@ export function MediaCard({ item, type }: MediaCardProps) {
         <div className="mt-1 flex items-center justify-between text-sm text-muted-foreground">
           <span>{item.year}</span>
           <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            <span>{item.rating.toFixed(1)}</span>
+            {/* Show release date for coming soon items, otherwise show rating */}
+            {item.releaseDate && item.genre?.includes('Coming Soon') ? (
+              <>
+                <Calendar className="h-3 w-3" />
+                <span>
+                  {new Date(item.releaseDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </span>
+              </>
+            ) : item.rating > 0 ? (
+              <>
+                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                <span>{item.rating.toFixed(1)}</span>
+              </>
+            ) : null}
             {type === 'game' && item.platform && (
               <div className="ml-1 flex items-center gap-1">
                 {getPlatformIcons(item.platform).map((IconComponent: LucideIcon, index: number) => (
