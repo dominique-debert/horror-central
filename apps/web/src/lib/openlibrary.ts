@@ -1,4 +1,4 @@
-// Client-side Open Library API wrapper using Next.js API routes
+// Client-side Open Library API wrapper using Next.js API routes with caching
 
 interface BookItem {
   id: string
@@ -17,19 +17,60 @@ interface BooksApiResponse {
   books: BookItem[]
 }
 
+// Cache entry type
+interface CacheEntry<T = unknown> {
+  data: T;
+  timestamp: number;
+}
+
+// Simple in-memory cache with type safety
+const CACHE = new Map<string, CacheEntry<BooksApiResponse>>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 class OpenLibraryClient {
   private baseUrl = '/api/books'
+  private cache = CACHE
 
-  async getTopRatedBooks(limit = 10): Promise<BookItem[]> {
+  private async fetchWithCache<T extends BooksApiResponse>(url: string): Promise<T | null> {
+    const now = Date.now()
+    const cacheKey = `books:${url}`
+    
+    // Return cached data if it exists and is not expired
+    const cached = this.cache.get(cacheKey)
+    if (cached && (now - cached.timestamp) < CACHE_TTL) {
+      return cached.data as T
+    }
+
     try {
-      const response = await fetch(`${this.baseUrl}?type=top-rated&limit=${limit}`)
+      const response = await fetch(url, {
+        next: { revalidate: 300 } // 5 minutes revalidation
+      })
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data: BooksApiResponse = await response.json()
-      return data.books || []
+      const data = await response.json()
+      
+      // Update cache
+      this.cache.set(cacheKey, {
+        data,
+        timestamp: now
+      })
+      
+      return data as T
+    } catch (error) {
+      console.error('API request failed:', error)
+      // Return cached data even if it's expired, if available
+      return cached?.data as T || null
+    }
+  }
+
+  async getTopRatedBooks(limit = 10): Promise<BookItem[]> {
+    try {
+      const url = `${this.baseUrl}?type=top-rated&limit=${limit}`
+      const data = await this.fetchWithCache<BooksApiResponse>(url)
+      return data?.books || []
     } catch (error) {
       console.error('Error fetching top rated books:', error)
       return []
