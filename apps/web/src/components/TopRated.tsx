@@ -1,41 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
-import { tmdbClient, tmdbMovieToMediaItem } from "@/lib/tmdb"
-
-
+import { MediaCard } from "@/components/ui/MediaCard"
+import { useTopRatedMovies } from "@/hooks/useTopRatedMovies"
 
 export default function TopRated() {
-  const [topRatedMovies, setTopRatedMovies] = useState<MediaItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchTopRatedMovies = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const [moviesResponse, genresResponse] = await Promise.all([
-          tmdbClient.getTopRatedHorrorMovies(1),
-          tmdbClient.getMovieGenres()
-        ])
-        
-        const mediaItems = moviesResponse.results.slice(0, 8).map(movie => 
-          tmdbMovieToMediaItem(movie, genresResponse.genres)
-        )
-        setTopRatedMovies(mediaItems)
-      } catch {
-        setError('Failed to load top rated movies. Please try again later.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTopRatedMovies()
-  }, [])
+  const { data: topRatedMovies = [], isLoading, isError, refetch } = useTopRatedMovies()
 
   return (
     <section className="py-10">
@@ -54,7 +25,7 @@ export default function TopRated() {
           </Button>
         </div>
 
-        {loading && (
+        {isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-96" />
@@ -62,19 +33,20 @@ export default function TopRated() {
           </div>
         )}
 
-        {error && (
+        {isError && (
           <div className="text-center py-8">
-            <p className="text-red-400 mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            <p className="text-red-400 mb-4">Failed to load top rated movies. Please try again.</p>
+            <Button 
+              onClick={() => refetch()}
+              variant="outline"
+              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
             >
               Retry
-            </button>
+            </Button>
           </div>
         )}
 
-        {!loading && !error && (
+        {!isLoading && !isError && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {topRatedMovies.map((movie) => (
               <MediaCard

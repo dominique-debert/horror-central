@@ -1,34 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
+import { MediaCard } from "@/components/ui/MediaCard"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { igdbClient } from "@/lib/igdb"
-
-
+import { useTopRatedHorrorGames } from "@/hooks/useGames"
 
 export default function TopRatedGames() {
-  const [games, setGames] = useState<MediaItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchTopRatedGames = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const games = await igdbClient.getTopRatedHorrorGames(8)
-        setGames(games)
-      } catch {
-        setError('Failed to load horror games. Please try again later.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTopRatedGames()
-  }, [])
+  const { data: games = [], isLoading, isError, refetch } = useTopRatedHorrorGames(8)
 
   return (
     <section className="py-10">
@@ -47,34 +25,31 @@ export default function TopRatedGames() {
           </Button>
         </div>
 
-        {loading && (
+        {isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-96" />
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="bg-gray-800 rounded-lg aspect-[2/3] animate-pulse" />
             ))}
           </div>
         )}
 
-        {error && (
+        {isError && (
           <div className="text-center py-8">
-            <p className="text-red-400 mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            <p className="text-red-400 mb-4">Failed to load games. Please try again later.</p>
+            <Button 
+              variant="outline" 
+              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+              onClick={() => refetch()}
             >
               Retry
-            </button>
+            </Button>
           </div>
         )}
 
-        {!loading && !error && (
+        {!isLoading && games.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {games.map((game) => (
-              <MediaCard
-                key={game.id}
-                item={game}
-                type="game"
-              />
+              <MediaCard key={game.id} item={game} type="game" />
             ))}
           </div>
         )}

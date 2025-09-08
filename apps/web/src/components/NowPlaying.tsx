@@ -2,54 +2,15 @@
 
 import { MediaCard, MediaItem } from "@/components/ui/MediaCard"
 import Link from "next/link"
-import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { tmdbClient, tmdbMovieToMediaItem } from "@/lib/tmdb"
+import { useNowPlayingMovies } from "@/hooks/useNowPlayingMovies"
 
 interface NowPlayingProps {
   initialMovies?: MediaItem[]
 }
 
-export default function NowPlaying({ initialMovies }: NowPlayingProps) {
-  const [movies, setMovies] = useState<MediaItem[]>(initialMovies || [])
-  const [loading, setLoading] = useState(!initialMovies)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (initialMovies) return
-
-    const fetchNowPlayingMovies = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        
-        // Fetch genres first for proper mapping
-        const [moviesResponse, genresResponse] = await Promise.all([
-          tmdbClient.getNowPlayingHorrorMovies(1),
-          tmdbClient.getMovieGenres()
-        ])
-
-        // Filter and convert TMDB movies to MediaItem format
-        const horrorMovies = moviesResponse.results.filter(movie => 
-          movie.genre_ids.includes(27) && // Ensure horror genre ID 27
-          !movie.genre_ids.includes(16) // Exclude animation genre ID 16
-        )
-        
-        const mediaItems = horrorMovies
-          .slice(0, 8) // Limit to 8 movies
-          .map(movie => tmdbMovieToMediaItem(movie, genresResponse.genres))
-
-        setMovies(mediaItems)
-      } catch (err) {
-        console.error('Error fetching now playing movies:', err)
-        setError('Failed to load movies. Please try again later.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchNowPlayingMovies()
-  }, [initialMovies])
+export default function NowPlaying({ initialMovies = [] }: NowPlayingProps) {
+  const { data: movies = [], isLoading, isError, refetch } = useNowPlayingMovies(initialMovies)
   return (
     <section className="py-10">
       <div className="container mx-auto px-4">
@@ -67,7 +28,7 @@ export default function NowPlaying({ initialMovies }: NowPlayingProps) {
           </Button>
         </div>
         
-        {loading && (
+        {isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-96" />
@@ -75,19 +36,20 @@ export default function NowPlaying({ initialMovies }: NowPlayingProps) {
           </div>
         )}
 
-        {error && (
+        {isError && (
           <div className="text-center py-8">
-            <p className="text-red-400 mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            <p className="text-red-400 mb-4">Failed to load movies. Please try again.</p>
+            <Button 
+              onClick={() => refetch()}
+              variant="outline"
+              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
             >
               Retry
-            </button>
+            </Button>
           </div>
         )}
 
-        {!loading && !error && (
+        {!isLoading && !isError && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {movies.map((movie) => (
               <MediaCard

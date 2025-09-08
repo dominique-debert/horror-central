@@ -2,125 +2,49 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Play, Info, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Play, Info, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
-import { tmdbClient, getBackdropUrl } from "@/lib/tmdb"
-import type { TMDBMovie } from "@/lib/tmdb"
+import { getBackdropUrl } from "@/lib/tmdb"
 import { LanguageBadge } from "@/components/ui/LanguageBadge"
 import { MediaTypeBadge } from "@/components/ui/MediaTypeBadge"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { useHeroContent } from "@/hooks/useHeroContent"
 
+interface TMDBVideo {
+  id: string
+  key: string
+  name: string
+  site: string
+  type: string
+  official: boolean
+  published_at: string
+}
 
-interface HeroMedia {
+interface TMDBVideosResponse {
   id: number
-  title: string
-  overview: string
-  backdrop_path: string | null
-  genre_ids: number[]
-  original_language: string
-  type: 'movie' | 'tv'
-  release_date?: string
-  first_air_date?: string
+  results: TMDBVideo[]
 }
 
-interface HeroSectionProps {
-  // Optional props for manual override
-  featuredMovies?: TMDBMovie[]
-  title?: string
-  description?: string
-  backgroundImage?: string
-  trailerUrl?: string
-  moreInfoUrl?: string
-}
-
-export default function HeroSection({ featuredMovies }: HeroSectionProps) {
-  const [heroMedia, setHeroMedia] = useState<HeroMedia[]>([])
+export default function HeroSection() {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [selectedTrailer, setSelectedTrailer] = useState<{key: string, name: string} | null>(null)
   const [trailers, setTrailers] = useState<Record<number, {key: string, name: string}[]>>({})
-
+  
+  const { data: heroMedia = [], isLoading, isError } = useHeroContent()
+  
+  // Auto-rotate hero content every 8 seconds
   useEffect(() => {
-    const fetchFeaturedContent = async () => {
-      if (featuredMovies) {
-        const movieMedia: HeroMedia[] = featuredMovies.map(movie => ({
-          ...movie,
-          title: movie.title,
-          type: 'movie' as const
-        }))
-        setHeroMedia(movieMedia)
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        
-        // Fetch multiple pages to get more content
-        const [popularMovies1, popularMovies2, topRatedTVShows1, topRatedTVShows2] = await Promise.all([
-          tmdbClient.getPopularHorrorMovies(1),
-          tmdbClient.getPopularHorrorMovies(2),
-          tmdbClient.getAllTimeTopRatedHorrorTVShows({ page: 1 }),
-          tmdbClient.getAllTimeTopRatedHorrorTVShows({ page: 2 })
-        ])
-
-        // Convert movies to HeroMedia format
-        const movieMedia: HeroMedia[] = [
-          ...popularMovies1.results, 
-          ...popularMovies2.results
-        ]
-          .filter((movie, index, self) => 
-            index === self.findIndex(m => m.id === movie.id)
-          )
-          .filter(movie => 
-            movie.backdrop_path && 
-            movie.overview && 
-            movie.vote_average >= 6.0 &&
-            movie.vote_count >= 100
-          )
-          .map(movie => ({
-            ...movie,
-            title: movie.title,
-            type: 'movie' as const
-          }))
-
-        // Convert TV shows to HeroMedia format
-        const tvMedia: HeroMedia[] = [
-          ...topRatedTVShows1.results,
-          ...topRatedTVShows2.results
-        ]
-          .filter(show => 
-            show.backdrop_path && 
-            show.overview && 
-            show.vote_average >= 6.5 &&
-            show.vote_count >= 50
-          )
-          .map(show => ({
-            id: show.id,
-            title: show.name,
-            overview: show.overview,
-            backdrop_path: show.backdrop_path,
-            genre_ids: show.genre_ids,
-            original_language: show.original_language,
-            type: 'tv' as const,
-            first_air_date: show.first_air_date
-          }))
-
-        // Mix movies and TV shows, getting more content
-        const allMedia = [...movieMedia.slice(0, 7), ...tvMedia.slice(0, 3)]
-        const shuffledMedia = allMedia.sort(() => Math.random() - 0.5)
-
-        setHeroMedia(shuffledMedia.slice(0, 10))
-      } catch (error) {
-        console.error('Failed to load featured content:', error)
-        // Failed to load featured content, use empty array
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchFeaturedContent()
-  }, [featuredMovies])
+    if (heroMedia.length <= 1) return
+    
+    const timer = setInterval(() => {
+      setCurrentMediaIndex(prev => (prev + 1) % heroMedia.length)
+    }, 8000)
+    
+    return () => clearInterval(timer)
+  }, [heroMedia.length])
+  
+  // If we have featured movies prop, we can use that instead of fetched content
+  // Currently using useHeroContent hook for data fetching
 
   // Manual navigation functions
   const nextMedia = () => {
@@ -130,16 +54,6 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
   const prevMedia = () => {
     setCurrentMediaIndex((prev) => (prev - 1 + heroMedia.length) % heroMedia.length)
   }
-
-  // Auto-rotate through movies every 8 seconds
-  useEffect(() => {
-    if (heroMedia.length === 0) return
-    
-    const interval = setInterval(() => {
-      setCurrentMediaIndex((prev) => (prev + 1) % heroMedia.length)
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [heroMedia.length])
 
   // Get current movie from the rotation
   const currentMedia = heroMedia[currentMediaIndex]
@@ -151,17 +65,28 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
     const fetchTrailers = async () => {
       try {
         const url = currentMedia.type === 'movie' 
-          ? `/api/movies/${currentMedia.id}`
-          : `/api/tv/${currentMedia.id}`;
+          ? `/api/movies/${currentMedia.id}/videos`
+          : `/api/tv/${currentMedia.id}/videos`;
         
         const response = await fetch(url);
-        const data = await response.json();
+        if (!response.ok) throw new Error('Failed to fetch trailers');
         
-        if (data.trailers && data.trailers.length > 0) {
-          setTrailers(prev => ({
-            ...prev,
-            [currentMedia.id]: data.trailers
+        const data: TMDBVideosResponse = await response.json();
+        const videoTrailers = data.results
+          .filter((video) => video.site === 'YouTube' && video.type === 'Trailer')
+          .map((video) => ({
+            key: video.key,
+            name: video.name
           }));
+          
+        setTrailers(prev => ({
+          ...prev,
+          [currentMedia.id]: videoTrailers
+        }));
+        
+        // Auto-play the first trailer if available
+        if (videoTrailers.length > 0) {
+          setSelectedTrailer(videoTrailers[0]);
         }
       } catch (error) {
         console.error('Error fetching trailers:', error);
@@ -169,12 +94,15 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
     };
 
     fetchTrailers();
-  }, [currentMedia]);
+  }, [currentMedia, trailers]);
 
   const handleWatchTrailer = () => {
-    if (!currentMedia || !trailers[currentMedia.id]?.length) {
+    if (!currentMedia) return;
+    
+    if (!trailers[currentMedia.id]?.length) {
       // If no trailers, fall back to TMDB page
-      window.open(moreInfoUrl, '_blank');
+      const tmdbUrl = `https://www.themoviedb.org/${currentMedia.type}/${currentMedia.id}`;
+      window.open(tmdbUrl, '_blank');
       return;
     }
     
@@ -208,19 +136,22 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
 
   const displayGenres = getDisplayGenres()
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <section className="relative h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-xl">Loading featured content...</div>
-      </section>
+      <div className="relative h-[80vh] w-full bg-gray-900 flex items-center justify-center">
+        <div className="animate-pulse w-full h-full bg-gray-800"></div>
+      </div>
     )
   }
 
-  if (heroMedia.length === 0) {
+  if (isError || heroMedia.length === 0) {
     return (
-      <section className="relative h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-xl">No featured content available</div>
-      </section>
+      <div className="relative h-[60vh] w-full bg-gray-900 flex items-center justify-center">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold text-white mb-4">Failed to load featured content</h2>
+          <p className="text-gray-400">Please try refreshing the page</p>
+        </div>
+      </div>
     )
   }
 

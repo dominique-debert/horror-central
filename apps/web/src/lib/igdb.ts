@@ -1,6 +1,6 @@
 // Client-side IGDB API wrapper using Next.js API routes
 
-interface GameItem {
+export interface GameItem {
   id: string
   title: string
   posterUrl: string
@@ -54,6 +54,22 @@ class IGDBClient {
       return data.games || []
     } catch (error) {
       console.error('Error fetching horror games:', error)
+      return []
+    }
+  }
+
+  async searchGames(query: string, limit: number = 20): Promise<GameItem[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}?type=search&q=${encodeURIComponent(query)}&limit=${limit}`)
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data: GamesApiResponse = await response.json()
+      return data.games || []
+    } catch (error) {
+      console.error('Error searching games:', error)
       return []
     }
   }
