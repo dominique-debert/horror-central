@@ -138,6 +138,34 @@ class TMDBClient {
     return this.request<ITMDBResponse<ITMDBMovie>>('/discover/movie', requestParams)
   }
 
+  // Search movies
+  async searchMovies(query: string, page: number = 1): Promise<ITMDBResponse<ITMDBMovie>> {
+    return this.request<ITMDBResponse<ITMDBMovie>>('/search/movie', {
+      query,
+      page,
+      include_adult: false,
+      language: 'en-US',
+    })
+  }
+
+  // Search TV shows
+  async searchTVShows(query: string, page: number = 1): Promise<ITMDBResponse<ITMDBTVShow>> {
+    return this.request<ITMDBResponse<ITMDBTVShow>>('/search/tv', {
+      query,
+      page,
+      include_adult: false,
+      language: 'en-US',
+    })
+  }
+
+  // Get movie details by ID
+  async getMovieDetails(id: string): Promise<ITMDBMovieDetails> {
+    return this.request<ITMDBMovieDetails>(`/movie/${id}`, {
+      append_to_response: 'videos,credits,watch/providers',
+      language: 'en-US',
+    })
+  }
+
   // Get movie details including runtime and director
   async getMovieDetailsWithCredits(movieId: number): Promise<ITMDBMovieDetails> {
     return this.request<ITMDBMovieDetails>(`/movie/${movieId}`, {

@@ -404,7 +404,7 @@ export default function ComingSoonPage() {
                     
                     <div className="flex flex-wrap gap-1 mb-4">
                       {item.genre.slice(0, 3).map((g: string) => (
-                        <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
+                        <Badge key={g} variant="outline" className="text-xs border-slate-600 text-slate-300">
                           {g}
                         </Badge>
                       ))}
@@ -412,7 +412,7 @@ export default function ComingSoonPage() {
                     
                     <div className="mt-auto">
                       <Link href={`/details/${item.type}/${item.id.replace('movie-', '')}`}>
-                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                        <Button className="w-full bg-slate-600 hover:bg-slate-700 text-white cursor-pointer">
                           More Info
                         </Button>
                       </Link>
