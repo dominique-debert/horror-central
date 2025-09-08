@@ -1,5 +1,5 @@
-import { Context } from 'hono'
-import { UserSchema } from '../types/user'
+import { Context } from 'hono';
+import { UserSchema, IUserResponse, ILoginResponse, IPrismaUser } from '../types';
 import { hashPassword, verifyPassword } from '../lib/auth/password'
 import { generateToken } from '../lib/auth/jwt'
 import { prisma } from '../lib/prisma-client'
@@ -30,12 +30,27 @@ export const register = async (c: Context) => {
         password: hashedPassword,
         name: validatedData.name,
       },
-    })
+    }) as IPrismaUser;
 
     // Generate JWT
-    const token = generateToken(user.id)
+    const token = generateToken(user.id, user.role);
 
-    return c.json({ token, user: { id: user.id, email: user.email, name: user.name } })
+    const response: IUserResponse = {
+      id: user.id,
+      email: user.email,
+      name: user.name || undefined,
+      image: user.image || undefined,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    };
+    
+    const loginResponse: ILoginResponse = {
+      user: response,
+      token
+    };
+    
+    return c.json(loginResponse);
   } catch (error) {
     console.error('Registration error:', error)
     return c.json({ error: 'Registration failed' }, 500)
@@ -49,22 +64,37 @@ export const login = async (c: Context) => {
     // Find user
     const user = await prisma.user.findUnique({
       where: { email },
-    })
+    }) as IPrismaUser | null;
 
     if (!user) {
-      return c.json({ error: 'Invalid credentials' }, 401)
+      return c.json({ error: 'Invalid credentials' }, 401);
     }
 
     // Verify password
-    const isValid = await verifyPassword(password, user.password)
+    const isValid = await verifyPassword(password, user.password);
     if (!isValid) {
-      return c.json({ error: 'Invalid credentials' }, 401)
+      return c.json({ error: 'Invalid credentials' }, 401);
     }
 
     // Generate JWT
-    const token = generateToken(user.id)
+    const token = generateToken(user.id, user.role);
 
-    return c.json({ token, user: { id: user.id, email: user.email, name: user.name } })
+    const response: IUserResponse = {
+      id: user.id,
+      email: user.email,
+      name: user.name || undefined,
+      image: user.image || undefined,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    };
+    
+    const loginResponse: ILoginResponse = {
+      user: response,
+      token
+    };
+    
+    return c.json(loginResponse);
   } catch (error) {
     console.error('Login error:', error)
     return c.json({ error: 'Login failed' }, 500)
