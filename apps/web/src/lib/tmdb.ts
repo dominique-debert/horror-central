@@ -468,6 +468,36 @@ class TMDBClient {
   async getTVGenres(): Promise<{ genres: ITMDBGenre[] }> {
     return this.request<{ genres: ITMDBGenre[] }>('/genre/tv/list')
   }
+
+  // Get movie videos (trailers, teasers, etc.)
+  async getMovieVideos(movieId: number): Promise<{ id: number; results: Array<{
+    id: string;
+    key: string;
+    name: string;
+    site: string;
+    type: string;
+    official: boolean;
+    published_at: string;
+  }> }> {
+    return this.request(`/movie/${movieId}/videos`, {
+      language: 'en-US'
+    });
+  }
+
+  // Get TV show videos (trailers, teasers, etc.)
+  async getTVVideos(tvId: number): Promise<{ id: number; results: Array<{
+    id: string;
+    key: string;
+    name: string;
+    site: string;
+    type: string;
+    official: boolean;
+    published_at: string;
+  }> }> {
+    return this.request(`/tv/${tvId}/videos`, {
+      language: 'en-US'
+    });
+  }
 }
 
 // Utility functions for image URLs

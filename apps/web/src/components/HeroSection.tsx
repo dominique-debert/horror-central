@@ -83,11 +83,6 @@ export default function HeroSection() {
           ...prev,
           [currentMedia.id]: videoTrailers
         }));
-        
-        // Auto-play the first trailer if available
-        if (videoTrailers.length > 0) {
-          setSelectedTrailer(videoTrailers[0]);
-        }
       } catch (error) {
         console.error('Error fetching trailers:', error);
       }
@@ -96,18 +91,52 @@ export default function HeroSection() {
     fetchTrailers();
   }, [currentMedia, trailers]);
 
-  const handleWatchTrailer = () => {
+  const handleWatchTrailer = async () => {
     if (!currentMedia) return;
     
-    if (!trailers[currentMedia.id]?.length) {
-      // If no trailers, fall back to TMDB page
-      const tmdbUrl = `https://www.themoviedb.org/${currentMedia.type}/${currentMedia.id}`;
-      window.open(tmdbUrl, '_blank');
+    // If we already have trailers for this media, show the first one
+    if (trailers[currentMedia.id]?.length) {
+      setSelectedTrailer(trailers[currentMedia.id][0]);
       return;
     }
     
-    // Use the first available trailer
-    setSelectedTrailer(trailers[currentMedia.id][0]);
+    try {
+      // Try to fetch trailers if we don't have them yet
+      const url = currentMedia.type === 'movie' 
+        ? `/api/movies/${currentMedia.id}/videos`
+        : `/api/tv/${currentMedia.id}/videos`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch trailers');
+      
+      const data: TMDBVideosResponse = await response.json();
+      const videoTrailers = data.results
+        .filter((video) => video.site === 'YouTube' && video.type === 'Trailer')
+        .map((video) => ({
+          key: video.key,
+          name: video.name
+        }));
+      
+      // Update the trailers state
+      setTrailers(prev => ({
+        ...prev,
+        [currentMedia.id]: videoTrailers
+      }));
+      
+      // If we found trailers, show the first one
+      if (videoTrailers.length > 0) {
+        setSelectedTrailer(videoTrailers[0]);
+      } else {
+        // If no trailers found, fall back to TMDB page
+        const tmdbUrl = `https://www.themoviedb.org/${currentMedia.type}/${currentMedia.id}`;
+        window.open(tmdbUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Error playing trailer:', error);
+      // Fall back to TMDB page if there's an error
+      const tmdbUrl = `https://www.themoviedb.org/${currentMedia.type}/${currentMedia.id}`;
+      window.open(tmdbUrl, '_blank');
+    }
   };
 
   const moreInfoUrl = currentMedia?.type === 'movie' 
@@ -272,13 +301,20 @@ export default function HeroSection() {
           </DialogTitle>
           <div className="aspect-video w-full">
             {selectedTrailer && (
-              <iframe
-                src={`https://www.youtube.com/embed/${selectedTrailer.key}?autoplay=1`}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title={selectedTrailer.name}
-              />
+              <div className="relative w-full h-full">
+                <iframe
+                  src={`https://www.youtube.com/embed/${selectedTrailer.key}?rel=0&showinfo=0`}
+                  className="w-full h-full"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={selectedTrailer.name}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-black/50 rounded-full p-4">
+                    <Play className="h-16 w-16 text-white" />
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </DialogContent>
