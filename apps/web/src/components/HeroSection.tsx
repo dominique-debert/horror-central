@@ -346,7 +346,7 @@ export default function HeroSection() {
             <div className="flex flex-wrap gap-4 ml-10 mt-15">
               <button
                 onClick={handleWatchTrailer}
-                className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-black/80 text-white border border-white/30 px-4 py-2 text-sm rounded-md font-medium transition-colors"
+                className="flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-800 text-white border border-white/30 px-4 py-2 text-sm rounded-md font-medium transition-colors cursor-pointer"
                 type="button"
               >
                 <Play className="w-5 h-5" />
@@ -355,7 +355,7 @@ export default function HeroSection() {
               
               <button
                 onClick={handleMoreInfo}
-                className="flex items-center justify-center gap-1.5 bg-black/60 hover:bg-black/80 text-white border border-white/30 px-4 py-2 text-sm rounded-md font-medium transition-colors"
+                className="flex items-center justify-center gap-1.5 bg-black/60 hover:bg-black/80 text-white border border-white/30 px-4 py-2 text-sm rounded-md font-medium transition-colors cursor-pointer"
                 type="button"
               >
                 <Info className="w-5 h-5" />

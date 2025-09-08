@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Search, Filter, Calendar, Clock, Film, Tv, SortAsc, SortDesc, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
 import { tmdbClient, getImageUrl } from '@/lib/tmdb'
-import type { TMDBMovie, TMDBTVShow } from '@/lib/tmdb'
+import type { ITMDBMovie, ITMDBTVShow } from '@/types'
 import Image from 'next/image'
 
 interface ComingSoonItem {
@@ -20,7 +21,7 @@ interface ComingSoonItem {
   anticipationScore: number
   description: string
   type: 'movie' | 'tv'
-  originalData: TMDBMovie | TMDBTVShow
+  originalData: ITMDBMovie | ITMDBTVShow
 }
 
 export default function ComingSoonPage() {
@@ -410,9 +411,11 @@ export default function ComingSoonPage() {
                     </div>
                     
                     <div className="mt-auto">
-                      <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
-                        More Info
-                      </Button>
+                      <Link href={`/details/${item.type}/${item.id.replace('movie-', '')}`}>
+                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                          More Info
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>
