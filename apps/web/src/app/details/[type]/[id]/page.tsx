@@ -466,46 +466,6 @@ export default function MediaDetailsPage() {
             </div>
           )}
 
-          {/* Crew */}
-          {media.crew && media.crew.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Key Crew</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {media.crew.slice(0, 8).map((crewMember) => (
-                  <div key={`${crewMember.id}-${crewMember.job}`} className="text-center">
-                    <div className="relative aspect-[2/3] mb-2 rounded-lg overflow-hidden bg-gray-800">
-                      {crewMember.profile_path ? (
-                        <Image
-                          src={`https://image.tmdb.org/t/p/w185${crewMember.profile_path}`}
-                          alt={crewMember.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <User className="w-8 h-8 text-gray-600" />
-                        </div>
-                      )}
-                    </div>
-                    <h4 className="text-sm font-medium text-white mb-1 line-clamp-2">
-                      {crewMember.name}
-                    </h4>
-                    <p className="text-xs text-gray-400 line-clamp-2">
-                      {crewMember.job}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              {media.crew.length > 8 && (
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-gray-400">
-                    And {media.crew.length - 8} more crew members
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Platform (Games) */}
           {type === 'game' && media.platform && (
             <div>
@@ -528,15 +488,29 @@ export default function MediaDetailsPage() {
                 <Play className="w-6 h-6 text-red-600" />
                 Trailers & Clips
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
                 {media.trailers.map((trailer) => (
                   <div 
                     key={trailer.id} 
                     className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => setSelectedTrailer({ key: trailer.key, name: trailer.name })}
                   >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-red-600 rounded-full p-3">
+                    {/* YouTube Thumbnail - Using maxresdefault for best quality */}
+                    <div className="absolute inset-0">
+                      <Image
+                        src={`https://img.youtube.com/vi/${trailer.key}/maxresdefault.jpg`}
+                        alt={trailer.name}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          // Fallback to a lower quality thumbnail if maxresdefault is not available
+                          const target = e.target as HTMLImageElement;
+                          target.src = `https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg`;
+                        }}
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black/30 hover:bg-black/10 transition-colors flex items-center justify-center">
+                      <div className="bg-red-600 rounded-full p-3 hover:scale-110 transition-transform">
                         <Play className="w-6 h-6 text-white" />
                       </div>
                     </div>
