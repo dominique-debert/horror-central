@@ -1,9 +1,9 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { MediaCard } from "@/components/ui/MediaCard"
-import { useTopRatedBooks } from "@/hooks/useBooks"
 
 interface BookItem {
   id: string
@@ -18,27 +18,86 @@ interface BookItem {
   slug: string
 }
 
-interface TopRatedBooksProps {
-  initialBooks?: BookItem[]
-}
+export default function TopRatedBooks() {
+  const [books, setBooks] = useState<BookItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-export default function TopRatedBooks({ initialBooks = [] }: TopRatedBooksProps) {
-  const { data, isLoading, isError, refetch } = useTopRatedBooks(12)
-  
-  // Use initial data if provided, otherwise use data from the query
-  const books = initialBooks.length > 0 ? initialBooks : data || []
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        setIsLoading(true)
+        // Use the same endpoint as the books page
+        const response = await fetch('/api/books?type=all-time-top-rated&page=1&sortBy=rating.desc&limit=8')
+        if (!response.ok) {
+          throw new Error('Failed to fetch books')
+        }
+        const data = await response.json()
+        // Ensure we only show 8 books
+        setBooks((data.books || []).slice(0, 8))
+        setError(null)
+      } catch (err) {
+        console.error('Error fetching books:', err)
+        // Fallback to the simpler endpoint if the first one fails
+        try {
+          const fallbackResponse = await fetch('/api/books?type=top-rated&limit=8')
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json()
+            // Ensure we only show 8 books in fallback as well
+            setBooks((fallbackData.books || []).slice(0, 8))
+            setError(null)
+            return
+          }
+        } catch (fallbackErr) {
+          console.error('Fallback fetch failed:', fallbackErr)
+        }
+        setError('Failed to load books. Please try again later.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  if (isError) {
+    fetchBooks()
+  }, [])
+
+  if (isLoading) {
     return (
       <section className="py-10">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-12">
             <div>
               <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h2>
-              <p className="text-red-400">Failed to load books. Please try again later.</p>
+              <p className="text-gray-400">Discover the most terrifying reads</p>
+            </div>
+            <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+              <Link href="/books">View All</Link>
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-4">
+                <div className="h-64 w-full bg-gray-800 rounded-lg animate-pulse" />
+                <div className="h-6 w-3/4 bg-gray-800 rounded animate-pulse" />
+                <div className="h-4 w-1/2 bg-gray-800 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h2>
+              <p className="text-red-400">{error}</p>
             </div>
             <Button 
-              onClick={() => refetch()}
+              onClick={() => window.location.reload()}
               variant="outline" 
               className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
             >
@@ -50,41 +109,18 @@ export default function TopRatedBooks({ initialBooks = [] }: TopRatedBooksProps)
     )
   }
 
-  if (isLoading) {
+  if (books.length === 0) {
     return (
       <section className="py-10">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-12">
             <div>
               <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h2>
-              <p className="text-gray-400 text-lg">
-                Discover the most influential and terrifying horror literature that has shaped the genre for generations
-              </p>
+              <p className="text-gray-400">No books found. Please try again later.</p>
             </div>
             <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
-              <Link href="/books">
-                View All
-              </Link>
+              <Link href="/books">View All</Link>
             </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="bg-gray-800 rounded-lg aspect-[2/3] animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  if (books.length === 0) {
-    return (
-      <section className="py-10">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h2 className="text-4xl font-bold text-white mb-4">No Books Found</h2>
-            <p className="text-gray-400">We couldn't find any top rated books at the moment.</p>
           </div>
         </div>
       </section>
@@ -97,19 +133,15 @@ export default function TopRatedBooks({ initialBooks = [] }: TopRatedBooksProps)
         <div className="flex items-center justify-between mb-12">
           <div>
             <h2 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h2>
-            <p className="text-gray-400 text-lg">
-              Discover the most influential and terrifying horror literature that has shaped the genre for generations
-            </p>
+            <p className="text-gray-400">Discover the most terrifying reads</p>
           </div>
           <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
-            <Link href="/books">
-              View All
-            </Link>
+            <Link href="/books">View All</Link>
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {books.slice(0, 8).map((book) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {books.map((book) => (
             <MediaCard
               key={book.id}
               item={{
@@ -121,14 +153,13 @@ export default function TopRatedBooks({ initialBooks = [] }: TopRatedBooksProps)
                 pages: book.pages,
                 author: book.author,
                 description: book.description,
-                genre: book.genre,
-                slug: book.slug
+                genre: book.genre?.length ? book.genre : ['Horror'],
+                slug: book.slug || book.id
               }}
               type="book"
             />
           ))}
         </div>
-
       </div>
     </section>
   )
