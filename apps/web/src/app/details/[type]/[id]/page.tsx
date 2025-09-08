@@ -250,7 +250,7 @@ export default function MediaDetailsPage() {
   const imageUrl = media.posterUrl || media.coverUrl || '/placeholder-poster.jpg'
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="container mx-auto px-4">
       {/* Trailer Modal */}
       <Dialog open={!!selectedTrailer} onOpenChange={(open: boolean) => !open && setSelectedTrailer(null)}>
         <DialogContent className="max-w-4xl p-0 bg-black border-0">

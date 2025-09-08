@@ -290,7 +290,7 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative h-full flex items-center">
         {/* Pagination Dots */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-20">
+        <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-20">
           {heroMedia.map((_, index) => (
             <button
               key={index}
@@ -401,7 +401,7 @@ export default function HeroSection() {
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
                 <p className="text-xl text-white mb-4">No trailer available</p>
-                <p className="text-gray-400 mb-6">`We couldn't find a trailer for this title.`</p>
+                <p className="text-gray-400 mb-6">We couldn&apos;t find a trailer for this title.</p>
                 <Button 
                   variant="outline" 
                   className="text-white border-white hover:bg-white/10"

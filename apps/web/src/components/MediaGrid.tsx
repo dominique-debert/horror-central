@@ -8,15 +8,6 @@ interface MediaGridProps {
 }
 
 export function MediaGrid({ items, mediaType }: MediaGridProps) {
-  // Debug log to check the items being passed to MediaGrid
-  console.log('MediaGrid items:', {
-    itemsCount: items?.length,
-    firstItem: items?.[0],
-    mediaType,
-    hasPosterPath: items?.[0]?.poster_path,
-    hasBackdropPath: items?.[0]?.backdrop_path
-  });
-
   if (!items || items.length === 0) {
     console.warn('No items found in MediaGrid');
     return <div className="text-center py-12">No items found</div>;
@@ -44,12 +35,12 @@ export function MediaGrid({ items, mediaType }: MediaGridProps) {
 
   return (
     <div className="w-full">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {validItems.map((item) => (
         <Link
           key={item.id}
-          href={`/${mediaType}/${item.id}`}
+          href={`/details/${mediaType}/${item.id}`}
           className="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
         >
           <Image
