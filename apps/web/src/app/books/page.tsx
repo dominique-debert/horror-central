@@ -1,104 +1,17 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { PageHeader } from '@/components/PageHeader'
-import { SearchAndFilterBooks } from '@/components/SearchAndFilterBooks'
+import { SearchAndFilter } from '@/components/SearchAndFilter'
 import { MediaCard } from '@/components/ui/MediaCard'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
 
-// Skeleton component for loading states
-const SkeletonCard = () => (
-  <div className="space-y-3">
-    <div className="h-64 w-full bg-gray-800 rounded-lg animate-pulse" />
-    <div className="h-5 w-4/5 bg-gray-800 rounded animate-pulse" />
-    <div className="h-4 w-1/3 bg-gray-800 rounded animate-pulse" />
-    <div className="flex justify-between items-center">
-      <div className="h-4 w-16 bg-gray-800 rounded animate-pulse" />
-      <div className="h-4 w-16 bg-gray-800 rounded animate-pulse" />
-    </div>
-  </div>
-)
-
-// Pagination components
-const Pagination = ({ children }: { children: React.ReactNode }) => (
-  <nav className="flex items-center justify-center">
-    <ul className="flex items-center space-x-1">
-      {children}
-    </ul>
-  </nav>
-)
-
-const PaginationContent = ({ children }: { children: React.ReactNode }) => (
-  <>{children}</>
-)
-
-const PaginationItem = ({ children }: { children: React.ReactNode }) => (
-  <li>{children}</li>
-)
-
-const PaginationButton = ({ 
-  isActive, 
-  onClick, 
-  children,
-  disabled = false,
-  className = ''
-}: { 
-  isActive?: boolean
-  onClick: () => void
-  children: React.ReactNode
-  disabled?: boolean
-  className?: string
-}) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    className={`px-3 py-1 rounded-md ${isActive ? 'bg-red-600 text-white' : 'text-gray-300 hover:bg-gray-800'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
-  >
-    {children}
-  </button>
-)
-
-const PaginationPrevious = ({ 
-  onClick, 
-  disabled = false,
-  className = ''
-}: { 
-  onClick: () => void
-  disabled?: boolean
-  className?: string
-}) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    className={`px-3 py-1 rounded-md text-gray-300 hover:bg-gray-800 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
-  >
-    Previous
-  </button>
-)
-
-const PaginationNext = ({ 
-  onClick, 
-  disabled = false,
-  className = ''
-}: { 
-  onClick: () => void
-  disabled?: boolean
-  className?: string
-}) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    className={`px-3 py-1 rounded-md text-gray-300 hover:bg-gray-800 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
-  >
-    Next
-  </button>
-)
-
-const PaginationEllipsis = () => (
-  <span className="px-3 py-1 text-gray-500">...</span>
-)
+// Types
+type SortOption = 'rating.desc' | 'first_publish_year.desc' | 'title.asc'
+type UISortOption = 'rating_desc' | 'year_desc' | 'title_asc'
 
 interface BookItem {
   id: string
@@ -112,6 +25,19 @@ interface BookItem {
   genre: string
   slug?: string
 }
+
+// Skeleton component for loading states
+const SkeletonCard = () => (
+  <div className="space-y-3">
+    <div className="h-64 w-full bg-gray-800 rounded-lg animate-pulse" />
+    <div className="h-5 w-4/5 bg-gray-800 rounded animate-pulse" />
+    <div className="h-4 w-1/3 bg-gray-800 rounded animate-pulse" />
+    <div className="flex justify-between items-center">
+      <div className="h-4 w-16 bg-gray-800 rounded animate-pulse" />
+      <div className="h-4 w-16 bg-gray-800 rounded animate-pulse" />
+    </div>
+  </div>
+)
 
 export default function BooksPage() {
   const router = useRouter()
@@ -131,7 +57,7 @@ export default function BooksPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDecade, setSelectedDecade] = useState('all')
   const [selectedAuthor, setSelectedAuthor] = useState('all')
-  const [sortBy, setSortBy] = useState('rating_desc')
+  const [sortBy, setSortBy] = useState<UISortOption>('rating_desc')
   
   // Available filters
   const decades = [
@@ -150,261 +76,265 @@ export default function BooksPage() {
     { value: 'h-p-lovecraft', label: 'H.P. Lovecraft' },
     { value: 'clive-barker', label: 'Clive Barker' },
     { value: 'shirley-jackson', label: 'Shirley Jackson' },
-    { value: 'dean-koontz', label: 'Dean Koontz' },
   ]
   
+  const sortOptions = [
+    { value: 'rating_desc', label: 'Highest Rated' },
+    { value: 'year_desc', label: 'Newest First' },
+    { value: 'title_asc', label: 'Title A-Z' },
+  ]
+  
+  // Map UI sort values to API sort values
+  const mapSortToApi = (sort: UISortOption): SortOption => {
+    switch (sort) {
+      case 'rating_desc': return 'rating.desc'
+      case 'year_desc': return 'first_publish_year.desc'
+      case 'title_asc': return 'title.asc'
+      default: return 'rating.desc'
+    }
+  }
+  
   // Fetch books from API
-  const fetchBooks = async (page: number, isFilterChange = false) => {
+  const fetchBooks = useCallback(async (page: number) => {
     try {
       setLoading(true)
+      setError(null)
       
-      // Build query params
       const params = new URLSearchParams()
+      params.set('type', 'all-time-top-rated')
       params.set('page', page.toString())
       params.set('limit', itemsPerPage.toString())
       
-      if (searchTerm) params.set('search', searchTerm)
-      if (selectedDecade !== 'all') params.set('decade', selectedDecade)
-      if (selectedAuthor !== 'all') params.set('author', selectedAuthor)
-      if (sortBy) params.set('sort', sortBy)
+      // Add filters
+      if (selectedDecade !== 'all') {
+        params.set('decade', selectedDecade)
+      }
       
-      const response = await fetch(`/api/books?${params.toString()}`)
+      if (selectedAuthor !== 'all') {
+        params.set('author', selectedAuthor)
+      }
+      
+      // Add sorting
+      params.set('sortBy', mapSortToApi(sortBy))
+      
+      // Handle search
+      const endpoint = searchTerm 
+        ? `/api/books?type=search&q=${encodeURIComponent(searchTerm)}&limit=${itemsPerPage}`
+        : `/api/books?${params.toString()}`
+      
+      const response = await fetch(endpoint)
       
       if (!response.ok) {
         throw new Error('Failed to fetch books')
       }
       
       const data = await response.json()
+      const books = data.books || data || []
+      const total = data.total || books.length
       
-      setBooks(data.books || [])
-      setTotalPages(Math.ceil((data.total || 0) / itemsPerPage))
+      setBooks(books)
+      setTotalPages(Math.ceil(total / itemsPerPage))
       
-      // Update URL without triggering a page reload
-      const newParams = new URLSearchParams(searchParams.toString())
-      newParams.set('page', page.toString())
-      router.push(`?${newParams.toString()}`, { scroll: false })
+      // Update URL without page reload
+      const url = new URL(window.location.href)
+      url.searchParams.set('page', page.toString())
+      if (searchTerm) url.searchParams.set('q', searchTerm)
+      if (selectedDecade !== 'all') url.searchParams.set('decade', selectedDecade)
+      if (selectedAuthor !== 'all') url.searchParams.set('author', selectedAuthor)
+      url.searchParams.set('sort', sortBy)
       
+      window.history.pushState({}, '', url.toString())
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
       console.error('Error fetching books:', err)
+      setError('Failed to load books. Please try again later.')
+      setBooks([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [searchTerm, selectedDecade, selectedAuthor, sortBy])
   
   // Handle page change
   const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return
-    
     setCurrentPage(newPage)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
     fetchBooks(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   
-  // Handle filter changes
-  const handleSearch = () => {
+  // Handle sort change
+  const handleSortChange = (value: string) => {
+    setSortBy(value as UISortOption)
     setCurrentPage(1)
-    fetchBooks(1, true)
+    fetchBooks(1) // Reset to first page when changing sort
   }
   
-  // Initialize page
+  // Initialize from URL params
   useEffect(() => {
-    // Get initial page from URL or default to 1
-    const page = parseInt(searchParams.get('page') || '1', 10)
-    setCurrentPage(isNaN(page) ? 1 : page)
+    const page = parseInt(searchParams.get('page') || '1')
+    const search = searchParams.get('q') || ''
+    const decade = searchParams.get('decade') || 'all'
+    const author = searchParams.get('author') || 'all'
+    const sort = (searchParams.get('sort') as UISortOption) || 'rating_desc'
     
-    // Initial data fetch
-    fetchBooks(isNaN(page) ? 1 : page)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    setCurrentPage(page)
+    setSearchTerm(search)
+    setSelectedDecade(decade)
+    setSelectedAuthor(author)
+    setSortBy(sort)
+  }, [searchParams])
   
-  // Generate pagination items
-  const paginationItems = useMemo(() => {
-    if (totalPages <= 1) return null
-    
-    const items = []
-    const maxVisiblePages = 5
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
-    
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1)
-    }
-    
-    // Previous button
-    items.push(
-      <PaginationItem key="prev">
-        <PaginationPrevious 
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        />
-      </PaginationItem>
-    )
-    
-    // First page
-    if (startPage > 1) {
-      items.push(
-        <PaginationItem key={1}>
-          <PaginationButton 
-            isActive={1 === currentPage}
-            onClick={() => handlePageChange(1)}
-          >
-            1
-          </PaginationButton>
-        </PaginationItem>
-      )
-      
-      if (startPage > 2) {
-        items.push(
-          <PaginationItem key="ellipsis-start">
-            <PaginationEllipsis />
-          </PaginationItem>
-        )
-      }
-    }
-    
-    // Page numbers
-    for (let i = startPage; i <= endPage; i++) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationButton
-            isActive={i === currentPage}
-            onClick={() => handlePageChange(i)}
-          >
-            {i}
-          </PaginationButton>
-        </PaginationItem>
-      )
-    }
-    
-    // Last page
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        items.push(
-          <PaginationItem key="ellipsis-end">
-            <PaginationEllipsis />
-          </PaginationItem>
-        )
-      }
-      
-      items.push(
-        <PaginationItem key={totalPages}>
-          <PaginationButton
-            isActive={totalPages === currentPage}
-            onClick={() => handlePageChange(totalPages)}
-          >
-            {totalPages}
-          </PaginationButton>
-        </PaginationItem>
-      )
-    }
-    
-    // Next button
-    items.push(
-      <PaginationItem key="next">
-        <PaginationNext 
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-        />
-      </PaginationItem>
-    )
-    
-    return items
-  }, [currentPage, totalPages])
+  // Fetch books when filters change
+  useEffect(() => {
+    fetchBooks(currentPage)
+  }, [fetchBooks, currentPage])
   
-  // Render skeleton loading states
+  // Render skeleton loaders
   const renderSkeletons = (count: number) => {
-    return Array(count).fill(0).map((_, i) => <SkeletonCard key={`skeleton-${i}`} />)
-  }
-
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        <PageHeader 
-          title="Top Rated Horror Books"
-          description="Discover the most acclaimed horror literature of all time, from classic gothic novels to modern psychological thrillers."
-        />
-
-        {/* Search and Filters */}
-        <div className="mb-8">
-          <SearchAndFilterBooks
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            selectedDecade={selectedDecade}
-            onDecadeChange={setSelectedDecade}
-            selectedAuthor={selectedAuthor}
-            onAuthorChange={setSelectedAuthor}
-            sortBy={sortBy}
-            onSortByChange={setSortBy}
-            availableDecades={decades}
-            availableAuthors={authors}
-            onSearch={handleSearch}
-          />
-        </div>
-
-        {/* Error State */}
-        {error && (
-          <div className="text-center py-12">
-            <p className="text-red-500 mb-4">{error}</p>
-            <Button onClick={() => fetchBooks(currentPage, true)}>Retry</Button>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && !error && books.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-400">No books found. Try adjusting your search filters.</p>
-          </div>
-        )}
-
-        {/* Books Grid */}
-        {!error && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {loading && books.length === 0 ? (
-                // Initial loading state
-                renderSkeletons(8)
-              ) : (
-                // Show actual book cards
-                books.map((book) => (
-                  <MediaCard
-                    key={book.id}
-                    item={{
-                      id: book.id,
-                      title: book.title,
-                      posterUrl: book.posterUrl,
-                      rating: book.rating,
-                      year: book.year,
-                      description: book.description,
-                      genre: book.genre,
-                      slug: book.slug || book.id,
-                      pages: book.pages
-                    }}
-                    type="book"
-                  />
-                ))
-              )}
-            </div>
-
-            {/* Loading more indicator */}
-            {loading && books.length > 0 && (
-              <div className="flex justify-center pt-4">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && !loading && (
-              <div className="mt-8">
-                <Pagination>
-                  <PaginationContent>
-                    {paginationItems}
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </div>
-        )}
+    return Array(count).fill(0).map((_, i) => (
+      <div key={i} className="col-span-1">
+        <SkeletonCard />
       </div>
+    ))
+  }
+  
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <PageHeader 
+        title="Horror Books"
+        description="Discover the most terrifying and thrilling horror books of all time"
+      />
+      
+      {/* Search and Filters */}
+      <div className="mb-8">
+        <SearchAndFilter
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedDecade={selectedDecade}
+          onDecadeChange={setSelectedDecade}
+          selectedAuthor={selectedAuthor}
+          onAuthorChange={setSelectedAuthor}
+          sortBy={sortBy}
+          onSortChange={handleSortChange}
+          decades={decades}
+          authors={authors}
+          sortOptions={sortOptions}
+        />
+      </div>
+      
+      {/* Loading and Error States */}
+      {loading && currentPage === 1 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {renderSkeletons(8)}
+        </div>
+      )}
+      
+      {error && (
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button 
+            onClick={() => fetchBooks(currentPage)}
+            variant="outline"
+            className="flex items-center gap-2 mx-auto"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Retry
+          </Button>
+        </div>
+      )}
+      
+      {/* Books Grid */}
+      {!loading && books.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+            {books.map((book) => (book && (
+              <MediaCard
+                key={book.id}
+                type="book"
+                item={{
+                  id: book.id,
+                  title: book.title,
+                  posterUrl: book.posterUrl || '/images/book-placeholder.jpg',
+                  coverUrl: book.posterUrl || '/images/book-placeholder.jpg',
+                  rating: book.rating || 0,
+                  year: book.year,
+                  description: book.description || '',
+                  genre: book.genre ? [book.genre] : ['Horror'],
+                  author: book.author || 'Unknown Author',
+                  pages: book.pages,
+                  slug: book.slug || book.id,
+                }}
+              />
+            )))}
+          </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number | 'ellipsis' = i + 1;
+                    
+                    // Handle ellipsis for large number of pages
+                    if (totalPages > 5) {
+                      if (currentPage > 3 && currentPage < totalPages - 2) {
+                        if (i === 0) return <PaginationItem key="first"><PaginationButton onClick={() => handlePageChange(1)}>1</PaginationButton></PaginationItem>;
+                        if (i === 1) return <PaginationItem key="ellipsis-start"><PaginationEllipsis /></PaginationItem>;
+                        pageNum = currentPage + i - 2;
+                        if (i === 3) return <PaginationItem key="ellipsis-end"><PaginationEllipsis /></PaginationItem>;
+                        if (i === 4) return <PaginationItem key="last"><PaginationButton onClick={() => handlePageChange(totalPages)}>{totalPages}</PaginationButton></PaginationItem>;
+                      } else if (currentPage <= 3) {
+                        if (i === 4) return <PaginationItem key="ellipsis"><PaginationEllipsis /></PaginationItem>;
+                      } else {
+                        if (i === 0) return <PaginationItem key="ellipsis"><PaginationEllipsis /></PaginationItem>;
+                        pageNum = totalPages - 4 + i;
+                      }
+                    }
+                    
+                    return (
+                      <PaginationItem key={pageNum}>
+                        {pageNum === 'ellipsis' ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationButton
+                            isActive={currentPage === pageNum}
+                            onClick={() => handlePageChange(pageNum as number)}
+                          >
+                            {pageNum}
+                          </PaginationButton>
+                        )}
+                      </PaginationItem>
+                    );
+                  })}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage >= totalPages}
+                      className={currentPage >= totalPages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </>
+      )}
+      
+      {/* No Results */}
+      {!loading && books.length === 0 && !error && (
+        <div className="text-center py-12">
+          <h3 className="text-xl font-semibold mb-2">No books found</h3>
+          <p className="text-gray-400">Try adjusting your search or filters</p>
+        </div>
+      )}
     </div>
   )
 }

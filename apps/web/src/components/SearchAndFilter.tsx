@@ -49,7 +49,7 @@ export function SearchAndFilter({
   const years = Array.from({ length: 10 }, (_, i) => (currentYear + i).toString());
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`mt-8 space-y-4 ${className}`}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="relative flex-1 max-w-2xl">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
