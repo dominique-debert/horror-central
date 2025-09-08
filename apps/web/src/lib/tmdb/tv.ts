@@ -1,29 +1,78 @@
 import { fetchFromTMDB } from './client';
 import { MediaItem, PaginatedResponse } from '@/types/media';
 
-type TVListType = 'popular' | 'airing_today' | 'on_the_air' | 'top_rated';
+type TVListType = 'popular' | 'airing_today' | 'on_the_air' | 'top_rated' | 'airing-today' | 'on-the-air' | 'top-rated';
 
+/**
+ * Get TV shows by list type
+ * @param listType - Can be either with underscores (airing_today) or hyphens (airing-today)
+ */
 export async function getTVShows(
-  listType: TVListType,
+  listType: string,
   page: number = 1
 ): Promise<PaginatedResponse<MediaItem>> {
-  const endpoint = `/tv/${listType}`;
-  const response = await fetchFromTMDB<PaginatedResponse<MediaItem>>(endpoint, {
-    page,
-    region: 'US',
-  });
+  try {
+    // Convert hyphens to underscores for the API endpoint
+    const normalizedListType = listType.replace(/-/g, '_') as TVListType;
+    const endpoint = `/tv/${normalizedListType}`;
+    
+    console.log(`Fetching TV shows from: ${endpoint} (page ${page})`);
+    
+    const response = await fetchFromTMDB<PaginatedResponse<any>>(endpoint, {
+      page,
+      region: 'US',
+    });
 
-  // Add media_type to each item in the response
-  const resultsWithType = response.results.map(item => ({
-    ...item,
-    media_type: 'tv' as const,
-    type: 'tv' as const
-  }));
+    console.log(`Received ${response.results?.length || 0} TV shows`);
 
-  return {
-    ...response,
-    results: resultsWithType
-  };
+    if (!response.results || response.results.length === 0) {
+      console.warn('No TV shows found in API response');
+      return {
+        page: 1,
+        results: [],
+        total_pages: 0,
+        total_results: 0
+      };
+    }
+
+    // Transform the API response to match our MediaItem type
+    const resultsWithType: MediaItem[] = response.results.map(item => ({
+      id: item.id,
+      title: item.name || item.original_name || 'Unknown Title',
+      name: item.name || item.original_name || 'Unknown Title',
+      poster_path: item.poster_path,
+      backdrop_path: item.backdrop_path,
+      overview: item.overview || 'No overview available',
+      vote_average: item.vote_average || 0,
+      vote_count: item.vote_count || 0,
+      release_date: item.first_air_date || item.release_date,
+      first_air_date: item.first_air_date,
+      media_type: 'tv',
+      type: 'tv',
+      original_title: item.original_name,
+      original_name: item.original_name,
+      genre_ids: item.genre_ids || [],
+      original_language: item.original_language || 'en',
+      popularity: item.popularity || 0,
+      adult: item.adult || false,
+      video: false
+    }));
+
+    return {
+      page: response.page || 1,
+      results: resultsWithType,
+      total_pages: response.total_pages || 1,
+      total_results: response.total_results || 0
+    };
+  } catch (error) {
+    console.error('Error in getTVShows:', error);
+    return {
+      page: 1,
+      results: [],
+      total_pages: 0,
+      total_results: 0
+    };
+  }
 }
 
 export async function getTVShowDetails(id: string | number) {

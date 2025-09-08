@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Play, Info, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
+// Link import removed as it's not used
 import { getBackdropUrl } from "@/lib/tmdb"
 import { LanguageBadge } from "@/components/ui/LanguageBadge"
 import { MediaTypeBadge } from "@/components/ui/MediaTypeBadge"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { useHeroContent } from "@/hooks/useHeroContent"
+import { fetchHeroContent } from "@/lib/utils/media"
+import { MediaItem } from "@/types/media"
+// Skeleton component removed as it's not used
 
 interface TMDBVideo {
   id: string
@@ -29,8 +32,28 @@ export default function HeroSection() {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
   const [selectedTrailer, setSelectedTrailer] = useState<{key: string, name: string} | null>(null)
   const [trailers, setTrailers] = useState<Record<number, {key: string, name: string}[]>>({})
+  const [heroMedia, setHeroMedia] = useState<MediaItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isError, setIsError] = useState(false)
   
-  const { data: heroMedia = [], isLoading, isError } = useHeroContent()
+  // Fetch hero content on component mount
+  useEffect(() => {
+    const loadHeroContent = async () => {
+      try {
+        setIsLoading(true)
+        const content = await fetchHeroContent()
+        setHeroMedia(content)
+        setIsError(false)
+      } catch (error) {
+        console.error('Failed to load hero content:', error)
+        setIsError(true)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadHeroContent()
+  }, [])
   
   // Auto-rotate hero content every 8 seconds
   useEffect(() => {
@@ -42,21 +65,30 @@ export default function HeroSection() {
     
     return () => clearInterval(timer)
   }, [heroMedia.length])
-  
-  // If we have featured movies prop, we can use that instead of fetched content
-  // Currently using useHeroContent hook for data fetching
 
   // Manual navigation functions
-  const nextMedia = () => {
-    setCurrentMediaIndex((prev) => (prev + 1) % heroMedia.length)
-  }
+  const nextMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('Next button clicked. Current index:', currentMediaIndex, 'Total items:', heroMedia.length);
+    setCurrentMediaIndex(prev => {
+      const nextIndex = (prev + 1) % heroMedia.length;
+      console.log('Next index:', nextIndex, 'Media type:', heroMedia[nextIndex]?.media_type);
+      return nextIndex;
+    });
+  };
 
-  const prevMedia = () => {
-    setCurrentMediaIndex((prev) => (prev - 1 + heroMedia.length) % heroMedia.length)
-  }
+  const prevMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('Previous button clicked. Current index:', currentMediaIndex, 'Total items:', heroMedia.length);
+    setCurrentMediaIndex(prev => {
+      const prevIndex = (prev - 1 + heroMedia.length) % heroMedia.length;
+      console.log('Previous index:', prevIndex, 'Media type:', heroMedia[prevIndex]?.media_type);
+      return prevIndex;
+    });
+  };
 
-  // Get current movie from the rotation
-  const currentMedia = heroMedia[currentMediaIndex]
+  // Get current media item - we know this is safe because of our loading/empty states
+  const currentMedia = heroMedia[currentMediaIndex];
 
   // Fetch trailers for the current media
   useEffect(() => {
@@ -134,41 +166,43 @@ export default function HeroSection() {
     } catch (error) {
       console.error('Error playing trailer:', error);
       // Fall back to TMDB page if there's an error
-      const tmdbUrl = `https://www.themoviedb.org/${currentMedia.type}/${currentMedia.id}`;
-      window.open(tmdbUrl, '_blank');
+      if (currentMedia?.media_type && currentMedia?.id) {
+        const tmdbUrl = `https://www.themoviedb.org/${currentMedia.media_type}/${currentMedia.id}`;
+        window.open(tmdbUrl, '_blank');
+      }
     }
   };
 
-  const moreInfoUrl = currentMedia?.type === 'movie' 
-    ? `https://www.themoviedb.org/movie/${currentMedia?.id}`
-    : `https://www.themoviedb.org/tv/${currentMedia?.id}`
+  // Generate TMDB URL for more info
+  const moreInfoUrl = currentMedia?.media_type && currentMedia?.id
+    ? `https://www.themoviedb.org/${currentMedia.media_type}/${currentMedia.id}`
+    : '#'
 
   // Get primary genre for badge
-  const getDisplayGenres = () => {
-    if (!currentMedia?.genre_ids) return []
+  const getDisplayGenres = (media: MediaItem) => {
+    if (!media?.genre_ids?.length) return [];
     
-    const genreMap: { [key: number]: string } = {
+    const genreMap: Record<number, string> = {
       27: 'Horror',
-      53: 'Thriller', 
-      9648: 'Mystery',
-      878: 'Sci-Fi',
+      53: 'Thriller',
       14: 'Fantasy',
-      80: 'Crime',
-      18: 'Drama'
-    }
-    
-    return currentMedia.genre_ids
-      .map(id => genreMap[id])
-      .filter(Boolean)
-      .slice(0, 3)
-  }
+      878: 'Sci-Fi',
+      9648: 'Mystery',
+    };
 
-  const displayGenres = getDisplayGenres()
+    // Get unique genres and filter out undefined
+    return [...new Set(media.genre_ids)]
+      .map(id => genreMap[id])
+      .filter((genre): genre is string => Boolean(genre))
+      .slice(0, 3);
+  };
+
+  const displayGenres = getDisplayGenres(currentMedia);
 
   if (isLoading) {
     return (
-      <div className="relative h-[80vh] w-full bg-gray-900 flex items-center justify-center">
-        <div className="animate-pulse w-full h-full bg-gray-800"></div>
+      <div className="relative h-[60vh] w-full bg-gray-900 flex items-center justify-center">
+        <div className="text-white">Loading featured content...</div>
       </div>
     )
   }
@@ -177,8 +211,12 @@ export default function HeroSection() {
     return (
       <div className="relative h-[60vh] w-full bg-gray-900 flex items-center justify-center">
         <div className="text-center p-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Failed to load featured content</h2>
-          <p className="text-gray-400">Please try refreshing the page</p>
+          <h2 className="text-2xl font-bold text-white mb-4">
+            {isError ? 'Failed to load featured content' : 'No featured content available'}
+          </h2>
+          <p className="text-gray-400">
+            {isError ? 'Please try refreshing the page' : 'Check back later for updates'}
+          </p>
         </div>
       </div>
     )
@@ -189,8 +227,8 @@ export default function HeroSection() {
       {/* Background Image with smooth transition */}
       <div className="absolute inset-0">
         <Image
-          src={getBackdropUrl(currentMedia.backdrop_path!)}
-          alt={currentMedia.title}
+          src={getBackdropUrl(currentMedia.backdrop_path || '')}
+          alt={currentMedia.title || currentMedia.name || 'Media backdrop'}
           fill
           className="object-cover"
           priority
@@ -199,47 +237,49 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
       </div>
 
-      {/* Navigation Chevrons */}
-      {heroMedia.length > 1 && (
-        <>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="absolute left-8 top-1/2 transform -translate-y-1/2 text-white hover:bg-black/30 z-10"
-            onClick={prevMedia}
-          >
-            <ChevronLeft className="h-8 w-8" />
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="lg"
-            className="absolute right-8 top-1/2 transform -translate-y-1/2 text-white hover:bg-black/30 z-10"
-            onClick={nextMedia}
-          >
-            <ChevronRight className="h-8 w-8" />
-          </Button>
-        </>
-      )}
+      {/* Navigation Buttons - Increased z-index and added pointer-events-auto */}
+      <div className="absolute inset-0 z-20 flex items-center justify-between px-4">
+        <button
+          onClick={prevMedia}
+          className="h-14 w-14 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 shadow-lg pointer-events-auto"
+          aria-label="Previous media"
+          disabled={heroMedia.length <= 1}
+        >
+          <ChevronLeft className="h-8 w-8" />
+        </button>
+        
+        <button
+          onClick={nextMedia}
+          className="h-14 w-14 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 shadow-lg pointer-events-auto"
+          aria-label="Next media"
+          disabled={heroMedia.length <= 1}
+        >
+          <ChevronRight className="h-8 w-8" />
+        </button>
+      </div>
 
       {/* Content */}
       <div className="relative z-10 flex h-full items-center">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl space-y-6">
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              {currentMedia.title}
-            </h1>
+            {currentMedia && (
+              <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+                {currentMedia.title || currentMedia.name}
+              </h1>
+            )}
             
-            <p className="text-xl text-gray-300 mb-8 max-w-2xl leading-relaxed">
-              {currentMedia.overview}
-            </p>
+            {currentMedia?.overview && (
+              <p className="text-xl text-gray-300 mb-8 max-w-2xl leading-relaxed">
+                {currentMedia.overview}
+              </p>
+            )}
 
             <div className="flex items-center gap-3 mb-4">
               <span className="bg-green-800 text-white px-3 py-1 rounded-md text-sm font-semibold">
                 TRENDING
               </span>
               <div className="flex gap-2">
-                <MediaTypeBadge type={currentMedia.type} />
+                <MediaTypeBadge type={currentMedia.media_type} />
                 {displayGenres.map((genre, index) => (
                   <span 
                     key={index}
@@ -248,7 +288,7 @@ export default function HeroSection() {
                     {genre}
                   </span>
                 ))}
-                {currentMedia?.original_language && (
+                {currentMedia.original_language && (
                   <LanguageBadge language={currentMedia.original_language} />
                 )}
               </div>

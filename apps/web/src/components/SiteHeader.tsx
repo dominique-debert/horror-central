@@ -3,6 +3,7 @@
 import Link from "next/link"
 import SearchBar from "@/components/SearchBar"
 import ThemeToggle from "@/components/ThemeToggle"
+import { NavDropdown } from "@/components/NavDropdown"
 import { useAuth } from "@/context/auth-context"
 import { useMemo } from "react"
 import { Button } from "@/components/ui/button"
@@ -17,8 +18,6 @@ import {
 export default function SiteHeader() {
   const nav = [
     { name: "Home", href: "/" },
-    { name: "Movies", href: "/top-rated" },
-    { name: "TV Shows", href: "/top-rated-tv" },
     { name: "Games", href: "/games" },
     { name: "Books", href: "/books" },
   ]
@@ -36,7 +35,7 @@ export default function SiteHeader() {
         <Link href="/" className="font-semibold tracking-tight text-foreground">
           FreakyHub
         </Link>
-        <nav className="hidden gap-1 md:flex">
+        <nav className="hidden items-center gap-1 md:flex">
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -46,6 +45,7 @@ export default function SiteHeader() {
               {item.name}
             </Link>
           ))}
+          <NavDropdown />
         </nav>
         <div className="ml-auto flex items-center gap-3">
           <SearchBar />
