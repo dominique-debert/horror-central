@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { 
   Star, 
   Calendar, 
@@ -90,6 +91,16 @@ interface MediaDetails {
     type: string
     region: string
   }>
+  
+  // Trailers
+  trailers?: Array<{
+    id: string
+    key: string
+    name: string
+    site: string
+    type: string
+    official: boolean
+  }>
 }
 
 type MediaType = 'movie' | 'tv' | 'game' | 'book'
@@ -141,6 +152,7 @@ export default function MediaDetailsPage() {
   const [media, setMedia] = useState<MediaDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedTrailer, setSelectedTrailer] = useState<{key: string, name: string} | null>(null)
 
   const type = params?.type as string
   const id = params?.id as string
@@ -238,7 +250,23 @@ export default function MediaDetailsPage() {
   const imageUrl = media.posterUrl || media.coverUrl || '/placeholder-poster.jpg'
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Trailer Modal */}
+      <Dialog open={!!selectedTrailer} onOpenChange={(open: boolean) => !open && setSelectedTrailer(null)}>
+        <DialogContent className="max-w-4xl p-0 bg-black border-0">
+          <div className="aspect-video w-full">
+            {selectedTrailer && (
+              <iframe
+                src={`https://www.youtube.com/embed/${selectedTrailer.key}?autoplay=1`}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={selectedTrailer.name}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Back button */}
       <div className="mb-6">
         <Button asChild variant="ghost" className="text-gray-400 hover:text-white">
@@ -488,6 +516,41 @@ export default function MediaDetailsPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Trailers Section */}
+          {media.trailers && media.trailers.length > 0 && (
+            <section className="mt-12">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Play className="w-6 h-6 text-red-600" />
+                Trailers & Clips
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {media.trailers.map((trailer) => (
+                  <div 
+                    key={trailer.id} 
+                    className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedTrailer({ key: trailer.key, name: trailer.name })}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-red-600 rounded-full p-3">
+                        <Play className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                      <h3 className="text-white font-medium line-clamp-2">
+                        {trailer.name}
+                        {trailer.official && (
+                          <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded">
+                            Official
+                          </span>
+                        )}
+                      </h3>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
           {/* VOD Providers */}

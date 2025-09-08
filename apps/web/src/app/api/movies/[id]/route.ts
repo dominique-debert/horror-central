@@ -3,6 +3,20 @@ import { NextRequest, NextResponse } from 'next/server'
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 
+interface TMDBVideo {
+  id: string
+  key: string
+  name: string
+  site: string
+  type: string
+  official: boolean
+  published_at: string
+}
+
+interface TMDBVideosResponse {
+  results: TMDBVideo[]
+}
+
 interface TMDBMovieDetails {
   id: number
   title: string
@@ -23,6 +37,7 @@ interface TMDBMovieDetails {
   tagline: string
   original_language: string
   original_title: string
+  videos: TMDBVideosResponse
 }
 
 interface TMDBCredits {
@@ -83,23 +98,28 @@ export async function GET(
       )
     }
 
-    // Fetch movie details
-    const [detailsResponse, creditsResponse, watchProvidersResponse] = await Promise.all([
-      fetch(`${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`),
-      fetch(`${TMDB_BASE_URL}/movie/${movieId}/credits?api_key=${TMDB_API_KEY}`),
-      fetch(`${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`)
-    ])
+    // Fetch movie details, credits, videos, and watch providers in parallel
+    const [movieResponse, creditsResponse, videosResponse, watchProvidersResponse] = await Promise.all([
+      fetch(`${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBMovieDetails>),
+      fetch(`${TMDB_BASE_URL}/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBCredits>),
+      fetch(`${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBVideosResponse>),
+      fetch(`${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`).then(res => res.json() as Promise<TMDBWatchProviders>)
+    ]);
 
-    if (!detailsResponse.ok) {
+    const movieDetails = movieResponse;
+    const credits = creditsResponse;
+    const videos = videosResponse;
+    const watchProviders = watchProvidersResponse;
+
+    // Add videos to movieDetails
+    movieDetails.videos = videos;
+
+    if (!movieDetails) {
       return NextResponse.json(
         { error: 'Movie not found' },
         { status: 404 }
       )
     }
-
-    const movieDetails: TMDBMovieDetails = await detailsResponse.json()
-    const credits: TMDBCredits = creditsResponse.ok ? await creditsResponse.json() : { cast: [], crew: [] }
-    const watchProviders: TMDBWatchProviders = watchProvidersResponse.ok ? await watchProvidersResponse.json() : { results: {} }
 
     // Find director and key crew
     const director = credits.crew.find(person => person.job === 'Director')?.name
@@ -140,21 +160,30 @@ export async function GET(
       }).format(amount)
     }
 
+    // Define types for watch providers
+    interface WatchProvider {
+      provider_name: string
+      logo_path: string
+      type: string
+      region: string
+    }
+
     // Process watch providers
-    const processedWatchProviders = []
+    const processedWatchProviders: WatchProvider[] = []
     const regions = ['US', 'GB', 'CA', 'AU'] // Priority regions
     
     for (const region of regions) {
       const regionData = watchProviders.results[region]
       if (regionData) {
-        const addProviders = (providers: any[], type: string) => {
-          providers?.forEach(provider => {
+        const addProviders = (providers: Array<{provider_name: string, logo_path: string}> | undefined, type: string) => {
+          if (!providers) return
+          providers.forEach(provider => {
             processedWatchProviders.push({
               provider_name: provider.provider_name,
               logo_path: provider.logo_path,
               type,
               region
-            })
+            } as WatchProvider)
           })
         }
 
@@ -165,11 +194,26 @@ export async function GET(
       }
     }
 
+    // Get trailers (filter for YouTube trailers)
+    const trailers = videos.results
+      .filter(video => video.site === 'YouTube' && video.type === 'Trailer')
+      .map(video => ({
+        id: video.id,
+        key: video.key,
+        name: video.name,
+        site: video.site,
+        type: video.type,
+        official: video.official
+      }));
+
     const response = {
       id: movieDetails.id.toString(),
       title: movieDetails.title,
       posterUrl: movieDetails.poster_path 
         ? `https://image.tmdb.org/t/p/w500${movieDetails.poster_path}`
+        : null,
+      coverUrl: movieDetails.backdrop_path
+        ? `https://image.tmdb.org/t/p/original${movieDetails.backdrop_path}`
         : null,
       rating: movieDetails.vote_average,
       year: new Date(movieDetails.release_date).getFullYear(),
@@ -183,6 +227,7 @@ export async function GET(
       composer,
       cast: fullCast,
       crew: keyCrew,
+      trailers,
       budget: formatCurrency(movieDetails.budget),
       boxOffice: formatCurrency(movieDetails.revenue),
       releaseDate: movieDetails.release_date,

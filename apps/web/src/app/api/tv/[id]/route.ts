@@ -3,6 +3,20 @@ import { NextRequest, NextResponse } from 'next/server'
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 
+interface TMDBVideo {
+  id: string
+  key: string
+  name: string
+  site: string
+  type: string
+  official: boolean
+  published_at: string
+}
+
+interface TMDBVideosResponse {
+  results: TMDBVideo[]
+}
+
 interface TMDBTVDetails {
   id: number
   name: string
@@ -14,7 +28,7 @@ interface TMDBTVDetails {
   vote_average: number
   vote_count: number
   genres: Array<{ id: number; name: string }>
-  networks: Array<{ id: number; name: string }>
+  networks: Array<{ id: number; name: string; logo_path: string | null }>
   production_companies: Array<{ id: number; name: string }>
   number_of_seasons: number
   number_of_episodes: number
@@ -24,6 +38,7 @@ interface TMDBTVDetails {
   original_name: string
   episode_run_time: number[]
   created_by: Array<{ id: number; name: string }>
+  videos: TMDBVideosResponse
 }
 
 interface TMDBCredits {
@@ -84,23 +99,28 @@ export async function GET(
       )
     }
 
-    // Fetch TV show details
-    const [detailsResponse, creditsResponse, watchProvidersResponse] = await Promise.all([
-      fetch(`${TMDB_BASE_URL}/tv/${tvId}?api_key=${TMDB_API_KEY}&language=en-US`),
-      fetch(`${TMDB_BASE_URL}/tv/${tvId}/credits?api_key=${TMDB_API_KEY}`),
-      fetch(`${TMDB_BASE_URL}/tv/${tvId}/watch/providers?api_key=${TMDB_API_KEY}`)
-    ])
+    // Fetch TV show details, credits, videos, and watch providers in parallel
+    const [tvResponse, creditsResponse, videosResponse, watchProvidersResponse] = await Promise.all([
+      fetch(`${TMDB_BASE_URL}/tv/${tvId}?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBTVDetails>),
+      fetch(`${TMDB_BASE_URL}/tv/${tvId}/credits?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBCredits>),
+      fetch(`${TMDB_BASE_URL}/tv/${tvId}/videos?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBVideosResponse>),
+      fetch(`${TMDB_BASE_URL}/tv/${tvId}/watch/providers?api_key=${TMDB_API_KEY}`).then(res => res.json() as Promise<TMDBWatchProviders>)
+    ]);
 
-    if (!detailsResponse.ok) {
+    const tvDetails = tvResponse;
+    const credits = creditsResponse;
+    const videos = videosResponse;
+    const watchProviders = watchProvidersResponse;
+
+    // Add videos to tvDetails
+    tvDetails.videos = videos;
+
+    if (!tvDetails) {
       return NextResponse.json(
         { error: 'TV show not found' },
         { status: 404 }
       )
     }
-
-    const tvDetails: TMDBTVDetails = await detailsResponse.json()
-    const credits: TMDBCredits = creditsResponse.ok ? await creditsResponse.json() : { cast: [], crew: [] }
-    const watchProviders: TMDBWatchProviders = watchProvidersResponse.ok ? await watchProvidersResponse.json() : { results: {} }
 
     // Find creator/showrunner and key crew
     const creator = tvDetails.created_by.length > 0 
@@ -137,21 +157,30 @@ export async function GET(
       ? Math.round(tvDetails.episode_run_time.reduce((a, b) => a + b, 0) / tvDetails.episode_run_time.length)
       : null
 
+    // Define types for watch providers
+    interface WatchProvider {
+      provider_name: string
+      logo_path: string
+      type: string
+      region: string
+    }
+
     // Process watch providers
-    const processedWatchProviders = []
+    const processedWatchProviders: WatchProvider[] = []
     const regions = ['US', 'GB', 'CA', 'AU'] // Priority regions
     
     for (const region of regions) {
       const regionData = watchProviders.results[region]
       if (regionData) {
-        const addProviders = (providers: any[], type: string) => {
-          providers?.forEach(provider => {
+        const addProviders = (providers: Array<{provider_name: string, logo_path: string}> | undefined, type: string) => {
+          if (!providers) return
+          providers.forEach(provider => {
             processedWatchProviders.push({
               provider_name: provider.provider_name,
               logo_path: provider.logo_path,
               type,
               region
-            })
+            } as WatchProvider)
           })
         }
 
@@ -162,28 +191,43 @@ export async function GET(
       }
     }
 
+    // Get trailers (filter for YouTube trailers)
+    const trailers = videos.results
+      .filter(video => video.site === 'YouTube' && video.type === 'Trailer')
+      .map(video => ({
+        id: video.id,
+        key: video.key,
+        name: video.name,
+        site: video.site,
+        type: video.type,
+        official: video.official
+      }));
+
     const response = {
       id: tvDetails.id.toString(),
       title: tvDetails.name,
       posterUrl: tvDetails.poster_path 
         ? `https://image.tmdb.org/t/p/w500${tvDetails.poster_path}`
         : null,
+      coverUrl: tvDetails.backdrop_path
+        ? `https://image.tmdb.org/t/p/original${tvDetails.backdrop_path}`
+        : null,
       rating: tvDetails.vote_average,
       year: new Date(tvDetails.first_air_date).getFullYear(),
-      duration: avgRuntime ? `${avgRuntime} min/episode` : null,
       description: tvDetails.overview,
       genre: tvDetails.genres.map(g => g.name),
-      director: creator, // Using creator as director equivalent
+      seasons: tvDetails.number_of_seasons,
+      episodes: tvDetails.number_of_episodes,
+      network: tvDetails.networks?.[0]?.name,
+      status: tvDetails.status,
       showrunner,
       writer,
       producer,
       composer,
       cast: fullCast,
       crew: keyCrew,
-      seasons: tvDetails.number_of_seasons,
-      episodes: tvDetails.number_of_episodes,
-      network: tvDetails.networks.length > 0 ? tvDetails.networks[0].name : null,
-      status: tvDetails.status,
+      trailers,
+      duration: avgRuntime ? `${avgRuntime} min/episode` : null,
       releaseDate: tvDetails.first_air_date,
       originalLanguage: tvDetails.original_language,
       watchProviders: processedWatchProviders,
