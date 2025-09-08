@@ -11,6 +11,8 @@ import Link from 'next/link'
 import { tmdbClient, getImageUrl } from '@/lib/tmdb'
 import type { ITMDBMovie, ITMDBTVShow } from '@/types'
 import Image from 'next/image'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
 
 interface ComingSoonItem {
   id: string
@@ -25,9 +27,14 @@ interface ComingSoonItem {
 }
 
 export default function ComingSoonPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const page = parseInt(searchParams.get('page') || '1', 10)
   const [comingSoonItems, setComingSoonItems] = useState<ComingSoonItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [totalPages, setTotalPages] = useState(1)
+  const [currentPage, setCurrentPage] = useState(page)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGenre, setSelectedGenre] = useState('')
   const [selectedYear, setSelectedYear] = useState('')
@@ -42,20 +49,28 @@ export default function ComingSoonPage() {
         setLoading(true)
         setError(null)
         
+        // Fetch data for the current page
         const [moviesResponse, tvShowsResponse, movieGenres, tvGenres] = await Promise.all([
-          tmdbClient.getUpcomingHorrorMovies(1),
-          tmdbClient.getUpcomingHorrorTVShows(1),
+          tmdbClient.getUpcomingHorrorMovies(currentPage),
+          tmdbClient.getUpcomingHorrorTVShows(currentPage),
           tmdbClient.getMovieGenres(),
           tmdbClient.getTVGenres()
         ])
 
+        // Calculate total pages based on the total results from the API
+        const totalResults = Math.max(moviesResponse.total_results, tvShowsResponse.total_results)
+        setTotalPages(Math.ceil(totalResults / 20)) // 20 items per page is TMDB's default
+
         // Convert movies to ComingSoonItem format
+        const today = new Date().toISOString().split('T')[0] // Get today's date in YYYY-MM-DD format
+        
         const movieItems: ComingSoonItem[] = moviesResponse.results
           .filter(movie => 
             movie.genre_ids.includes(27) && // Must be horror
-            !movie.genre_ids.includes(16) // Must not be animation
+            !movie.genre_ids.includes(16) && // Must not be animation
+            movie.poster_path && // Must have a poster path
+            movie.release_date >= today // Must be released today or in the future
           )
-          .slice(0, 12)
           .map(movie => {
             const movieGenreNames = movieGenres.genres
               .filter(genre => movie.genre_ids.includes(genre.id))
@@ -75,21 +90,19 @@ export default function ComingSoonPage() {
           })
 
         // Convert TV shows to ComingSoonItem format with more lenient filtering
-        console.log('TV Shows Response:', tvShowsResponse.results.length, 'shows')
         const tvItems: ComingSoonItem[] = tvShowsResponse.results
           .filter(show => {
-            // Much more lenient filtering - include shows from horror-adjacent genres
-            const overview = show.overview.toLowerCase()
-            const name = show.name.toLowerCase()
+            const overview = show.overview?.toLowerCase() || ''
+            const name = show.name?.toLowerCase() || ''
             const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'scary', 'terror', 'evil', 'dark', 'sinister', 'mystery', 'thriller', 'crime', 'fantasy', 'sci-fi', 'suspense', 'psychological', 'drama', 'action']
             const hasKeyword = horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword))
-            
-            // Also include shows with horror-adjacent genre IDs (10765: Sci-Fi & Fantasy, 9648: Mystery)
             const hasHorrorGenre = show.genre_ids.some(id => [10765, 9648, 18, 80].includes(id))
             
-            return hasKeyword || hasHorrorGenre
+            return (hasKeyword || hasHorrorGenre) && 
+                   show.poster_path && // Must have a poster path
+                   show.first_air_date && // Must have an air date
+                   show.first_air_date >= today // Must be airing today or in the future
           })
-          .slice(0, 8)
           .map(show => {
             const showGenreNames = tvGenres.genres
               .filter(genre => show.genre_ids.includes(genre.id))
@@ -108,9 +121,12 @@ export default function ComingSoonPage() {
             }
           })
 
-        console.log('Filtered TV Items:', tvItems.length, 'shows')
-        console.log('Movie Items:', movieItems.length, 'movies')
-        setComingSoonItems([...movieItems, ...tvItems])
+        // Filter out any items with invalid poster URLs
+        const validItems = [...movieItems, ...tvItems].filter(item => 
+          item.poster && !item.poster.includes('null') && item.poster !== '/null'
+        )
+        
+        setComingSoonItems(validItems)
       } catch (err) {
         console.error('Error fetching coming soon content:', err)
         setError('Failed to load coming soon content. Please try again later.')
@@ -120,7 +136,16 @@ export default function ComingSoonPage() {
     }
 
     fetchComingSoonContent()
-  }, [])
+  }, [currentPage])
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    // Update the URL with the new page number
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', newPage.toString())
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
 
   // Get unique genres and years for filtering
   const availableGenres = useMemo(() => {
@@ -226,201 +251,264 @@ export default function ComingSoonPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Coming Soon</h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Discover upcoming horror movies and TV shows that will keep you on the edge of your seat
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Coming Soon</h1>
+            <p className="text-gray-400">Upcoming horror movies and TV shows</p>
+          </div>
+          
+          {/* Search and filter UI */}
+          <div className="mt-4 md:mt-0 w-full md:w-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search coming soon..."
+                className="pl-10 w-full md:w-64 bg-gray-900 border-gray-700 text-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Filters and Search */}
+        {/* Filters */}
         <div className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 mb-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search titles or descriptions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-800 border-gray-700 text-white"
-                />
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="border-gray-700 text-white hover:bg-gray-800"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mr-2 mb-2"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="mr-2 h-4 w-4" />
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </Button>
 
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-4 bg-gray-900 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 p-4 bg-gray-900 rounded-lg">
               <div>
-                <Label htmlFor="type" className="text-sm font-medium text-gray-300">Type</Label>
+                <Label className="block mb-2">Genre</Label>
                 <select
-                  id="type"
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value as 'all' | 'movie' | 'tv')}
-                  className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white"
-                >
-                  <option value="all">All</option>
-                  <option value="movie">Movies</option>
-                  <option value="tv">TV Shows</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="genre" className="text-sm font-medium text-gray-300">Genre</Label>
-                <select
-                  id="genre"
+                  className="w-full p-2 rounded bg-gray-800 border border-gray-700 text-white"
                   value={selectedGenre}
                   onChange={(e) => setSelectedGenre(e.target.value)}
-                  className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white"
                 >
                   <option value="">All Genres</option>
-                  {availableGenres.map(genre => (
-                    <option key={genre} value={genre}>{genre}</option>
+                  {availableGenres.map((genre) => (
+                    <option key={genre} value={genre}>
+                      {genre}
+                    </option>
                   ))}
                 </select>
               </div>
+              
               <div>
-                <Label htmlFor="year" className="text-sm font-medium text-gray-300">Year</Label>
+                <Label className="block mb-2">Release Year</Label>
                 <select
-                  id="year"
+                  className="w-full p-2 rounded bg-gray-800 border border-gray-700 text-white"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
-                  className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white"
                 >
                   <option value="">All Years</option>
-                  {availableYears.map(year => (
-                    <option key={year} value={year}>{year}</option>
+                  {availableYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
                   ))}
                 </select>
               </div>
+              
               <div>
-                <Label htmlFor="sortBy" className="text-sm font-medium text-gray-300">Sort By</Label>
-                <select
-                  id="sortBy"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'date' | 'title' | 'score')}
-                  className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white"
-                >
-                  <option value="date">Release Date</option>
-                  <option value="title">Title</option>
-                  <option value="score">Score</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="sortOrder" className="text-sm font-medium text-gray-300">Order</Label>
-                <Button
-                  variant="outline"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="w-full mt-1 border-gray-700 text-white hover:bg-gray-800"
-                >
-                  {sortOrder === 'asc' ? <SortAsc className="h-4 w-4 mr-2" /> : <SortDesc className="h-4 w-4 mr-2" />}
-                  {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                </Button>
+                <Label className="block mb-2">Type</Label>
+                <div className="flex space-x-2">
+                  <Button
+                    variant={selectedType === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedType('all')}
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant={selectedType === 'movie' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedType('movie')}
+                  >
+                    Movies
+                  </Button>
+                  <Button
+                    variant={selectedType === 'tv' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedType('tv')}
+                  >
+                    TV Shows
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-gray-400">
-            Showing {filteredAndSortedItems.length} upcoming horror {selectedType === 'all' ? 'titles' : selectedType === 'movie' ? 'movies' : 'TV shows'}
-          </p>
-        </div>
-
-        {/* Content Grid */}
-        {filteredAndSortedItems.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No upcoming content found matching your criteria.</p>
-            <Button
-              onClick={() => {
-                setSearchTerm('')
-                setSelectedGenre('')
-                setSelectedYear('')
-                setSelectedType('all')
-              }}
-              className="mt-4 bg-red-600 hover:bg-red-700"
-            >
-              Clear Filters
-            </Button>
+        {/* Results */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-gray-900 rounded-lg animate-pulse h-96" />
+            ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredAndSortedItems.map((item) => {
-              const daysUntil = getDaysUntilRelease(item.releaseDate)
-              
-              return (
-                <Card key={item.id} className="bg-gray-900 border-gray-800 hover:border-red-500 transition-colors group flex flex-col h-full">
-                  <div className="relative">
-                    <Image
-                      src={item.poster}
-                      alt={item.title}
-                      width={400}
-                      height={600}
-                      className="w-full h-64 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-2 left-2">
-                      <Badge className={`${item.type === 'movie' ? 'bg-blue-600' : 'bg-purple-600'} text-white`}>
-                        {item.type === 'movie' ? <Film className="h-3 w-3 mr-1" /> : <Tv className="h-3 w-3 mr-1" />}
-                        {item.type === 'movie' ? 'Movie' : 'TV Show'}
-                      </Badge>
-                    </div>
-                    <div className="absolute top-2 right-2">
-                      <Badge className="bg-green-600 text-white">
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        Upcoming
-                      </Badge>
-                    </div>
-                    {daysUntil > 0 && (
-                      <div className="absolute bottom-2 left-2">
-                        <Badge className="bg-yellow-600 text-white">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {daysUntil} days
-                        </Badge>
+        ) : error ? (
+          <div className="text-center py-10">
+            <p className="text-red-500">{error}</p>
+          </div>
+        ) : filteredAndSortedItems.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredAndSortedItems.map((item) => (
+                <Card key={item.id} className="bg-gray-900 border-gray-800 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <div className="relative aspect-[2/3] bg-gray-800">
+                    {item.poster ? (
+                      <Image
+                        src={item.poster}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500">
+                        <Film className="h-16 w-16" />
                       </div>
                     )}
-                  </div>
-                  
-                  <CardHeader>
-                    <CardTitle className="text-white text-lg">{item.title}</CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <Calendar className="h-4 w-4" />
-                      {formatReleaseDate(item.releaseDate)}
+                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 px-2 py-1 rounded text-xs">
+                      {item.type.toUpperCase()}
                     </div>
-                  </CardHeader>
-                  
-                  <CardContent className="flex flex-col flex-grow">
-                    <p className="text-gray-300 text-sm mb-4 line-clamp-3">
-                      {item.description}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {item.genre.slice(0, 3).map((g: string) => (
-                        <Badge key={g} variant="outline" className="text-xs border-slate-600 text-slate-300">
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-lg mb-1 line-clamp-1">{item.title}</h3>
+                    <div className="flex items-center text-sm text-gray-400 mb-2">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>{item.releaseDate ? formatReleaseDate(item.releaseDate) : 'TBA'}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {item.genre.slice(0, 2).map((g) => (
+                        <Badge key={g} variant="secondary" className="text-xs">
                           {g}
                         </Badge>
                       ))}
+                      {item.genre.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{item.genre.length - 2}
+                        </Badge>
+                      )}
                     </div>
-                    
-                    <div className="mt-auto">
-                      <Link href={`/details/${item.type}/${item.id.replace('movie-', '')}`}>
-                        <Button className="w-full bg-slate-600 hover:bg-slate-700 text-white cursor-pointer">
-                          More Info
-                        </Button>
-                      </Link>
-                    </div>
+                    {item.anticipationScore > 0 && (
+                      <div className="flex items-center text-sm text-amber-400">
+                        <TrendingUp className="h-4 w-4 mr-1" />
+                        <span>{item.anticipationScore}% Anticipation</span>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              )
-            })}
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                      />
+                    </PaginationItem>
+                    
+                    {(() => {
+                      const pages = []
+                      const maxVisiblePages = 5
+                      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+                      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+                      
+                      // Adjust startPage if we're near the end
+                      if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1)
+                      }
+                      
+                      // Always show first page
+                      if (startPage > 1) {
+                        pages.push(
+                          <PaginationItem key={1}>
+                            <PaginationButton 
+                              isActive={1 === currentPage}
+                              onClick={() => handlePageChange(1)}
+                            >
+                              1
+                            </PaginationButton>
+                          </PaginationItem>
+                        )
+                        
+                        if (startPage > 2) {
+                          pages.push(
+                            <PaginationItem key="ellipsis-start">
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )
+                        }
+                      }
+                      
+                      // Add visible pages
+                      for (let i = startPage; i <= endPage; i++) {
+                        pages.push(
+                          <PaginationItem key={i}>
+                            <PaginationButton 
+                              isActive={i === currentPage}
+                              onClick={() => handlePageChange(i)}
+                            >
+                              {i}
+                            </PaginationButton>
+                          </PaginationItem>
+                        )
+                      }
+                      
+                      // Always show last page
+                      if (endPage < totalPages) {
+                        if (endPage < totalPages - 1) {
+                          pages.push(
+                            <PaginationItem key="ellipsis-end">
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )
+                        }
+                        
+                        pages.push(
+                          <PaginationItem key={totalPages}>
+                            <PaginationButton 
+                              isActive={totalPages === currentPage}
+                              onClick={() => handlePageChange(totalPages)}
+                            >
+                              {totalPages}
+                            </PaginationButton>
+                          </PaginationItem>
+                        )
+                      }
+                      
+                      return pages
+                    })()}
+                    
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-10">
+            <p>No results found. Try adjusting your filters.</p>
           </div>
         )}
       </div>

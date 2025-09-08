@@ -214,7 +214,7 @@ class TMDBClient {
           without_genres: `${ANIMATION_GENRE_ID},${COMEDY_GENRE_ID}`,
           sort_by: sortBy,
           'vote_count.gte': 5,
-          with_keywords: '158718|210024|9715|9951|12339|9882|180547|14544|162846|9663|9717|4565|9672|4344|9840',
+          with_keywords: '158718|210024|9715|12339|9882|180547|14544|162846|9663|9717|4565|9672|4344|9840',
           'with_original_language': 'en|ko|es|de|sv|da',
           include_adult: false
         }
@@ -352,26 +352,25 @@ class TMDBClient {
 
   // Legacy method for backward compatibility
   async getTopRatedHorrorTVShows(): Promise<ITMDBResponse<ITMDBTVShow>> {
-    return this.getAllTimeTopRatedHorrorTVShows({ page: 1, sortBy: 'vote_average.desc' })
+    return this.getAllTimeTopRatedHorrorTVShows({ page: 1 });
   }
 
   // Get upcoming horror movies
   async getUpcomingHorrorMovies(page: number = 1): Promise<ITMDBResponse<ITMDBMovie>> {
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
     const futureDate = new Date()
-    futureDate.setFullYear(futureDate.getFullYear() + 1)
-    const oneYearFromNow = futureDate.toISOString().split('T')[0]
-    
+    futureDate.setFullYear(futureDate.getFullYear() + 1) // One year from now
+
     return this.request<ITMDBResponse<ITMDBMovie>>('/discover/movie', {
       page,
       with_genres: HORROR_GENRE_ID,
       without_genres: ANIMATION_GENRE_ID,
-      sort_by: 'release_date.desc',
       'primary_release_date.gte': today,
-      'primary_release_date.lte': oneYearFromNow,
-      include_adult: false,
+      'primary_release_date.lte': futureDate.toISOString().split('T')[0],
+      sort_by: 'primary_release_date.asc',
       with_original_language: 'en|ko|es|de|sv|da',
-      'with_runtime.gte': 60
+      'with_runtime.gte': 60,
+      include_adult: false
     })
   }
 

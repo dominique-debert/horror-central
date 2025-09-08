@@ -96,7 +96,8 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
         const movieItems = moviesResponse.results
           .filter(movie => 
             movie.genre_ids.includes(27) && // Must be horror
-            !movie.genre_ids.includes(16) // Must not be animation
+            !movie.genre_ids.includes(16) && // Must not be animation
+            movie.poster_path // Must have a poster path
           )
           .slice(0, 4)
           .map(movie => ({
@@ -107,10 +108,11 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
         // Convert TV shows to MediaItem format with more lenient filtering
         const tvItems = tvShowsResponse.results
           .filter(show => {
-            const overview = show.overview.toLowerCase()
-            const name = show.name.toLowerCase()
+            const overview = show.overview?.toLowerCase() || ''
+            const name = show.name?.toLowerCase() || ''
             const horrorKeywords = ['horror', 'supernatural', 'ghost', 'demon', 'vampire', 'zombie', 'witch', 'haunted', 'scary', 'terror', 'evil', 'dark', 'sinister', 'mystery', 'thriller', 'crime', 'fantasy', 'sci-fi']
-            return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword))
+            return horrorKeywords.some(keyword => overview.includes(keyword) || name.includes(keyword)) &&
+                   show.poster_path // Must have a poster path
           })
           .slice(0, 4)
           .map(show => ({
@@ -129,15 +131,16 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
             releaseDate: show.first_air_date
           }))
 
-        // Ensure we have exactly 8 items total
-        const allItems = [...movieItems, ...tvItems]
+        // Ensure we have exactly 8 items total with valid posters
+        const allItems = [...movieItems, ...tvItems].filter(item => item.posterUrl && !item.posterUrl.includes('null'))
         
-        // If we don't have enough items, fill with additional movies
+        // If we don't have enough items, fill with additional movies that have posters
         if (allItems.length < 8) {
           const additionalMovies = moviesResponse.results
             .filter(movie => 
               movie.genre_ids.includes(27) && // Must be horror
               !movie.genre_ids.includes(16) && // Must not be animation
+              movie.poster_path && // Must have a poster
               !movieItems.some(existing => existing.id === movie.id.toString()) // Not already included
             )
             .slice(0, 8 - allItems.length)
@@ -152,18 +155,21 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
         setUpcomingMovies(allItems.slice(0, 8))
       } catch {
         setError('Failed to load upcoming content. Please try again later.')
-        // Fallback to mock data converted to MediaItem format
-        const fallbackItems = movies.slice(0, 8).map(movie => ({
-          id: movie.id,
-          title: movie.title,
-          posterUrl: movie.posterUrl,
-          rating: movie.anticipationScore,
-          year: new Date(movie.releaseDate).getFullYear(),
-          description: movie.description,
-          genre: movie.genre,
-          slug: movie.slug,
-          releaseDate: movie.releaseDate
-        }))
+        // Fallback to mock data converted to MediaItem format, ensuring they have poster URLs
+        const fallbackItems = movies
+          .filter(movie => movie.posterUrl) // Only include items with poster URLs
+          .slice(0, 8)
+          .map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            posterUrl: movie.posterUrl,
+            rating: movie.anticipationScore,
+            year: new Date(movie.releaseDate).getFullYear(),
+            description: movie.description,
+            genre: movie.genre,
+            slug: movie.slug,
+            releaseDate: movie.releaseDate
+          }))
         setUpcomingMovies(fallbackItems)
       } finally {
         setLoading(false)
