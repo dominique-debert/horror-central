@@ -18,7 +18,7 @@ export async function getTVShows(
     
     console.log(`Fetching TV shows from: ${endpoint} (page ${page})`);
     
-    const response = await fetchFromTMDB<PaginatedResponse<any>>(endpoint, {
+    const response = await fetchFromTMDB<PaginatedResponse<MediaItem>>(endpoint, {
       page,
       region: 'US',
     });
@@ -52,7 +52,7 @@ export async function getTVShows(
       original_title: item.original_name,
       original_name: item.original_name,
       genre_ids: item.genre_ids || [],
-      original_language: item.original_language || 'en',
+      original_language: item.original_language || 'en|ko|es|de|sv|da',
       popularity: item.popularity || 0,
       adult: item.adult || false,
       video: false
@@ -102,7 +102,7 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
       sort_by: 'popularity.desc',
       'vote_average.gte': '5.0',
       'vote_count.gte': '10',
-      with_original_language: 'en',
+      with_original_language: 'en|ko|es|de|sv|da',
       page,
       'first_air_date.gte': '2010-01-01' // Last 14 years
     });
@@ -116,7 +116,7 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
         sort_by: 'popularity.desc',
         with_keywords: 'horror,thriller,supernatural',
         'vote_average.gte': '4.5',
-        with_original_language: 'en',
+        with_original_language: 'en|ko|es|de|sv|da',
         page,
         'first_air_date.gte': '2010-01-01'
       });
@@ -129,7 +129,7 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
       response = await fetchFromTMDB<PaginatedResponse<MediaItem>>('/tv/popular', {
         page,
         region: 'US',
-        with_original_language: 'en'
+        with_original_language: 'en|ko|es|de|sv|da'
       });
       console.log(`Found ${response.results.length} popular TV shows`);
     }
@@ -165,10 +165,6 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
       results: resultsWithType
     };
 
-    return {
-      ...response,
-      results: resultsWithType
-    };
   } catch (error) {
     console.error('Error fetching top rated horror TV shows:', error);
     return { page: 1, results: [], total_pages: 0, total_results: 0 };

@@ -136,41 +136,57 @@ export default function HeroSection() {
     try {
       // Try to fetch trailers if we don't have them yet
       const mediaType = currentMedia.media_type || (currentMedia.title ? 'movie' : 'tv');
-      const response = await fetch(`/api/${mediaType}/${currentMedia.id}/videos`);
+      const endpoint = mediaType === 'movie' ? 'movies' : 'tv';
+      const response = await fetch(`/api/${endpoint}/${currentMedia.id}/videos`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch trailers');
       }
       
       const data: TMDBVideosResponse = await response.json();
+      
+      // Get the first official trailer, or fall back to the first trailer
+      const officialTrailer = data.results.find(
+        video => video.site === 'YouTube' && video.type === 'Trailer' && video.official
+      );
+      
+      const fallbackTrailer = data.results.find(
+        video => video.site === 'YouTube' && video.type === 'Trailer'
+      );
+      
+      const teaser = data.results.find(
+        video => video.site === 'YouTube' && video.type === 'Teaser'
+      );
+      
+      const selectedVideo = officialTrailer || fallbackTrailer || teaser;
+      
+      if (selectedVideo) {
+        setSelectedTrailer({
+          key: selectedVideo.key,
+          name: selectedVideo.name,
+          official: selectedVideo.official
+        });
+      } else {
+        throw new Error('No trailer found');
+      }
+      
+      // Update the trailers state for future use
       const videoTrailers = data.results
         .filter(video => video.site === 'YouTube' && (video.type === 'Trailer' || video.type === 'Teaser'))
         .sort((a, b) => (a.official === b.official ? 0 : a.official ? -1 : 1))
         .map(({ key, name, official }) => ({ key, name, official }));
       
-      // Update the trailers state
-      const updatedTrailers = {
-        ...trailers,
+      setTrailers(prev => ({
+        ...prev,
         [currentMedia.id]: videoTrailers
-      };
-      setTrailers(updatedTrailers);
+      }));
       
-      // If we found trailers, show the first one
-      if (videoTrailers.length > 0) {
-        setSelectedTrailer(videoTrailers[0]);
-      } else {
-        // No trailers found, show an error in the dialog
-        setSelectedTrailer({ 
-          key: 'error', 
-          name: 'No trailer available' 
-        });
-      }
     } catch (error) {
       console.error('Error playing trailer:', error);
-      // Show error in dialog instead of redirecting
+      // Show error in dialog
       setSelectedTrailer({ 
         key: 'error', 
-        name: 'Error loading trailer' 
+        name: 'No trailer available' 
       });
     }
   }, [currentMedia, trailers]);
@@ -265,8 +281,8 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
       
       {/* Title */}
-      <div className="absolute top-4 left-0 w-full text-center z-10">
-        <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
+      <div className="absolute top-20 left-20 w-full z-10">
+        <h1 className="text-2xl md:text-3xl font-bold text-white/50 drop-shadow-lg">
           Featured Movies & TV Shows
         </h1>
       </div>
@@ -296,8 +312,13 @@ export default function HeroSection() {
         
         <div className="container mx-auto px-4 z-10">
           <div className="max-w-3xl">
+            
+            {/* Title and Overview */}
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 ml-10">
+              {currentMedia.title || currentMedia.name}
+            </h1>
             {/* Badges */}
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-3 ml-10">
               <span className="bg-green-800 text-white px-2 py-0.5 rounded-md text-xs font-semibold">
                 TRENDING
               </span>
@@ -317,20 +338,15 @@ export default function HeroSection() {
               </div>
             </div>
             
-            {/* Title and Overview */}
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              {currentMedia.title || currentMedia.name}
-            </h1>
-            
-            <p className="text-gray-300 mb-4 text-sm line-clamp-2">
+            <p className="text-gray-300 mb-4 text-sm line-clamp-2 ml-10">
               {currentMedia.overview}
             </p>
             
             {/* Buttons */}
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 ml-10 mt-15">
               <button
                 onClick={handleWatchTrailer}
-                className="flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-sm rounded-md font-medium transition-colors"
+                className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-black/80 text-white border border-white/30 px-4 py-2 text-sm rounded-md font-medium transition-colors"
                 type="button"
               >
                 <Play className="w-5 h-5" />
@@ -376,7 +392,7 @@ export default function HeroSection() {
             ) : selectedTrailer?.key && selectedTrailer.key !== 'loading' ? (
               <iframe
                 key={selectedTrailer.key}
-                src={`https://www.youtube.com/embed/${selectedTrailer.key}?autoplay=1&mute=1&rel=0&modestbranding=1&showinfo=0&playsinline=1`}
+                src={`https://www.youtube.com/embed/${selectedTrailer.key}?autoplay=1&rel=0&modestbranding=1&showinfo=0&playsinline=1`}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -385,7 +401,7 @@ export default function HeroSection() {
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
                 <p className="text-xl text-white mb-4">No trailer available</p>
-                <p className="text-gray-400 mb-6">We couldn't find a trailer for this title.</p>
+                <p className="text-gray-400 mb-6">`We couldn't find a trailer for this title.`</p>
                 <Button 
                   variant="outline" 
                   className="text-white border-white hover:bg-white/10"

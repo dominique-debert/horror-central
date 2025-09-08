@@ -24,7 +24,7 @@ export async function getMovies(
     with_genres: '27', // Horror genre
     'vote_average.gte': '5', // Minimum 5.0 rating
     'vote_count.gte': '50', // Minimum 50 votes
-    with_original_language: 'en', // English language
+    with_original_language: 'en|ko|es|de|sv|da',
     'with_runtime.gte': '60' // At least 60 minutes
   };
 
@@ -77,7 +77,7 @@ export async function getPopularHorrorMovies(page: number = 1) {
     with_genres: '27', // Horror genre ID
     'vote_count.gte': '30', // Lowered minimum votes to get more results
     'vote_average.gte': '5.5', // Slightly lower rating threshold
-    with_original_language: 'en', // English language
+    with_original_language: 'en|ko|es|de|sv|da',
     page,
     'primary_release_date.gte': twoYearsAgo.toISOString().split('T')[0], // Last 2 years
     'with_runtime.gte': '60' // At least 60 minutes
