@@ -1,17 +1,17 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { PageHeader } from '@/components/PageHeader'
 import { SearchAndFilter } from '@/components/SearchAndFilter'
 import { MediaCard } from '@/components/ui/MediaCard'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
 
 // Types
 type SortOption = 'rating.desc' | 'first_publish_year.desc' | 'title.asc'
-type UISortOption = 'rating_desc' | 'year_desc' | 'title_asc'
+type UISortOption = 'rating.desc' | 'first_publish_year.desc' | 'title.asc'
 
 interface BookItem {
   id: string
@@ -40,7 +40,6 @@ const SkeletonCard = () => (
 )
 
 export default function BooksPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   
   // State for books data and loading
@@ -57,7 +56,7 @@ export default function BooksPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDecade, setSelectedDecade] = useState('all')
   const [selectedAuthor, setSelectedAuthor] = useState('all')
-  const [sortBy, setSortBy] = useState<UISortOption>('rating_desc')
+  const [sortBy, setSortBy] = useState<UISortOption>('rating.desc')
   
   // Available filters
   const decades = [
@@ -79,17 +78,17 @@ export default function BooksPage() {
   ]
   
   const sortOptions = [
-    { value: 'rating_desc', label: 'Highest Rated' },
-    { value: 'year_desc', label: 'Newest First' },
-    { value: 'title_asc', label: 'Title A-Z' },
+    { value: 'rating.desc' as const, label: 'Highest Rated' },
+    { value: 'first_publish_year.desc' as const, label: 'Newest First' },
+    { value: 'title.asc' as const, label: 'Title A-Z' },
   ]
   
   // Map UI sort values to API sort values
   const mapSortToApi = (sort: UISortOption): SortOption => {
     switch (sort) {
-      case 'rating_desc': return 'rating.desc'
-      case 'year_desc': return 'first_publish_year.desc'
-      case 'title_asc': return 'title.asc'
+      case 'rating.desc': return 'rating.desc'
+      case 'first_publish_year.desc': return 'first_publish_year.desc'
+      case 'title.asc': return 'title.asc'
       default: return 'rating.desc'
     }
   }
@@ -161,8 +160,8 @@ export default function BooksPage() {
   }
   
   // Handle sort change
-  const handleSortChange = (value: string) => {
-    setSortBy(value as UISortOption)
+  const handleSortChange = (value: UISortOption) => {
+    setSortBy(value)
     setCurrentPage(1)
     fetchBooks(1) // Reset to first page when changing sort
   }
@@ -173,7 +172,7 @@ export default function BooksPage() {
     const search = searchParams.get('q') || ''
     const decade = searchParams.get('decade') || 'all'
     const author = searchParams.get('author') || 'all'
-    const sort = (searchParams.get('sort') as UISortOption) || 'rating_desc'
+    const sort = (searchParams.get('sort') as UISortOption) || 'rating.desc'
     
     setCurrentPage(page)
     setSearchTerm(search)
