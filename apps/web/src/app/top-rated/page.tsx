@@ -1,13 +1,16 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Star, Award, Calendar, Clock } from "lucide-react"
+import { Star, Film, Calendar, Clock, Search, Filter } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { tmdbClient, TMDBMovie, TMDBMovieDetails } from "@/lib/tmdb"
+import { PageLayout } from "@/components/PageLayout"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface TopRatedMovie {
   id: number
@@ -35,8 +38,8 @@ const GENRE_MAPPINGS: Record<number, string[]> = {
   878: ['Sci-Fi'], // Science Fiction
   14: ['Fantasy'], // Fantasy
   9648: ['Mystery'], // Mystery
-  80: ['Crime'], // Crime
-  35: ['Comedy'] // Comedy
+  // 80: ['Crime'], // Crime
+  // 35: ['Comedy'] // Comedy
 }
 
 // Convert TMDB movie to TopRatedMovie format
@@ -64,342 +67,222 @@ function tmdbMovieToTopRatedMovie(movie: TMDBMovie, details?: TMDBMovieDetails):
   }
 }
 
-
-const genres = ["All", "Horror", "Thriller", "Drama", "Sci-Fi", "Fantasy", "Mystery", "Crime"]
-const decades = ["All", "1970s", "1980s", "1990s", "2000s", "2010s", "2020s"]
-
-function getRatingColor(rating: number): string {
-  if (rating >= 9.0) return "text-green-400"
-  if (rating >= 8.0) return "text-yellow-400"
-  if (rating >= 7.0) return "text-orange-400"
-  return "text-red-400"
-}
-
 export default function TopRatedPage() {
   const [selectedGenre, setSelectedGenre] = useState("All")
   const [selectedDecade, setSelectedDecade] = useState("All")
-  const [sortBy, setSortBy] = useState("rating")
+  const [sortBy, setSortBy] = useState<"rating" | "date" | "title">("rating")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [searchTerm, setSearchTerm] = useState("")
   const [allTopRatedMovies, setAllTopRatedMovies] = useState<TopRatedMovie[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMorePages, setHasMorePages] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
   const MOVIES_PER_PAGE = 20
 
-  // Fetch initial movies
-  useEffect(() => {
-    fetchMovies(1, true)
-  }, [])
+  // Extract unique genres and decades for filters
+  const availableGenres = useMemo(() => {
+    const genres = new Set<string>(["All"])
+    allTopRatedMovies.forEach(movie => {
+      movie.genre.forEach(g => genres.add(g))
+    })
+    return Array.from(genres).sort()
+  }, [allTopRatedMovies])
 
-  // Reset and refetch when filters change
-  useEffect(() => {
-    if (allTopRatedMovies.length > 0) {
-      setCurrentPage(1)
-      setAllTopRatedMovies([])
-      setHasMorePages(true)
-      fetchMovies(1, true)
-    }
-  }, [selectedGenre, selectedDecade, sortBy])
+  const availableDecades = useMemo(() => {
+    const decades = new Set<string>(["All"])
+    allTopRatedMovies.forEach(movie => {
+      if (movie.year) {
+        const decade = `${Math.floor(movie.year / 10) * 10}s`
+        decades.add(decade)
+      }
+    })
+    return Array.from(decades).sort((a, b) => b.localeCompare(a))
+  }, [allTopRatedMovies])
 
-  async function fetchMovies(page: number, isInitial: boolean = false) {
+  // Fetch movies with error handling and loading states
+  const fetchMovies = async (page: number, reset: boolean = false) => {
     try {
-      if (isInitial) {
-        setLoading(true)
-      } else {
-        setLoadingMore(true)
-      }
-      setError(null)
+      if (reset) setLoading(true)
+      else setLoadingMore(true)
       
-      // Determine sort order based on sortBy state
-      let apiSortBy: 'vote_average.desc' | 'primary_release_date.desc' | 'title.asc' = 'vote_average.desc'
-      if (sortBy === 'year') apiSortBy = 'primary_release_date.desc'
-      else if (sortBy === 'title') apiSortBy = 'title.asc'
-      
-      // Determine genre filter
-      let genreIds: number[] | undefined
-      if (selectedGenre !== 'All') {
-        const genreMap: Record<string, number> = {
-          'Horror': 27,
-          'Thriller': 53,
-          'Drama': 18,
-          'Sci-Fi': 878,
-          'Fantasy': 14,
-          'Mystery': 9648,
-          'Crime': 80
-        }
-        genreIds = [genreMap[selectedGenre]]
-      }
-      
-      // Determine year range for decade filter
-      let minYear: number | undefined
-      let maxYear: number | undefined
-      if (selectedDecade !== 'All') {
-        const decade = parseInt(selectedDecade.replace('s', ''))
-        minYear = decade
-        maxYear = decade + 9
-      }
-      
-      const response = await tmdbClient.getAllTimeTopRatedHorrorMovies({
-        page,
-        sortBy: apiSortBy,
-        genreIds,
-        minYear,
-        maxYear
-      })
-      
-      // Convert TMDB movies to our format
-      const convertedMovies = response.results
-        .map((movie: TMDBMovie) => tmdbMovieToTopRatedMovie(movie))
-        .filter(movie => movie.rating >= 6.0) // Quality threshold
-      
-      if (isInitial) {
-        setAllTopRatedMovies(convertedMovies)
-      } else {
-        setAllTopRatedMovies(prev => {
-          // Remove duplicates when adding new movies
-          const existingIds = new Set(prev.map(m => m.id))
-          const newMovies = convertedMovies.filter(m => !existingIds.has(m.id))
-          return [...prev, ...newMovies]
+      const moviesResponse = await tmdbClient.getTopRatedHorrorMovies(page)
+      const moviesWithDetails = await Promise.all(
+        moviesResponse.results.map(async (movie) => {
+          try {
+            const details = await tmdbClient.getMovieDetails(movie.id)
+            return tmdbMovieToTopRatedMovie(movie, details)
+          } catch (error) {
+            console.error(`Error fetching details for movie ${movie.id}:`, error)
+            return tmdbMovieToTopRatedMovie(movie)
+          }
         })
-      }
+      )
       
-      // Check if there are more pages
-      setHasMorePages(page < response.total_pages && convertedMovies.length > 0)
-      
+      setAllTopRatedMovies(prev => 
+        reset ? moviesWithDetails : [...prev, ...moviesWithDetails]
+      )
+      setHasMorePages(moviesResponse.page < moviesResponse.total_pages)
+      setError(null)
     } catch (err) {
-      console.error('Error fetching top-rated movies:', err)
-      setError('Failed to load top-rated movies. Please try again later.')
+      console.error("Error fetching top rated movies:", err)
+      setError("Failed to load movies. Please try again later.")
     } finally {
       setLoading(false)
       setLoadingMore(false)
     }
   }
 
-  function handleLoadMore() {
-    const nextPage = currentPage + 1
-    setCurrentPage(nextPage)
-    fetchMovies(nextPage, false)
+  // Initial fetch
+  useEffect(() => {
+    fetchMovies(1, true)
+  }, [])
+
+  // Filter and sort movies
+  const filteredAndSortedMovies = useMemo(() => {
+    return allTopRatedMovies
+      .filter(movie => {
+        const matchesSearch = movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           movie.director.toLowerCase().includes(searchTerm.toLowerCase())
+        const matchesGenre = selectedGenre === "All" || movie.genre.includes(selectedGenre)
+        const matchesDecade = selectedDecade === "All" || 
+                            movie.year.toString().startsWith(selectedDecade.slice(0, 3))
+        return matchesSearch && matchesGenre && matchesDecade
+      })
+      .sort((a, b) => {
+        let comparison = 0
+        
+        if (sortBy === "rating") {
+          comparison = a.rating - b.rating
+        } else if (sortBy === "date") {
+          comparison = (a.year || 0) - (b.year || 0)
+        } else if (sortBy === "title") {
+          comparison = a.title.localeCompare(b.title)
+        }
+        
+        return sortOrder === "desc" ? -comparison : comparison
+      })
+  }, [allTopRatedMovies, searchTerm, selectedGenre, selectedDecade, sortBy, sortOrder])
+
+  // Handle loading more
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMorePages) {
+      const nextPage = currentPage + 1
+      setCurrentPage(nextPage)
+      fetchMovies(nextPage)
+    }
   }
 
-  // Display movies with pagination
-  const displayedMovies = allTopRatedMovies.slice(0, currentPage * MOVIES_PER_PAGE)
-  const hasMoreToShow = displayedMovies.length < allTopRatedMovies.length || hasMorePages
-
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-16">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4">Top Rated Horror Movies</h1>
-          <p className="text-gray-400 text-lg max-w-3xl mx-auto">
-            Discover the highest-rated horror movies of all time, curated by critics and audiences. 
-            From classic supernatural thrillers to modern psychological masterpieces.
-          </p>
+    <PageLayout
+      title="Top Rated Horror Movies"
+      description="Discover the most highly rated horror movies of all time"
+      searchTerm={searchTerm}
+      onSearchChange={setSearchTerm}
+      selectedGenre={selectedGenre}
+      onGenreChange={setSelectedGenre}
+      selectedYear={selectedDecade}
+      onYearChange={setSelectedDecade}
+      sortBy={sortBy}
+      onSortByChange={setSortBy}
+      sortOrder={sortOrder}
+      onSortOrderChange={setSortOrder}
+      availableGenres={availableGenres}
+      availableYears={availableDecades}
+      showFilters={showFilters}
+      onToggleFilters={() => setShowFilters(!showFilters)}
+    >
+      {loading && !loadingMore ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-80 bg-gray-800 rounded-lg animate-pulse"></div>
+          ))}
         </div>
-
-        {/* Filters */}
-        <div className="mb-12 space-y-6">
-          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
-            {/* Genre Filter */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-gray-400 mr-2">Genre:</span>
-              {genres.map((genre) => (
-                <Button
-                  key={genre}
-                  variant={selectedGenre === genre ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedGenre(genre)}
-                  className={selectedGenre === genre 
-                    ? "bg-red-600 hover:bg-red-700 text-white" 
-                    : "border-gray-600 text-gray-300 hover:bg-gray-800"
-                  }
-                >
-                  {genre}
-                </Button>
-              ))}
-            </div>
-
-            {/* Decade & Sort */}
-            <div className="flex flex-wrap gap-4 items-center">
-              <div className="flex gap-2 items-center">
-                <span className="text-sm text-gray-400">Decade:</span>
-                {decades.map((decade) => (
-                  <Button
-                    key={decade}
-                    variant={selectedDecade === decade ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedDecade(decade)}
-                    className={selectedDecade === decade 
-                      ? "bg-red-600 hover:bg-red-700 text-white" 
-                      : "border-gray-600 text-gray-300 hover:bg-gray-800"
-                    }
-                  >
-                    {decade}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="flex gap-2 items-center">
-                <span className="text-sm text-gray-400">Sort:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-gray-900 border border-gray-700 rounded px-3 py-1 text-white text-sm"
-                >
-                  <option value="rating">Rating</option>
-                  <option value="year">Year</option>
-                  <option value="title">Title</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-sm text-gray-400">
-            Showing {displayedMovies.length} movies
-            {hasMoreToShow && (
-              <span className="ml-2 text-gray-500">
-                (More available)
-              </span>
-            )}
-          </div>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={() => fetchMovies(1, true)}>Retry</Button>
         </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-            <p className="mt-4 text-gray-400">Loading top-rated horror movies...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="text-center py-12">
-            <p className="text-red-400 mb-4">{error}</p>
-            <Button 
-              onClick={() => window.location.reload()} 
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Try Again
-            </Button>
-          </div>
-        )}
-
-        {/* Movies Grid */}
-        {!loading && !error && (
-          <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayedMovies.map((movie, index) => (
-                <Card key={movie.id} className="bg-gray-900 border-gray-700 hover:border-red-600 transition-all duration-300 group relative">
-              {index < 3 && (
-                <div className="absolute -top-2 -left-2 z-10">
-                  <div className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                    {index + 1}
+      ) : filteredAndSortedMovies.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredAndSortedMovies.map((movie) => (
+              <Link key={movie.id} href={`/details/movie/${movie.id}`}>
+                <Card className="bg-gray-900 border-gray-800 overflow-hidden hover:border-primary transition-colors h-full flex flex-col">
+                  <div className="relative aspect-[2/3] w-full">
+                    <Image
+                      src={movie.posterUrl}
+                      alt={movie.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                    />
                   </div>
-                </div>
-              )}
-              
-              <div className="relative">
-                <Image
-                  src={movie.posterUrl}
-                  alt={movie.title}
-                  width={300}
-                  height={450}
-                  className="w-full h-64 object-cover rounded-t-lg"
-                />
-              </div>
-              
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-white font-bold text-lg group-hover:text-red-400 transition-colors line-clamp-1">
-                    {movie.title}
-                  </h3>
-                  <div className="flex items-center ml-2">
-                    <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                    <span className={`font-bold ${getRatingColor(movie.rating)}`}>
-                      {movie.rating}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center text-gray-400 text-sm mb-2">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  <span className="mr-3">{movie.year}</span>
-                  <Clock className="w-3 h-3 mr-1" />
-                  <span>{movie.duration}</span>
-                </div>
-                
-                <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                  {movie.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {movie.genre.slice(0, 2).map((g) => (
-                    <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
-                      {g}
-                    </Badge>
-                  ))}
-                </div>
-                
-                {movie.awards && movie.awards.length > 0 && (
-                  <div className="flex items-center mb-3">
-                    <Award className="w-3 h-3 text-yellow-400 mr-1" />
-                    <span className="text-xs text-yellow-400 truncate">
-                      {movie.awards[0]}
-                    </span>
-                  </div>
-                )}
-                
-                {(movie.criticsScore || movie.audienceScore) && (
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                    {movie.criticsScore && (
-                      <span>Critics: {movie.criticsScore}%</span>
-                    )}
-                    {movie.audienceScore && (
-                      <span>Audience: {movie.audienceScore}%</span>
-                    )}
-                  </div>
-                )}
-                
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full border-gray-600 text-gray-300 hover:bg-red-600 hover:border-red-600 hover:text-white"
-                  asChild
-                >
-                  <Link href={`/details/movie/${movie.id}`}>
-                    View Details
-                  </Link>
-                </Button>
-              </CardContent>
+                  <CardHeader className="flex-1 p-4">
+                    <div className="flex justify-between items-start gap-2">
+                      <CardTitle className="text-lg font-bold line-clamp-2">
+                        {movie.title}
+                      </CardTitle>
+                      <Badge variant="secondary" className="shrink-0">
+                        {movie.year}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1 mt-2">
+                      <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                      <span className="font-medium">{movie.rating.toFixed(1)}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {movie.genre.slice(0, 2).map((g) => (
+                        <Badge key={g} variant="outline" className="text-xs">
+                          {g}
+                        </Badge>
+                      ))}
+                      {movie.genre.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{movie.genre.length - 2}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        <span>{movie.duration}</span>
+                      </div>
+                      <div className="text-right text-xs text-gray-500">
+                        {movie.director}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-300 line-clamp-3">
+                      {movie.description}
+                    </p>
+                  </CardContent>
                 </Card>
-              ))}
-            </div>
-            
-            {/* Load More Button */}
-            {hasMoreToShow && (
-              <div className="text-center mt-12">
-                <Button
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="bg-red-600 hover:bg-red-700 text-white px-8 py-3"
-                  size="lg"
-                >
-                  {loadingMore ? (
-                    <>
-                      <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Loading More...
-                    </>
-                  ) : (
-                    'View More Movies'
-                  )}
-                </Button>
-              </div>
-            )}
+              </Link>
+            ))}
           </div>
-        )}
-      </div>
-    </div>
+
+          {hasMorePages && !loading && (
+            <div className="mt-8 text-center">
+              <Button 
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                variant="outline"
+                className="mx-auto"
+              >
+                {loadingMore ? 'Loading...' : 'Load More'}
+              </Button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-gray-400">No movies found. Try adjusting your filters.</p>
+        </div>
+      )}
+    </PageLayout>
   )
 }

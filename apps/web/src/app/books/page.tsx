@@ -1,13 +1,104 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
+import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { PageHeader } from '@/components/PageHeader'
+import { SearchAndFilterBooks } from '@/components/SearchAndFilterBooks'
+import { MediaCard } from '@/components/ui/MediaCard'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Star, Calendar, User, BookOpen, Loader2, Eye } from 'lucide-react'
-// Removed openLibraryClient import - using API route instead
+import { Loader2 } from 'lucide-react'
+
+// Skeleton component for loading states
+const SkeletonCard = () => (
+  <div className="space-y-3">
+    <div className="h-64 w-full bg-gray-800 rounded-lg animate-pulse" />
+    <div className="h-5 w-4/5 bg-gray-800 rounded animate-pulse" />
+    <div className="h-4 w-1/3 bg-gray-800 rounded animate-pulse" />
+    <div className="flex justify-between items-center">
+      <div className="h-4 w-16 bg-gray-800 rounded animate-pulse" />
+      <div className="h-4 w-16 bg-gray-800 rounded animate-pulse" />
+    </div>
+  </div>
+)
+
+// Pagination components
+const Pagination = ({ children }: { children: React.ReactNode }) => (
+  <nav className="flex items-center justify-center">
+    <ul className="flex items-center space-x-1">
+      {children}
+    </ul>
+  </nav>
+)
+
+const PaginationContent = ({ children }: { children: React.ReactNode }) => (
+  <>{children}</>
+)
+
+const PaginationItem = ({ children }: { children: React.ReactNode }) => (
+  <li>{children}</li>
+)
+
+const PaginationButton = ({ 
+  isActive, 
+  onClick, 
+  children,
+  disabled = false,
+  className = ''
+}: { 
+  isActive?: boolean
+  onClick: () => void
+  children: React.ReactNode
+  disabled?: boolean
+  className?: string
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`px-3 py-1 rounded-md ${isActive ? 'bg-red-600 text-white' : 'text-gray-300 hover:bg-gray-800'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
+  >
+    {children}
+  </button>
+)
+
+const PaginationPrevious = ({ 
+  onClick, 
+  disabled = false,
+  className = ''
+}: { 
+  onClick: () => void
+  disabled?: boolean
+  className?: string
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`px-3 py-1 rounded-md text-gray-300 hover:bg-gray-800 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
+  >
+    Previous
+  </button>
+)
+
+const PaginationNext = ({ 
+  onClick, 
+  disabled = false,
+  className = ''
+}: { 
+  onClick: () => void
+  disabled?: boolean
+  className?: string
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`px-3 py-1 rounded-md text-gray-300 hover:bg-gray-800 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
+  >
+    Next
+  </button>
+)
+
+const PaginationEllipsis = () => (
+  <span className="px-3 py-1 text-gray-500">...</span>
+)
 
 interface BookItem {
   id: string
@@ -18,348 +109,302 @@ interface BookItem {
   author: string
   pages: number
   description: string
-  genre: string[]
-  slug: string
-}
-
-interface BooksResponse {
-  books: BookItem[]
-  total: number
-  page: number
-  totalPages: number
+  genre: string
+  slug?: string
 }
 
 export default function BooksPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // State for books data and loading
   const [books, setBooks] = useState<BookItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 12
+  
   // Filter states
-  const [selectedDecade, setSelectedDecade] = useState<string>('All')
-  const [selectedAuthor, setSelectedAuthor] = useState<string>('All')
-  const [sortBy, setSortBy] = useState<'rating.desc' | 'first_publish_year.desc' | 'title.asc'>('rating.desc')
-
-  // Available filter options
-  const decades = ['All', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s']
-  const authors = ['All', 'Stephen King', 'H.P. Lovecraft', 'Edgar Allan Poe', 'Clive Barker', 'Anne Rice', 'Bram Stoker']
-  const sortOptions = [
-    { value: 'rating.desc' as const, label: 'Highest Rated' },
-    { value: 'first_publish_year.desc' as const, label: 'Newest First' },
-    { value: 'title.asc' as const, label: 'Title A-Z' }
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedDecade, setSelectedDecade] = useState('all')
+  const [selectedAuthor, setSelectedAuthor] = useState('all')
+  const [sortBy, setSortBy] = useState('rating_desc')
+  
+  // Available filters
+  const decades = [
+    { value: 'all', label: 'All Decades' },
+    { value: '2020s', label: '2020s' },
+    { value: '2010s', label: '2010s' },
+    { value: '2000s', label: '2000s' },
+    { value: '1990s', label: '1990s' },
+    { value: '1980s', label: '1980s' },
+    { value: '1970s', label: '1970s' },
   ]
-
-  const fetchBooks = async (page: number = 1, reset: boolean = false) => {
+  
+  const authors = [
+    { value: 'all', label: 'All Authors' },
+    { value: 'stephen-king', label: 'Stephen King' },
+    { value: 'h-p-lovecraft', label: 'H.P. Lovecraft' },
+    { value: 'clive-barker', label: 'Clive Barker' },
+    { value: 'shirley-jackson', label: 'Shirley Jackson' },
+    { value: 'dean-koontz', label: 'Dean Koontz' },
+  ]
+  
+  // Fetch books from API
+  const fetchBooks = async (page: number, isFilterChange = false) => {
     try {
-      if (page === 1) {
-        setLoading(true)
-        setError(null)
-      } else {
-        setLoadingMore(true)
-      }
-
-      // Build URL parameters
-      const searchParams = new URLSearchParams({
-        type: 'all-time-top-rated',
-        page: page.toString(),
-        sortBy
-      })
-
-      // Add decade filter
-      if (selectedDecade !== 'All') {
-        const decade = parseInt(selectedDecade.replace('s', ''))
-        searchParams.set('minYear', decade.toString())
-        searchParams.set('maxYear', (decade + 9).toString())
-      }
-
-      // Add author filter
-      if (selectedAuthor !== 'All') {
-        searchParams.set('author', selectedAuthor)
-      }
-
-      const response = await fetch(`/api/books?${searchParams.toString()}`)
+      setLoading(true)
+      
+      // Build query params
+      const params = new URLSearchParams()
+      params.set('page', page.toString())
+      params.set('limit', itemsPerPage.toString())
+      
+      if (searchTerm) params.set('search', searchTerm)
+      if (selectedDecade !== 'all') params.set('decade', selectedDecade)
+      if (selectedAuthor !== 'all') params.set('author', selectedAuthor)
+      if (sortBy) params.set('sort', sortBy)
+      
+      const response = await fetch(`/api/books?${params.toString()}`)
       
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`)
-      }
-
-      const data: BooksResponse = await response.json()
-      
-      if (reset || page === 1) {
-        setBooks(data.books)
-      } else {
-        setBooks(prev => [...prev, ...data.books])
+        throw new Error('Failed to fetch books')
       }
       
-      setCurrentPage(data.page)
-      setTotalPages(data.totalPages)
-      setHasMore(data.page < data.totalPages)
+      const data = await response.json()
+      
+      setBooks(data.books || [])
+      setTotalPages(Math.ceil((data.total || 0) / itemsPerPage))
+      
+      // Update URL without triggering a page reload
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.set('page', page.toString())
+      router.push(`?${newParams.toString()}`, { scroll: false })
       
     } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
       console.error('Error fetching books:', err)
-      setError('Failed to load books. Please try again.')
     } finally {
       setLoading(false)
-      setLoadingMore(false)
     }
   }
-
-  // Initial load
+  
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return
+    
+    setCurrentPage(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    fetchBooks(newPage)
+  }
+  
+  // Handle filter changes
+  const handleSearch = () => {
+    setCurrentPage(1)
+    fetchBooks(1, true)
+  }
+  
+  // Initialize page
   useEffect(() => {
-    fetchBooks(1, true)
-  }, [selectedDecade, selectedAuthor, sortBy])
-
-  const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      fetchBooks(currentPage + 1, false)
+    // Get initial page from URL or default to 1
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    setCurrentPage(isNaN(page) ? 1 : page)
+    
+    // Initial data fetch
+    fetchBooks(isNaN(page) ? 1 : page)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  
+  // Generate pagination items
+  const paginationItems = useMemo(() => {
+    if (totalPages <= 1) return null
+    
+    const items = []
+    const maxVisiblePages = 5
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1)
     }
-  }
-
-  const handleRetry = () => {
-    setError(null)
-    fetchBooks(1, true)
-  }
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Discover the most acclaimed horror literature of all time, from classic gothic novels to modern psychological thrillers.
-          </p>
-        </div>
-
-        {/* Loading Skeletons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 20 }).map((_, index) => (
-            <Card key={index} className="bg-gray-800 border-gray-700 animate-pulse">
-              <div className="aspect-[2/3] bg-gray-700 rounded-t-lg"></div>
-              <CardContent className="p-4">
-                <div className="h-4 bg-gray-700 rounded mb-2"></div>
-                <div className="h-3 bg-gray-700 rounded mb-2 w-3/4"></div>
-                <div className="h-3 bg-gray-700 rounded w-1/2"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+    
+    // Previous button
+    items.push(
+      <PaginationItem key="prev">
+        <PaginationPrevious 
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        />
+      </PaginationItem>
     )
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h1>
-          <div className="bg-red-900/20 border border-red-500 rounded-lg p-6 max-w-md mx-auto">
-            <p className="text-red-400 mb-4">{error}</p>
-            <Button onClick={handleRetry} variant="outline" className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white">
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
+    
+    // First page
+    if (startPage > 1) {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationButton 
+            isActive={1 === currentPage}
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </PaginationButton>
+        </PaginationItem>
+      )
+      
+      if (startPage > 2) {
+        items.push(
+          <PaginationItem key="ellipsis-start">
+            <PaginationEllipsis />
+          </PaginationItem>
+        )
+      }
+    }
+    
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationButton
+            isActive={i === currentPage}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </PaginationButton>
+        </PaginationItem>
+      )
+    }
+    
+    // Last page
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        items.push(
+          <PaginationItem key="ellipsis-end">
+            <PaginationEllipsis />
+          </PaginationItem>
+        )
+      }
+      
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationButton
+            isActive={totalPages === currentPage}
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </PaginationButton>
+        </PaginationItem>
+      )
+    }
+    
+    // Next button
+    items.push(
+      <PaginationItem key="next">
+        <PaginationNext 
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+        />
+      </PaginationItem>
     )
+    
+    return items
+  }, [currentPage, totalPages])
+  
+  // Render skeleton loading states
+  const renderSkeletons = (count: number) => {
+    return Array(count).fill(0).map((_, i) => <SkeletonCard key={`skeleton-${i}`} />)
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-white mb-4">Top Rated Horror Books</h1>
-        <p className="text-gray-400 max-w-2xl mx-auto">
-          Discover the most acclaimed horror literature of all time, from classic gothic novels to modern psychological thrillers.
-        </p>
-      </div>
+    <div className="min-h-screen bg-black text-white">
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader 
+          title="Top Rated Horror Books"
+          description="Discover the most acclaimed horror literature of all time, from classic gothic novels to modern psychological thrillers."
+        />
 
-      {/* Filters */}
-      <div className="mb-8 space-y-4">
-        {/* Decade Filter */}
-        <div>
-          <h3 className="text-white font-semibold mb-2">Publication Decade</h3>
-          <div className="flex flex-wrap gap-2">
-            {decades.map((decade) => (
-              <Button
-                key={decade}
-                variant={selectedDecade === decade ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedDecade(decade)}
-                className={selectedDecade === decade 
-                  ? "bg-red-600 hover:bg-red-700 text-white" 
-                  : "border-gray-600 text-gray-300 hover:bg-gray-700"
-                }
-              >
-                {decade}
-              </Button>
-            ))}
-          </div>
+        {/* Search and Filters */}
+        <div className="mb-8">
+          <SearchAndFilterBooks
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedDecade={selectedDecade}
+            onDecadeChange={setSelectedDecade}
+            selectedAuthor={selectedAuthor}
+            onAuthorChange={setSelectedAuthor}
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
+            availableDecades={decades}
+            availableAuthors={authors}
+            onSearch={handleSearch}
+          />
         </div>
 
-        {/* Author Filter */}
-        <div>
-          <h3 className="text-white font-semibold mb-2">Author</h3>
-          <div className="flex flex-wrap gap-2">
-            {authors.map((author) => (
-              <Button
-                key={author}
-                variant={selectedAuthor === author ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedAuthor(author)}
-                className={selectedAuthor === author 
-                  ? "bg-red-600 hover:bg-red-700 text-white" 
-                  : "border-gray-600 text-gray-300 hover:bg-gray-700"
-                }
-              >
-                {author}
-              </Button>
-            ))}
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={() => fetchBooks(currentPage, true)}>Retry</Button>
           </div>
-        </div>
+        )}
 
-        {/* Sort Options */}
-        <div>
-          <h3 className="text-white font-semibold mb-2">Sort By</h3>
-          <div className="flex flex-wrap gap-2">
-            {sortOptions.map((option) => (
-              <Button
-                key={option.value}
-                variant={sortBy === option.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSortBy(option.value)}
-                className={sortBy === option.value 
-                  ? "bg-red-600 hover:bg-red-700 text-white" 
-                  : "border-gray-600 text-gray-300 hover:bg-gray-700"
-                }
-              >
-                {option.label}
-              </Button>
-            ))}
+        {/* Empty State */}
+        {!loading && !error && books.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-400">No books found. Try adjusting your search filters.</p>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Results Count */}
-      <div className="mb-6">
-        <p className="text-gray-400">
-          Showing {books.length} books
-          {selectedDecade !== 'All' && ` from the ${selectedDecade}`}
-          {selectedAuthor !== 'All' && ` by ${selectedAuthor}`}
-        </p>
-      </div>
+        {/* Books Grid */}
+        {!error && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {loading && books.length === 0 ? (
+                // Initial loading state
+                renderSkeletons(8)
+              ) : (
+                // Show actual book cards
+                books.map((book) => (
+                  <MediaCard
+                    key={book.id}
+                    item={{
+                      id: book.id,
+                      title: book.title,
+                      posterUrl: book.posterUrl,
+                      rating: book.rating,
+                      year: book.year,
+                      description: book.description,
+                      genre: book.genre,
+                      slug: book.slug || book.id,
+                      pages: book.pages
+                    }}
+                    type="book"
+                  />
+                ))
+              )}
+            </div>
 
-      {/* Books Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {books.map((book, index) => (
-          <Card key={`${book.id}-${index}`} className="bg-gray-800 border-gray-700 hover:border-red-500 transition-colors group">
-            <Link href={`/details/book/${book.id}`} className="block">
-              <div className="relative">
-                <Image
-                  src={book.posterUrl}
-                  alt={book.title}
-                  width={300}
-                  height={450}
-                  className="w-full aspect-[2/3] object-cover rounded-t-lg"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.src = '/placeholder-book-cover.jpg'
-                  }}
-                />
-                <div className="absolute top-2 right-2">
-                  <Badge variant="secondary" className="bg-black/70 text-white flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    {book.rating.toFixed(1)}
-                  </Badge>
-                </div>
+            {/* Loading more indicator */}
+            {loading && books.length > 0 && (
+              <div className="flex justify-center pt-4">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-white mb-2 line-clamp-2 group-hover:text-red-400 transition-colors">
-                  {book.title}
-                </h3>
-                <div className="space-y-1 text-sm text-gray-400">
-                  <div className="flex items-center gap-1">
-                    <User className="w-3 h-3" />
-                    <span>{book.author}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    <span>{book.year}</span>
-                  </div>
-                  {book.pages > 0 && (
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="w-3 h-3" />
-                      <span>{book.pages} pages</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-1 mt-2 mb-3">
-                  {book.genre.slice(0, 2).map((g) => (
-                    <Badge key={g} variant="outline" className="text-xs border-gray-600 text-gray-300">
-                      {g}
-                    </Badge>
-                  ))}
-                </div>
-                <Button 
-                  size="sm" 
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  View Details
-                </Button>
-              </CardContent>
-            </Link>
-          </Card>
-        ))}
-      </div>
-
-      {/* Load More Button */}
-      {hasMore && (
-        <div className="text-center">
-          <Button
-            onClick={handleLoadMore}
-            disabled={loadingMore}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
-          >
-            {loadingMore ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Loading More Books...
-              </>
-            ) : (
-              'View More Books'
             )}
-          </Button>
-        </div>
-      )}
 
-      {/* No More Results */}
-      {!hasMore && books.length > 0 && (
-        <div className="text-center text-gray-400">
-          <p>You've reached the end of the results.</p>
-        </div>
-      )}
-
-      {/* No Results */}
-      {books.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-400 text-lg mb-4">No books found matching your criteria.</p>
-          <Button
-            onClick={() => {
-              setSelectedDecade('All')
-              setSelectedAuthor('All')
-              setSortBy('rating.desc')
-            }}
-            variant="outline"
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
-          >
-            Clear Filters
-          </Button>
-        </div>
-      )}
+            {/* Pagination */}
+            {totalPages > 1 && !loading && (
+              <div className="mt-8">
+                <Pagination>
+                  <PaginationContent>
+                    {paginationItems}
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

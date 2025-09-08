@@ -66,7 +66,6 @@ export async function searchMovies(query: string, page: number = 1) {
 
 // Get popular horror movies with horror genre filter
 export async function getPopularHorrorMovies(page: number = 1) {
-  console.log(`Fetching popular horror movies page ${page}...`);
   
   // Get date 2 years ago for more results
   const twoYearsAgo = new Date();
@@ -82,17 +81,6 @@ export async function getPopularHorrorMovies(page: number = 1) {
     'primary_release_date.gte': twoYearsAgo.toISOString().split('T')[0], // Last 2 years
     'with_runtime.gte': '60' // At least 60 minutes
   });
-
-  console.log(`Found ${response.results.length} movies on page ${page}`);
-  if (response.results.length > 0) {
-    console.log('First movie:', {
-      id: response.results[0].id,
-      title: response.results[0].title,
-      type: response.results[0].type,
-      media_type: response.results[0].media_type,
-      genre_ids: response.results[0].genre_ids
-    });
-  }
 
   // Add media_type to each item in the response
   const resultsWithType = response.results.map(item => ({

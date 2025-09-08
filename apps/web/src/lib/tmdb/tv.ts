@@ -16,17 +16,12 @@ export async function getTVShows(
     const normalizedListType = listType.replace(/-/g, '_') as TVListType;
     const endpoint = `/tv/${normalizedListType}`;
     
-    console.log(`Fetching TV shows from: ${endpoint} (page ${page})`);
-    
     const response = await fetchFromTMDB<PaginatedResponse<MediaItem>>(endpoint, {
       page,
       region: 'US',
     });
 
-    console.log(`Received ${response.results?.length || 0} TV shows`);
-
     if (!response.results || response.results.length === 0) {
-      console.warn('No TV shows found in API response');
       return {
         page: 1,
         results: [],
@@ -93,7 +88,6 @@ export async function searchTVShows(query: string, page: number = 1) {
 
 // Get top rated horror TV shows with horror genre filter
 export async function getTopRatedHorrorTVShows(page: number = 1) {
-  console.log(`Fetching top rated horror TV shows page ${page}...`);
   
   try {
     // First try the direct horror TV shows endpoint
@@ -107,11 +101,9 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
       'first_air_date.gte': '2010-01-01' // Last 14 years
     });
 
-    console.log(`Found ${response.results.length} horror TV shows on page ${page}`);
     
     // If no results, try with broader criteria
     if (response.results.length === 0) {
-      console.log('No results with horror genre, trying broader search...');
       response = await fetchFromTMDB<PaginatedResponse<MediaItem>>('/discover/tv', {
         sort_by: 'popularity.desc',
         with_keywords: 'horror,thriller,supernatural',
@@ -120,34 +112,14 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
         page,
         'first_air_date.gte': '2010-01-01'
       });
-      console.log(`Found ${response.results.length} shows with broader search`);
     }
     
     // If still no results, try getting popular TV shows
     if (response.results.length === 0) {
-      console.warn('No horror TV shows found, falling back to popular TV shows...');
       response = await fetchFromTMDB<PaginatedResponse<MediaItem>>('/tv/popular', {
         page,
         region: 'US',
         with_original_language: 'en|ko|es|de|sv|da'
-      });
-      console.log(`Found ${response.results.length} popular TV shows`);
-    }
-    
-    // Log first 5 shows for better debugging
-    if (response.results.length > 0) {
-      response.results.slice(0, 5).forEach((show, index) => {
-        console.log(`TV Show ${index + 1}:`, {
-          id: show.id,
-          name: show.name,
-          type: show.type || 'tv',
-          media_type: show.media_type || 'tv',
-          genre_ids: show.genre_ids || [],
-          vote_average: show.vote_average,
-          vote_count: show.vote_count,
-          first_air_date: show.first_air_date,
-          overview: show.overview?.substring(0, 50) + '...' // First 50 chars of overview
-        });
       });
     }
     

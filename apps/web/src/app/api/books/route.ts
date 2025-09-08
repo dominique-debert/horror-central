@@ -297,8 +297,6 @@ class OpenLibraryClient {
         // Use simple query without complex filters to avoid 500 errors
         const searchQuery = query
         
-        console.log(`Searching with query: ${searchQuery}`)
-        
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
         
@@ -320,7 +318,6 @@ class OpenLibraryClient {
         }
 
         const data: OpenLibrarySearchResponse = await response.json()
-        console.log(`Query "${query}" returned ${data.docs?.length || 0} results`)
         
         if (data.docs && data.docs.length > 0) {
           const books = data.docs
@@ -335,14 +332,10 @@ class OpenLibraryClient {
       }
     }
 
-    console.log(`Total books found before deduplication: ${allBooks.length}`)
-    
     // Remove duplicates based on title and author
     const uniqueBooks = allBooks.filter((book, index, self) => 
       index === self.findIndex(b => b.title === book.title && b.author === book.author)
     )
-    
-    console.log(`Unique books after deduplication: ${uniqueBooks.length}`)
     
     // Apply client-side filtering
     let filteredBooks = uniqueBooks
@@ -375,8 +368,6 @@ class OpenLibraryClient {
     const totalPages = Math.ceil(totalBooks / limit)
     const startIndex = (page - 1) * limit
     const paginatedBooks = filteredBooks.slice(startIndex, startIndex + limit)
-    
-    console.log(`Returning page ${page} with ${paginatedBooks.length} books`)
     
     return {
       books: paginatedBooks,

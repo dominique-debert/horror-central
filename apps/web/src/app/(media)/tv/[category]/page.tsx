@@ -50,16 +50,6 @@ export default async function TVCategoryPage({
   const tvListType = category.replace(/-/g, '_') as 'popular' | 'airing_today' | 'on_the_air' | 'top_rated';
   const data = await getTVShows(tvListType, page);
   const title = getTitleFromCategory(category);
-  
-  // Debug logging
-  console.log('TV Shows Data:', {
-    category,
-    tvListType,
-    page,
-    resultsCount: data?.results?.length,
-    firstItem: data?.results?.[0],
-    totalPages: data?.total_pages
-  });
 
   return (
     <div className="space-y-6">

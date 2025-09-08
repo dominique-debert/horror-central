@@ -57,46 +57,43 @@ const defaultArticles: NewsArticle[] = [
 
 export default function LatestNews({ articles = defaultArticles }: LatestNewsProps) {
   return (
-    <section className="py-10">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-12">
-          <div>
-            <h2 className="text-4xl font-bold text-white mb-4">Latest News</h2>
-            <p className="text-gray-400 text-lg">
-              Stay up to date with the latest horror movie news, reviews, and industry updates
-            </p>
-          </div>
-          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
-            <Link href="/news">
-              View All
-            </Link>
-          </Button>
+    <section className="py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-3xl font-bold text-white">Latest News</h2>
+          <p className="text-gray-400 mt-1">
+            Stay up to date with the latest horror movie news, reviews, and industry updates
+          </p>
         </div>
+        <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+          <Link href="/news">
+            View All
+          </Link>
+        </Button>
+      </div>
 
-        <div className="space-y-6">
-          {articles.map((article) => {
-            const newsArticle: NewsArticle = {
-              id: article.id,
-              title: article.title,
-              excerpt: article.excerpt,
-              imageUrl: article.imageUrl,
-              author: article.author,
-              publishedAt: article.publishedAt,
-              readTime: article.readTime,
-              category: article.category,
-              slug: article.slug
-            }
-            
-            return (
-              <NewsCard
-                key={article.id}
-                article={newsArticle}
-                layout="horizontal"
-              />
-            )
-          })}
-        </div>
-
+      <div className="space-y-6">
+        {articles.map((article) => {
+          const newsArticle: NewsArticle = {
+            id: article.id,
+            title: article.title,
+            excerpt: article.excerpt,
+            imageUrl: article.imageUrl,
+            author: article.author,
+            publishedAt: article.publishedAt,
+            readTime: article.readTime,
+            category: article.category,
+            slug: article.slug
+          }
+          
+          return (
+            <NewsCard
+              key={article.id}
+              article={newsArticle}
+              layout="horizontal"
+            />
+          )
+        })}
       </div>
     </section>
   )

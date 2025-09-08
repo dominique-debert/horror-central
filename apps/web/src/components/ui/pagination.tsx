@@ -51,7 +51,7 @@ const PaginationButton = ({
     size="sm"
     className={cn(
       'h-9 min-w-9 p-0 cursor-pointer',
-      disabled && 'opacity-50 pointer-events-none',
+      disabled && 'opacity-50 cursor-default pointer-events-none',
       className
     )}
     disabled={disabled}

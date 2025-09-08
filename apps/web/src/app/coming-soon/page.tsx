@@ -13,6 +13,8 @@ import type { ITMDBMovie, ITMDBTVShow } from '@/types'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
+import { PageHeader } from '@/components/PageHeader';
+import { SearchAndFilter, ALL_VALUE } from '@/components/SearchAndFilter';
 
 interface ComingSoonItem {
   id: string
@@ -41,7 +43,29 @@ export default function ComingSoonPage() {
   const [selectedType, setSelectedType] = useState<'all' | 'movie' | 'tv'>('all')
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'score'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const [showFilters, setShowFilters] = useState(false)
+  const [availableGenres, setAvailableGenres] = useState<string[]>([])
+  const [availableYears, setAvailableYears] = useState<string[]>([])
+
+  // Extract unique genres from the items
+  const allGenres = useMemo(() => {
+    const genres = new Set<string>();
+    comingSoonItems.forEach(item => {
+      item.genre.forEach(g => genres.add(g));
+    });
+    return Array.from(genres).sort();
+  }, [comingSoonItems]);
+
+  // Generate years for the next 10 years
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 10 }, (_, i) => (currentYear + i).toString());
+  }, []);
+
+  // Update available genres and years when data loads
+  useEffect(() => {
+    setAvailableGenres(allGenres);
+    setAvailableYears(years);
+  }, [allGenres, years]);
 
   useEffect(() => {
     const fetchComingSoonContent = async () => {
@@ -147,58 +171,56 @@ export default function ComingSoonPage() {
     router.push(`?${params.toString()}`, { scroll: false })
   }
 
-  // Get unique genres and years for filtering
-  const availableGenres = useMemo(() => {
-    const genres = new Set<string>()
-    comingSoonItems.forEach(item => {
-      item.genre.forEach(g => genres.add(g))
-    })
-    return Array.from(genres).sort()
-  }, [comingSoonItems])
-
-  const availableYears = useMemo(() => {
-    const years = new Set<string>()
-    comingSoonItems.forEach(item => {
-      if (item.releaseDate) {
-        years.add(new Date(item.releaseDate).getFullYear().toString())
+  // Filter items
+  const filteredItems = useMemo(() => {
+    return comingSoonItems.filter(item => {
+      // Filter by search term
+      if (searchTerm && !item.title.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
       }
-    })
-    return Array.from(years).sort()
-  }, [comingSoonItems])
-
-  // Filter and sort items
-  const filteredAndSortedItems = useMemo(() => {
-    const filtered = comingSoonItems.filter(item => {
-      const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.description.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesGenre = !selectedGenre || item.genre.includes(selectedGenre)
-      const matchesYear = !selectedYear || (item.releaseDate && new Date(item.releaseDate).getFullYear().toString() === selectedYear)
-      const matchesType = selectedType === 'all' || item.type === selectedType
       
-      return matchesSearch && matchesGenre && matchesYear && matchesType
-    })
+      // Filter by genre
+      if (selectedGenre && selectedGenre !== ALL_VALUE && !item.genre.includes(selectedGenre)) {
+        return false;
+      }
+      
+      // Filter by year
+      if (selectedYear && selectedYear !== ALL_VALUE) {
+        const itemYear = new Date(item.releaseDate).getFullYear().toString();
+        if (itemYear !== selectedYear) {
+          return false;
+        }
+      }
+      
+      // Filter by type
+      if (selectedType !== 'all' && item.type !== selectedType) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [comingSoonItems, searchTerm, selectedGenre, selectedYear, selectedType]);
 
-    // Sort items
-    filtered.sort((a, b) => {
-      let comparison = 0
+  // Sort items
+  const sortedItems = useMemo(() => {
+    return [...filteredItems].sort((a, b) => {
+      let comparison = 0;
       
       switch (sortBy) {
         case 'date':
-          comparison = new Date(a.releaseDate || '').getTime() - new Date(b.releaseDate || '').getTime()
-          break
+          comparison = new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime();
+          break;
         case 'title':
-          comparison = a.title.localeCompare(b.title)
-          break
+          comparison = a.title.localeCompare(b.title);
+          break;
         case 'score':
-          comparison = a.anticipationScore - b.anticipationScore
-          break
+          comparison = a.anticipationScore - b.anticipationScore;
+          break;
       }
       
-      return sortOrder === 'asc' ? comparison : -comparison
-    })
-
-    return filtered
-  }, [comingSoonItems, searchTerm, selectedGenre, selectedYear, selectedType, sortBy, sortOrder])
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [filteredItems, sortBy, sortOrder]);
 
   const getDaysUntilRelease = (releaseDate: string) => {
     const today = new Date()
@@ -251,146 +273,67 @@ export default function ComingSoonPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Coming Soon</h1>
-            <p className="text-gray-400">Upcoming horror movies and TV shows</p>
-          </div>
-          
-          {/* Search and filter UI */}
-          <div className="mt-4 md:mt-0 w-full md:w-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search coming soon..."
-                className="pl-10 w-full md:w-64 bg-gray-900 border-gray-700 text-white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-8">
-          <Button
-            variant="outline"
-            size="sm"
-            className="mr-2 mb-2"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-
-          {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 p-4 bg-gray-900 rounded-lg">
-              <div>
-                <Label className="block mb-2">Genre</Label>
-                <select
-                  className="w-full p-2 rounded bg-gray-800 border border-gray-700 text-white"
-                  value={selectedGenre}
-                  onChange={(e) => setSelectedGenre(e.target.value)}
-                >
-                  <option value="">All Genres</option>
-                  {availableGenres.map((genre) => (
-                    <option key={genre} value={genre}>
-                      {genre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <Label className="block mb-2">Release Year</Label>
-                <select
-                  className="w-full p-2 rounded bg-gray-800 border border-gray-700 text-white"
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                >
-                  <option value="">All Years</option>
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <Label className="block mb-2">Type</Label>
-                <div className="flex space-x-2">
-                  <Button
-                    variant={selectedType === 'all' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedType('all')}
-                  >
-                    All
-                  </Button>
-                  <Button
-                    variant={selectedType === 'movie' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedType('movie')}
-                  >
-                    Movies
-                  </Button>
-                  <Button
-                    variant={selectedType === 'tv' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedType('tv')}
-                  >
-                    TV Shows
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <PageHeader 
+          title="Coming Soon" 
+          description="Discover upcoming horror movies and TV shows that will send chills down your spine."
+        />
+        
+        <SearchAndFilter
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedGenre={selectedGenre}
+          onGenreChange={setSelectedGenre}
+          selectedYear={selectedYear}
+          onYearChange={setSelectedYear}
+          selectedType={selectedType}
+          onTypeChange={setSelectedType}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          sortOrder={sortOrder}
+          onSortOrderChange={setSortOrder}
+          availableGenres={availableGenres}
+          availableYears={availableYears}
+          className="mb-8"
+        />
 
         {/* Results */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-gray-900 rounded-lg animate-pulse h-96" />
+              <div key={i} className="h-80 bg-gray-800 rounded-lg animate-pulse"></div>
             ))}
           </div>
         ) : error ? (
-          <div className="text-center py-10">
-            <p className="text-red-500">{error}</p>
+          <div className="text-center py-12">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
           </div>
-        ) : filteredAndSortedItems.length > 0 ? (
+        ) : sortedItems.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredAndSortedItems.map((item) => (
-                <Card key={item.id} className="bg-gray-900 border-gray-800 overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  <div className="relative aspect-[2/3] bg-gray-800">
-                    {item.poster ? (
-                      <Image
-                        src={item.poster}
-                        alt={item.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500">
-                        <Film className="h-16 w-16" />
-                      </div>
-                    )}
-                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 px-2 py-1 rounded text-xs">
-                      {item.type.toUpperCase()}
-                    </div>
+              {sortedItems.map((item) => (
+                <Card key={item.id} className="bg-gray-900 border-gray-800 overflow-hidden hover:border-primary transition-colors h-full flex flex-col">
+                  <div className="relative aspect-[2/3] w-full">
+                    <Image
+                      src={item.poster || '/placeholder.svg'}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                    />
                   </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-bold text-lg mb-1 line-clamp-1">{item.title}</h3>
-                    <div className="flex items-center text-sm text-gray-400 mb-2">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>{item.releaseDate ? formatReleaseDate(item.releaseDate) : 'TBA'}</span>
+                  <CardHeader className="flex-1 p-4">
+                    <div className="flex justify-between items-start gap-2">
+                      <CardTitle className="text-lg font-bold line-clamp-2">
+                        {item.title}
+                      </CardTitle>
+                      <Badge variant="secondary" className="shrink-0">
+                        {item.type.toUpperCase()}
+                      </Badge>
                     </div>
-                    <div className="flex flex-wrap gap-1 mb-2">
+                    <div className="flex flex-wrap gap-1 mt-2">
                       {item.genre.slice(0, 2).map((g) => (
-                        <Badge key={g} variant="secondary" className="text-xs">
+                        <Badge key={g} variant="outline" className="text-xs">
                           {g}
                         </Badge>
                       ))}
@@ -400,12 +343,21 @@ export default function ComingSoonPage() {
                         </Badge>
                       )}
                     </div>
-                    {item.anticipationScore > 0 && (
-                      <div className="flex items-center text-sm text-amber-400">
-                        <TrendingUp className="h-4 w-4 mr-1" />
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>{formatReleaseDate(item.releaseDate)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="h-4 w-4" />
                         <span>{item.anticipationScore}% Anticipation</span>
                       </div>
-                    )}
+                    </div>
+                    <p className="text-sm text-gray-300 line-clamp-3">
+                      {item.description || 'No description available.'}
+                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -507,8 +459,8 @@ export default function ComingSoonPage() {
             )}
           </>
         ) : (
-          <div className="text-center py-10">
-            <p>No results found. Try adjusting your filters.</p>
+          <div className="text-center py-12">
+            <p className="text-gray-400">No results found. Try adjusting your filters.</p>
           </div>
         )}
       </div>

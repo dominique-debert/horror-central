@@ -75,7 +75,13 @@ const defaultMovies: ComingSoonMovie[] = [
 ]
 
 export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) {
-  const [upcomingMovies, setUpcomingMovies] = useState<MediaItem[]>([])
+  type ExtendedMediaItem = Omit<MediaItem, 'duration'> & {
+    duration?: string | number;
+    originalLanguage?: string;
+    type?: 'movie' | 'tv';
+  };
+  
+  const [upcomingMovies, setUpcomingMovies] = useState<ExtendedMediaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -156,8 +162,8 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
       } catch {
         setError('Failed to load upcoming content. Please try again later.')
         // Fallback to mock data converted to MediaItem format, ensuring they have poster URLs
-        const fallbackItems = movies
-          .filter(movie => movie.posterUrl) // Only include items with poster URLs
+        const fallbackItems: ExtendedMediaItem[] = movies
+          .filter(movie => movie.posterUrl)
           .slice(0, 8)
           .map(movie => ({
             id: movie.id,
@@ -168,7 +174,10 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
             description: movie.description,
             genre: movie.genre,
             slug: movie.slug,
-            releaseDate: movie.releaseDate
+            releaseDate: movie.releaseDate,
+            duration: '120 min',
+            originalLanguage: 'en',
+            type: 'movie' as const
           }))
         setUpcomingMovies(fallbackItems)
       } finally {
@@ -180,64 +189,68 @@ export default function ComingSoon({ movies = defaultMovies }: ComingSoonProps) 
   }, [movies])
 
   return (
-    <section className="py-10">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-12">
-          <div>
-            <h2 className="text-4xl font-bold text-white mb-4">Coming Soon</h2>
-            <p className="text-gray-400 text-lg">
-              Get ready for the most anticipated horror movies and TV shows coming soon
-            </p>
-          </div>
-          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
-            <Link href="/coming-soon">
-              View All
-            </Link>
-          </Button>
+    <section className="py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-3xl font-bold text-white">Coming Soon</h2>
+          <p className="text-gray-400 mt-1">
+            Get ready for the most anticipated horror releases coming to theaters and streaming
+          </p>
         </div>
-
-        {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-gray-900 rounded-lg animate-pulse h-96" />
-            ))}
-          </div>
-        )}
-
-        {error && (
-          <div className="text-center py-8">
-            <p className="text-red-400 mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-            {upcomingMovies.map((movie) => {
-              // Create a modified movie item with Coming Soon badge in genre and no rating
-              const comingSoonMovie = {
-                ...movie,
-                genre: ['Coming Soon', ...movie.genre.slice(0, 2)], // Add "Coming Soon" as first genre
-                rating: 0 // Remove rating display
-              }
-              
-              return (
-                <MediaCard 
-                  key={movie.id}
-                  item={comingSoonMovie}
-                  type="movie"
-                />
-              )
-            })}
-          </div>
-        )}
-
+        <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+          <Link href="/coming-soon">
+            View All
+          </Link>
+        </Button>
       </div>
+
+      {error && (
+        <div className="text-center py-8">
+          <p className="text-red-400 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {upcomingMovies.map((movie) => {
+            // Create a modified movie item with Coming Soon badge in genre and no rating
+            const comingSoonMovie: ExtendedMediaItem = {
+              ...movie,
+              genre: ['Coming Soon', ...(movie.genre || []).slice(0, 2)],
+              rating: 0,
+              duration: typeof movie.duration === 'number' ? `${movie.duration} min` : (movie.duration || '120 min'),
+              slug: movie.slug || `movie-${movie.id}`,
+              year: movie.year || new Date().getFullYear(),
+              description: movie.description || 'No description available',
+              posterUrl: movie.posterUrl || '/placeholder-movie.jpg',
+              originalLanguage: movie.originalLanguage || 'en',
+              type: 'movie' as const
+            }
+            
+            // Ensure duration is always a string before passing to MediaCard
+            const mediaItem: MediaItem = {
+              ...comingSoonMovie,
+              duration: typeof comingSoonMovie.duration === 'number' 
+                ? `${comingSoonMovie.duration} min` 
+                : (comingSoonMovie.duration || '120 min')
+            };
+            
+            return (
+              <MediaCard 
+                key={movie.id}
+                item={mediaItem}
+                type="movie"
+              />
+            )
+          })}
+        </div>
+      )}
     </section>
   )
 }

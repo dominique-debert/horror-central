@@ -10,7 +10,7 @@ export default function Page() {
   return (
     <main className="space-y-0">
       <HeroSection />
-      <div className="p-8 space-y-12">
+      <div className="container mx-auto px-4 space-y-8">
         <ComingSoon />
         <TopRated />
         <TopRatedTVShows />
