@@ -74,11 +74,13 @@ export default function HeroSection() {
 
   // Manual navigation functions
   const nextMedia = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setCurrentMediaIndex(prev => (prev + 1) % heroMedia.length);
   }, [heroMedia.length]);
 
   const prevMedia = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setCurrentMediaIndex(prev => (prev - 1 + heroMedia.length) % heroMedia.length);
   }, [heroMedia.length]);
@@ -188,12 +190,30 @@ export default function HeroSection() {
   const getDisplayGenres = useCallback((media: MediaItem) => {
     if (!media?.genre_ids?.length) return [];
     
+    // Movie and TV show genres from TMDB
     const genreMap: Record<number, string> = {
+      // Movie genres
       27: 'Horror',
       53: 'Thriller',
       14: 'Fantasy',
       878: 'Sci-Fi',
       9648: 'Mystery',
+      // TV show genres
+      10759: 'Action & Adventure',
+      16: 'Animation',
+      35: 'Comedy',
+      80: 'Crime',
+      99: 'Documentary',
+      18: 'Drama',
+      10751: 'Family',
+      10762: 'Kids',
+      10763: 'News',
+      10764: 'Reality',
+      10765: 'Sci-Fi & Fantasy',
+      10766: 'Soap',
+      10767: 'Talk',
+      10768: 'War & Politics',
+      37: 'Western'
     };
 
     return [...new Set(media.genre_ids)]
@@ -244,13 +264,32 @@ export default function HeroSection() {
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
       
+      {/* Title */}
+      <div className="absolute top-4 left-0 w-full text-center z-10">
+        <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
+          Featured Movies & TV Shows
+        </h1>
+      </div>
+      
       {/* Content */}
       <div className="relative h-full flex items-center">
+        {/* Pagination Dots */}
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-20">
+          {heroMedia.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentMediaIndex(index)}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${currentMediaIndex === index ? 'bg-white w-6' : 'bg-white/50'}`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
         {/* Navigation Arrows */}
         <button
           onClick={prevMedia}
-          className="absolute left-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+          className="absolute left-4 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
           aria-label="Previous"
+          type="button"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
@@ -312,8 +351,9 @@ export default function HeroSection() {
         
         <button
           onClick={nextMedia}
-          className="absolute right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+          className="absolute right-4 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
           aria-label="Next"
+          type="button"
         >
           <ChevronRight className="w-6 h-6" />
         </button>
