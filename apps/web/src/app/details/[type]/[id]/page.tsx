@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { 
   Star, 
   Calendar, 
@@ -254,6 +254,9 @@ export default function MediaDetailsPage() {
       {/* Trailer Modal */}
       <Dialog open={!!selectedTrailer} onOpenChange={(open: boolean) => !open && setSelectedTrailer(null)}>
         <DialogContent className="max-w-4xl p-0 bg-black border-0">
+          <DialogTitle className="sr-only">
+            {selectedTrailer ? `Trailer: ${selectedTrailer.name}` : 'Trailer Player'}
+          </DialogTitle>
           <div className="aspect-video w-full">
             {selectedTrailer && (
               <iframe

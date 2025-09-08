@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Play, Info, ChevronLeft, ChevronRight } from "lucide-react"
+import { Play, Info, ChevronLeft, ChevronRight, X } from "lucide-react"
 import Image from "next/image"
 import { tmdbClient, getBackdropUrl } from "@/lib/tmdb"
 import type { TMDBMovie } from "@/lib/tmdb"
 import { LanguageBadge } from "@/components/ui/LanguageBadge"
 import { MediaTypeBadge } from "@/components/ui/MediaTypeBadge"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 
 interface HeroMedia {
@@ -36,6 +37,8 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
   const [heroMedia, setHeroMedia] = useState<HeroMedia[]>([])
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [selectedTrailer, setSelectedTrailer] = useState<{key: string, name: string} | null>(null)
+  const [trailers, setTrailers] = useState<Record<number, {key: string, name: string}[]>>({})
 
   useEffect(() => {
     const fetchFeaturedContent = async () => {
@@ -140,6 +143,44 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
 
   // Get current movie from the rotation
   const currentMedia = heroMedia[currentMediaIndex]
+
+  // Fetch trailers for the current media
+  useEffect(() => {
+    if (!currentMedia || trailers[currentMedia.id]) return;
+
+    const fetchTrailers = async () => {
+      try {
+        const url = currentMedia.type === 'movie' 
+          ? `/api/movies/${currentMedia.id}`
+          : `/api/tv/${currentMedia.id}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.trailers && data.trailers.length > 0) {
+          setTrailers(prev => ({
+            ...prev,
+            [currentMedia.id]: data.trailers
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching trailers:', error);
+      }
+    };
+
+    fetchTrailers();
+  }, [currentMedia]);
+
+  const handleWatchTrailer = () => {
+    if (!currentMedia || !trailers[currentMedia.id]?.length) {
+      // If no trailers, fall back to TMDB page
+      window.open(moreInfoUrl, '_blank');
+      return;
+    }
+    
+    // Use the first available trailer
+    setSelectedTrailer(trailers[currentMedia.id][0]);
+  };
 
   const moreInfoUrl = currentMedia?.type === 'movie' 
     ? `https://www.themoviedb.org/movie/${currentMedia?.id}`
@@ -254,7 +295,11 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
             </div>
             
             <div className="flex gap-4">
-              <Button size="lg" className="bg-red-600 hover:bg-red-700 text-white">
+              <Button 
+                size="lg" 
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleWatchTrailer}
+              >
                 <Play className="mr-2 h-5 w-5" />
                 Watch Trailer
               </Button>
@@ -287,6 +332,26 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
           />
         ))}
       </div>
+
+      {/* Trailer Modal */}
+      <Dialog open={!!selectedTrailer} onOpenChange={(open: boolean) => !open && setSelectedTrailer(null)}>
+        <DialogContent className="max-w-4xl p-0 bg-black border-0">
+          <DialogTitle className="sr-only">
+            {selectedTrailer ? `Trailer: ${selectedTrailer.name}` : 'Trailer Player'}
+          </DialogTitle>
+          <div className="aspect-video w-full">
+            {selectedTrailer && (
+              <iframe
+                src={`https://www.youtube.com/embed/${selectedTrailer.key}?autoplay=1`}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={selectedTrailer.name}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }
