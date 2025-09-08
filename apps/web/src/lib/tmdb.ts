@@ -1,124 +1,30 @@
 // TMDB API Client for Horror Central
-import { MediaItem } from "@/components/ui/MediaCard"
+import { IMediaItem } from "@/types/core/IMediaItem"
+import { MediaType } from "@/types/core/IMediaType"
+import { 
+  ITMDBMovie, 
+  ITMDBTVShow, 
+  ITMDBGenre, 
+  ITMDBMovieDetails, 
+  ITMDBTVDetails, 
+  ITMDBResponse, 
+  ITMDBWatchProvidersResponse,
+  ITMDBWatchProvider
+} from "@/types"
+
+type MediaItem = IMediaItem;
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p'
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY
+
+// Genre IDs
 const HORROR_GENRE_ID = 27
 const ANIMATION_GENRE_ID = 16
-const CRIME_GENRE_ID = 80
 const COMEDY_GENRE_ID = 35
-const DRAMA_GENRE_ID = 18
 const HORROR_TV_GENRE_IDS = [10765, 9648] // Sci-Fi & Fantasy, Mystery (closest to horror for TV)
 
-// TMDB API Response Types
-export interface TMDBMovie {
-  id: number
-  title: string
-  overview: string
-  poster_path: string | null
-  backdrop_path: string | null
-  release_date: string
-  vote_average: number
-  vote_count: number
-  genre_ids: number[]
-  adult: boolean
-  original_language: string
-  popularity: number
-}
-
-export interface TMDBTVShow {
-  id: number
-  name: string
-  overview: string
-  poster_path: string | null
-  backdrop_path: string | null
-  first_air_date: string
-  vote_average: number
-  vote_count: number
-  genre_ids: number[]
-  origin_country: string[]
-  original_language: string
-  popularity: number
-}
-
-export interface TMDBGenre {
-  id: number
-  name: string
-}
-
-export interface TMDBMovieCredits {
-  cast: Array<{
-    id: number
-    name: string
-    character: string
-    profile_path: string | null
-  }>
-  crew: Array<{
-    id: number
-    name: string
-    job: string
-    department: string
-    profile_path: string | null
-  }>
-}
-
-export interface TMDBMovieDetails extends TMDBMovie {
-  runtime: number
-  genres: TMDBGenre[]
-  production_companies: Array<{
-    id: number
-    name: string
-    logo_path: string | null
-  }>
-  credits?: TMDBMovieCredits
-  budget: number
-  revenue: number
-  tagline: string | null
-}
-
-export interface TMDBTVDetails extends TMDBTVShow {
-  number_of_seasons: number
-  number_of_episodes: number
-  genres: TMDBGenre[]
-  created_by: Array<{
-    id: number
-    name: string
-  }>
-  networks: Array<{
-    id: number
-    name: string
-    logo_path: string | null
-  }>
-  status: string
-}
-
-export interface TMDBWatchProvider {
-  display_priority: number
-  logo_path: string
-  provider_id: number
-  provider_name: string
-}
-
-export interface TMDBWatchProviderRegion {
-  link?: string
-  flatrate?: TMDBWatchProvider[]
-  rent?: TMDBWatchProvider[]
-  buy?: TMDBWatchProvider[]
-  ads?: TMDBWatchProvider[]
-}
-
-export interface TMDBWatchProvidersResponse {
-  id: number
-  results: Record<string, TMDBWatchProviderRegion>
-}
-
-export interface TMDBResponse<T> {
-  page: number
-  results: T[]
-  total_pages: number
-  total_results: number
-}
+// All type definitions are imported from @/types/api
 
 // API Client Class
 class TMDBClient {
@@ -157,13 +63,13 @@ class TMDBClient {
   }
 
   // Get now playing horror movies
-  async getNowPlayingHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
+  async getNowPlayingHorrorMovies(page: number = 1): Promise<ITMDBResponse<ITMDBMovie>> {
     // Use discover endpoint to properly filter by horror genre
     const today = new Date()
     const twoMonthsAgo = new Date()
     twoMonthsAgo.setMonth(today.getMonth() - 2)
     
-    return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', {
+    return this.request<ITMDBResponse<ITMDBMovie>>('/discover/movie', {
       page,
       with_genres: HORROR_GENRE_ID,
       without_genres: ANIMATION_GENRE_ID,
@@ -177,11 +83,11 @@ class TMDBClient {
   }
 
   // Get top-rated horror movies
-  async getTopRatedHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
+  async getTopRatedHorrorMovies(page: number = 1): Promise<ITMDBResponse<ITMDBMovie>> {
     const currentYear = new Date().getFullYear()
     const startYear = currentYear - 1
     
-    return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', {
+    return this.request<ITMDBResponse<ITMDBMovie>>('/discover/movie', {
       page,
       with_genres: HORROR_GENRE_ID,
       without_genres: ANIMATION_GENRE_ID,
@@ -202,7 +108,7 @@ class TMDBClient {
     maxYear?: number
     genreIds?: number[]
     sortBy?: 'vote_average.desc' | 'primary_release_date.desc' | 'title.asc'
-  }): Promise<TMDBResponse<TMDBMovie>> {
+  }): Promise<ITMDBResponse<ITMDBMovie>> {
     const {
       page = 1,
       minYear,
@@ -229,19 +135,19 @@ class TMDBClient {
       requestParams['primary_release_date.lte'] = `${maxYear}-12-31`
     }
 
-    return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', requestParams)
+    return this.request<ITMDBResponse<ITMDBMovie>>('/discover/movie', requestParams)
   }
 
   // Get movie details including runtime and director
-  async getMovieDetailsWithCredits(movieId: number): Promise<TMDBMovieDetails> {
-    return this.request<TMDBMovieDetails>(`/movie/${movieId}`, {
+  async getMovieDetailsWithCredits(movieId: number): Promise<ITMDBMovieDetails> {
+    return this.request<ITMDBMovieDetails>(`/movie/${movieId}`, {
       append_to_response: 'credits'
     })
   }
 
   // Get popular horror movies
-  async getPopularHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
-    return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', {
+  async getPopularHorrorMovies(page: number = 1): Promise<ITMDBResponse<ITMDBMovie>> {
+    return this.request<ITMDBResponse<ITMDBMovie>>('/discover/movie', {
       page,
       with_genres: HORROR_GENRE_ID,
       without_genres: ANIMATION_GENRE_ID,
@@ -259,7 +165,7 @@ class TMDBClient {
     maxYear?: number
     genreIds?: number[]
     sortBy?: 'vote_average.desc' | 'first_air_date.desc' | 'name.asc'
-  }): Promise<TMDBResponse<TMDBTVShow>> {
+  }): Promise<ITMDBResponse<ITMDBTVShow>> {
     const {
       page = 1,
       minYear,
@@ -269,7 +175,7 @@ class TMDBClient {
     } = params || {}
 
     // Use multiple strategies to get comprehensive horror TV results
-    const allShows: TMDBTVShow[] = []
+    const allShows: ITMDBTVShow[] = []
     
     // Strategy 1: Discover with Sci-Fi & Fantasy + Mystery genres
     for (let discoverPage = 1; discoverPage <= 5; discoverPage++) {
@@ -292,7 +198,7 @@ class TMDBClient {
           requestParams['first_air_date.lte'] = `${maxYear}-12-31`
         }
 
-        const response = await this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', requestParams)
+        const response = await this.request<ITMDBResponse<ITMDBTVShow>>('/discover/tv', requestParams)
         allShows.push(...response.results)
         
         if (response.results.length === 0) break
@@ -317,7 +223,7 @@ class TMDBClient {
 
     for (const searchTerm of horrorShowSearches) {
       try {
-        const searchResponse = await this.request<TMDBResponse<TMDBTVShow>>('/search/tv', {
+        const searchResponse = await this.request<ITMDBResponse<ITMDBTVShow>>('/search/tv', {
           query: searchTerm,
           page: 1
         })
@@ -325,7 +231,7 @@ class TMDBClient {
         // Add top 2 results if they have good ratings
         const goodResults = searchResponse.results
           .slice(0, 2)
-          .filter(show => show.vote_average >= 6.0 && show.vote_count >= 20)
+          .filter((show: ITMDBTVShow) => show.vote_average >= 6.0 && show.vote_count >= 20)
         
         allShows.push(...goodResults)
       } catch (error) {
@@ -335,7 +241,7 @@ class TMDBClient {
 
     // Strategy 3: Additional discover calls with different parameters
     try {
-      const additionalResponse = await this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
+      const additionalResponse = await this.request<ITMDBResponse<ITMDBTVShow>>('/discover/tv', {
         page: 1,
         with_genres: '18,80', // Drama, Crime (often have horror elements)
         with_keywords: '158718|9715|12339|9882|180547|14544|162846|9663|9717|4565|9672|4344|9840',
@@ -351,11 +257,11 @@ class TMDBClient {
     
     // Remove duplicates
     const uniqueShows = allShows.reduce((acc, show) => {
-      if (!acc.find(existing => existing.id === show.id)) {
+      if (!acc.find((existing: ITMDBTVShow) => existing.id === show.id)) {
         acc.push(show)
       }
       return acc
-    }, [] as TMDBTVShow[])
+    }, [] as ITMDBTVShow[])
 
     // Filter results to prioritize shows with horror-related content
     const horrorKeywords = [
@@ -366,7 +272,7 @@ class TMDBClient {
       'apocalypse', 'survival', 'infection', 'virus', 'pandemic', 'outbreak'
     ]
     
-    const filteredResults = uniqueShows.filter(show => {
+    const filteredResults = uniqueShows.filter((show: ITMDBTVShow) => {
       const overview = (show.overview || '').toLowerCase()
       const name = show.name.toLowerCase()
       
@@ -383,8 +289,8 @@ class TMDBClient {
     let finalResults = filteredResults
     
     if (minYear || maxYear) {
-      finalResults = finalResults.filter(show => {
-        const year = new Date(show.first_air_date || '1900-01-01').getFullYear()
+      finalResults = finalResults.filter((show: ITMDBTVShow) => {
+        const year = new Date(show.first_air_date || '').getFullYear()
         if (minYear && year < minYear) return false
         if (maxYear && year > maxYear) return false
         return true
@@ -392,11 +298,11 @@ class TMDBClient {
     }
     
     // Sort results
-    finalResults.sort((a, b) => {
+    finalResults.sort((a: ITMDBTVShow, b: ITMDBTVShow) => {
       if (sortBy === 'vote_average.desc') return b.vote_average - a.vote_average
       if (sortBy === 'first_air_date.desc') {
-        const dateA = new Date(a.first_air_date || '1900-01-01').getTime()
-        const dateB = new Date(b.first_air_date || '1900-01-01').getTime()
+        const dateA = new Date(a.first_air_date || '').getTime()
+        const dateB = new Date(b.first_air_date || '').getTime()
         return dateB - dateA
       }
       if (sortBy === 'name.asc') return a.name.localeCompare(b.name)
@@ -417,18 +323,18 @@ class TMDBClient {
   }
 
   // Legacy method for backward compatibility
-  async getTopRatedHorrorTVShows(): Promise<TMDBResponse<TMDBTVShow>> {
+  async getTopRatedHorrorTVShows(): Promise<ITMDBResponse<ITMDBTVShow>> {
     return this.getAllTimeTopRatedHorrorTVShows({ page: 1, sortBy: 'vote_average.desc' })
   }
 
   // Get upcoming horror movies
-  async getUpcomingHorrorMovies(page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
+  async getUpcomingHorrorMovies(page: number = 1): Promise<ITMDBResponse<ITMDBMovie>> {
     const today = new Date().toISOString().split('T')[0]
     const futureDate = new Date()
     futureDate.setFullYear(futureDate.getFullYear() + 1)
     const oneYearFromNow = futureDate.toISOString().split('T')[0]
     
-    return this.request<TMDBResponse<TMDBMovie>>('/discover/movie', {
+    return this.request<ITMDBResponse<ITMDBMovie>>('/discover/movie', {
       page,
       with_genres: HORROR_GENRE_ID,
       without_genres: ANIMATION_GENRE_ID,
@@ -442,19 +348,19 @@ class TMDBClient {
   }
 
   // Get featured horror movies
-  async getFeaturedHorrorMovies(count: number = 10): Promise<TMDBMovie[]> {
+  async getFeaturedHorrorMovies(count: number = 10): Promise<ITMDBMovie[]> {
     const response = await this.getTopRatedHorrorMovies(1)
     // Return up to the requested count of movies
     return response.results.slice(0, Math.min(count, response.results.length))
   }
 
   // Get upcoming horror TV shows
-  async getUpcomingHorrorTVShows(page: number = 1): Promise<TMDBResponse<TMDBTVShow>> {
+  async getUpcomingHorrorTVShows(page: number = 1): Promise<ITMDBResponse<ITMDBTVShow>> {
     const today = new Date()
     const futureDate = new Date()
     futureDate.setFullYear(futureDate.getFullYear() + 1)
     
-    return this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
+    return this.request<ITMDBResponse<ITMDBTVShow>>('/discover/tv', {
       page,
       with_genres: HORROR_TV_GENRE_IDS.join(','), // Sci-Fi & Fantasy, Mystery
       'first_air_date.gte': today.toISOString().split('T')[0],
@@ -466,8 +372,8 @@ class TMDBClient {
   }
 
   // Get popular horror TV shows
-  async getPopularHorrorTVShows(page: number = 1): Promise<TMDBResponse<TMDBTVShow>> {
-    return this.request<TMDBResponse<TMDBTVShow>>('/discover/tv', {
+  async getPopularHorrorTVShows(page: number = 1): Promise<ITMDBResponse<ITMDBTVShow>> {
+    return this.request<ITMDBResponse<ITMDBTVShow>>('/discover/tv', {
       page,
       with_genres: HORROR_GENRE_ID,
       sort_by: 'popularity.desc'
@@ -475,23 +381,23 @@ class TMDBClient {
   }
 
   // Get movie details
-  async getMovieDetails(movieId: number): Promise<TMDBMovieDetails> {
-    return this.request<TMDBMovieDetails>(`/movie/${movieId}`)
+  async getMovieDetails(movieId: number): Promise<ITMDBMovieDetails> {
+    return this.request<ITMDBMovieDetails>(`/movie/${movieId}`)
   }
 
   // Get TV show details
-  async getTVDetails(tvId: number): Promise<TMDBTVDetails> {
-    return this.request<TMDBTVDetails>(`/tv/${tvId}`)
+  async getTVDetails(tvId: number): Promise<ITMDBTVDetails> {
+    return this.request<ITMDBTVDetails>(`/tv/${tvId}`)
   }
 
   // Get movie watch providers
-  async getMovieWatchProviders(movieId: number): Promise<TMDBWatchProvidersResponse> {
-    return this.request<TMDBWatchProvidersResponse>(`/movie/${movieId}/watch/providers`)
+  async getMovieWatchProviders(movieId: number): Promise<ITMDBWatchProvidersResponse> {
+    return this.request<ITMDBWatchProvidersResponse>(`/movie/${movieId}/watch/providers`)
   }
 
   // Get TV show watch providers
-  async getTVWatchProviders(tvId: number): Promise<TMDBWatchProvidersResponse> {
-    return this.request<TMDBWatchProvidersResponse>(`/tv/${tvId}/watch/providers`)
+  async getTVWatchProviders(tvId: number): Promise<ITMDBWatchProvidersResponse> {
+    return this.request<ITMDBWatchProvidersResponse>(`/tv/${tvId}/watch/providers`)
   }
 
   // Get available watch provider regions
@@ -500,33 +406,33 @@ class TMDBClient {
   }
 
   // Get all available movie watch providers
-  async getMovieWatchProvidersList(region?: string): Promise<{ results: TMDBWatchProvider[] }> {
+  async getMovieWatchProvidersList(region?: string): Promise<{ results: ITMDBWatchProvider[] }> {
     const params: Record<string, string> = {}
     if (region) {
       params.watch_region = region
     }
-    return this.request<{ results: TMDBWatchProvider[] }>('/watch/providers/movie', params)
+    return this.request<{ results: ITMDBWatchProvider[] }>('/watch/providers/movie', params)
   }
 
   // Get all available TV watch providers
-  async getTVWatchProvidersList(region?: string): Promise<{ results: TMDBWatchProvider[] }> {
+  async getTVWatchProvidersList(region?: string): Promise<{ results: ITMDBWatchProvider[] }> {
     const params: Record<string, string> = {}
     if (region) {
       params.watch_region = region
     }
-    return this.request<{ results: TMDBWatchProvider[] }>('/watch/providers/tv', params)
+    return this.request<{ results: ITMDBWatchProvider[] }>('/watch/providers/tv', params)
   }
 
   // Search for horror movies
-  async searchHorrorMovies(query: string, page: number = 1): Promise<TMDBResponse<TMDBMovie>> {
-    const response = await this.request<TMDBResponse<TMDBMovie>>('/search/movie', {
+  async searchHorrorMovies(query: string, page: number = 1): Promise<ITMDBResponse<ITMDBMovie>> {
+    const response = await this.request<ITMDBResponse<ITMDBMovie>>('/search/movie', {
       query,
       page,
       include_adult: false
     })
 
     // Filter results to only include horror movies
-    const horrorResults = response.results.filter(movie => 
+    const horrorResults = response.results.filter((movie: ITMDBMovie) => 
       movie.genre_ids.includes(HORROR_GENRE_ID)
     )
 
@@ -537,14 +443,14 @@ class TMDBClient {
   }
 
   // Search for horror TV shows
-  async searchHorrorTVShows(query: string, page: number = 1): Promise<TMDBResponse<TMDBTVShow>> {
-    const response = await this.request<TMDBResponse<TMDBTVShow>>('/search/tv', {
+  async searchHorrorTVShows(query: string, page: number = 1): Promise<ITMDBResponse<ITMDBTVShow>> {
+    const response = await this.request<ITMDBResponse<ITMDBTVShow>>('/search/tv', {
       query,
       page
     })
 
     // Filter results to only include horror TV shows
-    const horrorResults = response.results.filter(show => 
+    const horrorResults = response.results.filter((show: ITMDBTVShow) => 
       show.genre_ids.includes(HORROR_GENRE_ID)
     )
 
@@ -555,12 +461,12 @@ class TMDBClient {
   }
 
   // Get genre list
-  async getMovieGenres(): Promise<{ genres: TMDBGenre[] }> {
-    return this.request<{ genres: TMDBGenre[] }>('/genre/movie/list')
+  async getMovieGenres(): Promise<{ genres: ITMDBGenre[] }> {
+    return this.request<{ genres: ITMDBGenre[] }>('/genre/movie/list')
   }
 
-  async getTVGenres(): Promise<{ genres: TMDBGenre[] }> {
-    return this.request<{ genres: TMDBGenre[] }>('/genre/tv/list')
+  async getTVGenres(): Promise<{ genres: ITMDBGenre[] }> {
+    return this.request<{ genres: ITMDBGenre[] }>('/genre/tv/list')
   }
 }
 
@@ -576,7 +482,7 @@ export const getBackdropUrl = (path: string | null, size: 'w300' | 'w780' | 'w12
 }
 
 // Convert TMDB movie to our MediaItem format
-export const tmdbMovieToMediaItem = (movie: TMDBMovie, genres: TMDBGenre[] = []): MediaItem => {
+export const tmdbMovieToMediaItem = (movie: ITMDBMovie, genres: ITMDBGenre[] = []): MediaItem => {
   const movieGenres = genres.filter(genre => movie.genre_ids.includes(genre.id)).map(g => g.name)
   
   return {
@@ -594,7 +500,7 @@ export const tmdbMovieToMediaItem = (movie: TMDBMovie, genres: TMDBGenre[] = [])
 }
 
 // Convert TMDB TV show to our MediaItem format
-export const tmdbTVToMediaItem = (show: TMDBTVShow, genres: TMDBGenre[] = []): MediaItem => {
+export const tmdbTVToMediaItem = (show: ITMDBTVShow, genres: ITMDBGenre[] = []): MediaItem => {
   const showGenres = genres.filter(genre => show.genre_ids.includes(genre.id)).map(g => g.name)
   
   return {
