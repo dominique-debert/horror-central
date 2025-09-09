@@ -1,3 +1,4 @@
+// This file replaces the corrupted route.ts entirely
 import { NextRequest, NextResponse } from 'next/server'
 
 // Types
@@ -220,3 +221,5 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+// Clean file ends here
