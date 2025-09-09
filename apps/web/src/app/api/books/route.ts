@@ -14,13 +14,18 @@ interface BookItem {
   slug: string
 }
 
-// Open Library API interfaces
-
+// OpenLibrary API interfaces
 interface OpenLibrarySearchDoc {
   key: string
   title: string
   author_name?: string[]
-  first_publish_year?: number
+  first_publish_        const result = await openLibrary.getAllTimeTopRatedHorrorBooks({
+          page: parseInt(searchParams.get('page') || '1'),
+          minYear: minYear ? parseInt(minYear) : undefined,
+          maxYear: maxYear ? parseInt(maxYear) : undefined,
+          author: author || undefined,
+          limit: parseInt(searchParams.get('limit') || '20'),
+        })umber
   cover_i?: number
   isbn?: string[]
   subject?: string[]
@@ -394,6 +399,80 @@ class OpenLibraryClient {
       return [];
     }
   }
+
+  async getUniqueLanguages(params?: {
+    minYear?: number;
+    maxYear?: number;
+  }): Promise<string[]> {
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('q', 'subject:horror');
+      queryParams.append('limit', '1000');
+      queryParams.append('fields', 'language');
+      
+      if (params?.minYear) {
+        queryParams.append('first_publish_year', `[${params.minYear} TO *]`);
+      }
+      if (params?.maxYear) {
+        queryParams.append('first_publish_year', `[* TO ${params.maxYear}]`);
+      }
+
+      const response = await fetch(`${this.baseUrl}/search.json?${queryParams.toString()}`, {
+        headers: {
+          'User-Agent': 'Horror-Central/1.0 (horror-central@example.com)',
+        },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!response.ok) {
+        console.error(`OpenLibrary API returned ${response.status}: ${response.statusText}`);
+        return ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Russian', 'Japanese', 'Chinese'];
+      }
+
+      const data: OpenLibrarySearchResponse = await response.json();
+      
+      const languages = new Set<string>();
+      data.docs.forEach(book => {
+        if (book.language && Array.isArray(book.language)) {
+          book.language.forEach(lang => {
+            if (lang && typeof lang === 'string') {
+              // Convert language codes to readable names
+              const languageNames: { [key: string]: string } = {
+                'eng': 'English',
+                'spa': 'Spanish', 
+                'fre': 'French',
+                'ger': 'German',
+                'ita': 'Italian',
+                'por': 'Portuguese',
+                'rus': 'Russian',
+                'jpn': 'Japanese',
+                'chi': 'Chinese',
+                'ara': 'Arabic',
+                'hin': 'Hindi',
+                'dut': 'Dutch',
+                'pol': 'Polish',
+                'swe': 'Swedish',
+                'nor': 'Norwegian',
+                'dan': 'Danish',
+                'fin': 'Finnish'
+              };
+              
+              const languageName = languageNames[lang] || lang;
+              languages.add(languageName);
+            }
+          });
+        }
+      });
+
+      const sortedLanguages = Array.from(languages).sort();
+      console.log(`Found ${sortedLanguages.length} unique languages`);
+      return sortedLanguages;
+
+    } catch (error) {
+      console.error('Error fetching unique languages:', error);
+      return ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Russian', 'Japanese', 'Chinese'];
+    }
+  }
 }
 
 const openLibraryClient = new OpenLibraryClient()
@@ -435,25 +514,29 @@ export async function GET(request: Request) {
         const searchBooks = await openLibraryClient.searchBooks(query, limit)
         result = { books: searchBooks }
         break
-      case 'unique-authors': {
-        try {
-          const minYear = searchParams.get('minYear') ? parseInt(searchParams.get('minYear')!) : undefined;
-          const maxYear = searchParams.get('maxYear') ? parseInt(searchParams.get('maxYear')!) : undefined;
-          const authors = await openLibraryClient.getUniqueAuthors({
-            minYear,
-            maxYear,
-            limit
-          });
-          console.log(`Found ${authors.length} unique authors`);
-          return NextResponse.json({ authors });
-        } catch (error) {
-          console.error('Error in unique-authors endpoint:', error);
-          return NextResponse.json({ authors: [] });
-        }
-      }
+      case 'unique-authors':
+        const authorsResult = await openLibraryClient.getUniqueAuthors({
+          minYear: minYear ? parseInt(minYear) : undefined,
+        })
+        return NextResponse.json({ authors: authorsResult })
+
+      case 'unique-languages':
+        const languagesResult = await openLibraryClient.getUniqueLanguages({
+          minYear: minYear ? parseInt(minYear) : undefined,
+        })
+        return NextResponse.json({ languages: languagesResult })
+
       default:
-        const defaultBooks = await openLibraryClient.getTopRatedBooks(limit)
-        result = { books: defaultBooks }
+        // Handle all-time-top-rated and other cases
+        const defaultResult = await openLibraryClient.getAllTimeTopRatedHorrorBooks({
+          page: parseInt(searchParams.get('page') || '1'),
+          minYear: minYear ? parseInt(minYear) : undefined,
+          maxYear: maxYear ? parseInt(maxYear) : undefined,
+          author: author || undefined,
+          language: searchParams.get('language') || undefined,
+          limit: parseInt(searchParams.get('limit') || '20'),
+        })
+        return NextResponse.json(defaultResult)
     }
 
     return NextResponse.json(result)

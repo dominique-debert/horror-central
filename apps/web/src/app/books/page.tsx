@@ -16,6 +16,7 @@ export default function BooksPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDecade, setSelectedDecade] = useState('all')
   const [selectedAuthor, setSelectedAuthor] = useState('all')
+  const [selectedLanguage, setSelectedLanguage] = useState('all')
   const [sortBy, setSortBy] = useState<SortOption>('rating.desc')
   const [currentPage, setCurrentPage] = useState(() => {
     // Get page from URL search params, default to 1
@@ -28,6 +29,10 @@ export default function BooksPage() {
   const [authors, setAuthors] = useState<string[]>([]);
   const [isLoadingAuthors, setIsLoadingAuthors] = useState(false);
 
+  // Languages for the filter select
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [isLoadingLanguages, setIsLoadingLanguages] = useState(false);
+
   // Available decades from 1970s to current decade
   const currentYear = new Date().getFullYear()
   const currentDecade = Math.floor(currentYear / 10) * 10
@@ -36,9 +41,10 @@ export default function BooksPage() {
     (_, i) => `${currentDecade - i * 10}`
   )
 
-  // Fetch authors for the filter select
+  // Fetch authors and languages for the filter select
   useEffect(() => {
     setIsLoadingAuthors(true);
+    setIsLoadingLanguages(true);
     const params = new URLSearchParams();
     params.set('type', 'unique-authors');
     params.set('limit', '1000');
@@ -49,11 +55,36 @@ export default function BooksPage() {
       .then(res => res.json())
       .then(data => {
         setAuthors(data.authors || []);
+        setLanguages(data.languages || []);
         setIsLoadingAuthors(false);
+        setIsLoadingLanguages(false);
       })
       .catch(() => {
         setAuthors([]);
+        setLanguages([]);
         setIsLoadingAuthors(false);
+        setIsLoadingLanguages(false);
+      });
+  }, [selectedDecade])
+
+  // Fetch languages for the filter select
+  useEffect(() => {
+    setIsLoadingLanguages(true);
+    const params = new URLSearchParams();
+    params.set('type', 'unique-languages');
+    params.set('limit', '50');
+    if (selectedDecade && selectedDecade !== 'all') {
+      params.set('minYear', selectedDecade);
+    }
+    fetch(`/api/books?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => {
+        setLanguages(data.languages || []);
+        setIsLoadingLanguages(false);
+      })
+      .catch(() => {
+        setLanguages([]);
+        setIsLoadingLanguages(false);
       });
   }, [selectedDecade])
 
@@ -62,7 +93,7 @@ export default function BooksPage() {
     page: currentPage,
     minYear: selectedDecade && selectedDecade !== 'all' ? parseInt(selectedDecade) : undefined,
     author: selectedAuthor !== 'all' ? selectedAuthor : undefined,
-    sortBy: sortBy,
+    language: selectedLanguage !== 'all' ? selectedLanguage : undefined,
     limit: itemsPerPage,
   })
 
@@ -193,15 +224,16 @@ export default function BooksPage() {
         onDecadeChange={setSelectedDecade}
         selectedAuthor={selectedAuthor}
         onAuthorChange={setSelectedAuthor}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
+        selectedLanguage={selectedLanguage}
+        onLanguageChange={setSelectedLanguage}
         availableDecades={decades}
         availableAuthors={authors}
+        availableLanguages={languages}
         isLoadingAuthors={isLoadingAuthors}
         className="mb-8"
       />
 
-      {isLoading || isLoadingAuthors ? (
+      {isLoading || isLoadingAuthors || isLoadingLanguages ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-3 animate-pulse">
