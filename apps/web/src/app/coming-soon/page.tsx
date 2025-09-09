@@ -321,43 +321,44 @@ export default function ComingSoonPage() {
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                     />
+                  <Badge variant="secondary" className="text-xs absolute top-2 right-2">
+                    { item.type.toUpperCase() }
+                  </Badge>
                   </div>
                   <CardHeader className="flex-1 p-4">
                     <div className="flex justify-between items-start gap-2">
                       <CardTitle className="text-lg font-bold line-clamp-2">
                         {item.title}
                       </CardTitle>
-                      <Badge variant="secondary" className="shrink-0">
-                        {item.type.toUpperCase()}
-                      </Badge>
+
                     </div>
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {item.genre.slice(0, 2).map((g) => (
-                        <Badge key={g} variant="outline" className="text-xs">
-                          {g}
+                      {item.genre.slice(0, 2).map((genre) => (
+                        <Badge key={genre} variant="outline" className="bg-slate-800 text-xs">
+                          { genre }
                         </Badge>
                       ))}
-                      {item.genre.length > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{item.genre.length - 2}
+                      {/* {item.genre.length > 2 && (
+                        <Badge variant="outline" className="bg-slate-800 text-xs">
+                        +{item.genre.length - 2}
                         </Badge>
-                      )}
+                        )} */}
                     </div>
                   </CardHeader>
                   <CardContent className="p-4 pt-0">
                     <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{formatReleaseDate(item.releaseDate)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
+                      {/* <div className="flex items-center gap-1">
                         <TrendingUp className="h-4 w-4" />
                         <span>{item.anticipationScore}% Anticipation</span>
-                      </div>
+                        </div> */}
                     </div>
                     <p className="text-sm text-gray-300 line-clamp-3">
-                      {item.description || 'No description available.'}
+                      { item.description }
                     </p>
+                    <div className="flex gap-1 mt-6 text-xs">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatReleaseDate(item.releaseDate)}</span>
+                    </div>
                   </CardContent>
                 </Card>
               ))}

@@ -50,7 +50,8 @@ export function PageLayout({
   action,
 }: PageLayoutProps) {
   return (
-    <div className={`bg-black text-white ${className}`}>
+    <div className="container mx-auto mt-8 px-6">
+    <div className={`text-white ${className}`}>
       <div className="px-0">
         <PageHeader title={title} description={description} action={action} />
         
@@ -76,8 +77,9 @@ export function PageLayout({
           />
         )}
 
-        <main className="mt-0">{children}</main>
+        <main className="mt-8">{children}</main>
       </div>
+    </div>
     </div>
   );
 }
