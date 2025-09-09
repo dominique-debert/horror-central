@@ -19,7 +19,11 @@ export default function BooksPage() {
   const [selectedAuthor, setSelectedAuthor] = useState('all')
   const [selectedFormat, setSelectedFormat] = useState<FormatOption>('all')
   const [sortBy, setSortBy] = useState<SortOption>('rating.desc')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(() => {
+    // Get page from URL search params, default to 1
+    const page = searchParams.get('page')
+    return page ? Math.max(1, parseInt(page, 10)) : 1
+  })
   const itemsPerPage = 12
 
   // Available decades from 1970s to current decade
@@ -60,6 +64,18 @@ export default function BooksPage() {
     })
   }, [data, searchTerm, selectedFormat])
 
+  // Update URL when page changes
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (currentPage > 1) {
+      params.set('page', currentPage.toString())
+    } else {
+      params.delete('page')
+    }
+    const url = `${window.location.pathname}?${params.toString()}`
+    window.history.replaceState({}, '', url)
+  }, [currentPage, searchParams])
+
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
@@ -96,6 +112,52 @@ export default function BooksPage() {
     const url = `${window.location.pathname}?${params.toString()}`
     window.history.replaceState({}, '', url)
   }, [searchTerm, selectedDecade, selectedAuthor, selectedFormat, sortBy])
+
+  const getPaginationItems = () => {
+    if (!data) return [];
+    
+    const totalPages = data.totalPages;
+    const current = currentPage;
+    const items = [];
+    
+    // Always show first page button
+    items.push(1);
+    
+    // Calculate range of pages to show around current page
+    let startPage = Math.max(2, current - 1);
+    let endPage = Math.min(totalPages - 1, current + 1);
+    
+    // Adjust if we're near the start or end
+    if (current <= 3) {
+      endPage = Math.min(4, totalPages - 1);
+    } else if (current >= totalPages - 2) {
+      startPage = Math.max(2, totalPages - 3);
+    }
+    
+    // Add ellipsis if needed after first page
+    if (startPage > 2) {
+      items.push('ellipsis-start');
+    }
+    
+    // Add page numbers in range
+    for (let i = startPage; i <= endPage; i++) {
+      if (i > 1 && i < totalPages) { // Skip if it's the first or last page (we'll add those separately)
+        items.push(i);
+      }
+    }
+    
+    // Add ellipsis before last page if needed
+    if (endPage < totalPages - 1) {
+      items.push('ellipsis-end');
+    }
+    
+    // Always show last page if there is one
+    if (totalPages > 1) {
+      items.push(totalPages);
+    }
+    
+    return items;
+  };
 
   if (error) {
     return (
@@ -189,41 +251,49 @@ export default function BooksPage() {
                     />
                   </PaginationItem>
                   
-                  {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
-                    let pageNum = i + 1
-                    if (currentPage > 3) {
-                      pageNum = currentPage - 2 + i
+                  {getPaginationItems().map((item, index) => {
+                    if (item === 'ellipsis-start' || item === 'ellipsis-end') {
+                      return (
+                        <PaginationItem key={`ellipsis-${index}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
                     }
-                    if (pageNum > data.totalPages) return null
                     
+                    const pageNum = item as number;
                     return (
                       <PaginationItem key={pageNum}>
                         <PaginationButton
                           href="#"
                           isActive={currentPage === pageNum}
                           onClick={(e) => {
-                            e.preventDefault()
-                            setCurrentPage(pageNum)
+                            e.preventDefault();
+                            setCurrentPage(pageNum);
                           }}
                         >
                           {pageNum}
                         </PaginationButton>
                       </PaginationItem>
-                    )
+                    );
                   })}
                   
                   <PaginationItem>
                     <PaginationNext 
                       href="#"
                       onClick={(e) => {
-                        e.preventDefault()
-                        if (currentPage < data.totalPages) setCurrentPage(currentPage + 1)
+                        e.preventDefault();
+                        if (currentPage < data.totalPages) setCurrentPage(currentPage + 1);
                       }}
                       className={currentPage === data.totalPages ? 'pointer-events-none opacity-50' : ''}
                     />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
+              
+              {/* Optional: Show page info */}
+              <div className="ml-4 flex items-center text-sm text-muted-foreground">
+                Page {currentPage} of {data.totalPages}
+              </div>
             </div>
           )}
         </>

@@ -11,17 +11,25 @@ export const useTopRatedBooks = (limit = 12) => {
 };
 
 export const useAllTimeTopRatedBooks = (params?: {
-  page?: number;
-  minYear?: number;
-  maxYear?: number;
-  author?: string;
-  sortBy?: 'rating.desc' | 'first_publish_year.desc' | 'title.asc';
+  page?: number
+  minYear?: number
+  maxYear?: number
+  author?: string
+  sortBy?: 'rating.desc' | 'first_publish_year.desc' | 'title.asc'
+  limit?: number
 }) => {
+  // Ensure page is at least 1
+  const page = Math.max(1, params?.page || 1);
+  
   return useQuery({
-    queryKey: ['all-time-top-rated-books', params],
-    queryFn: () => openLibraryClient.getAllTimeTopRatedHorrorBooks(params),
+    queryKey: ['all-time-top-rated-books', { ...params, page }],
+    queryFn: () => openLibraryClient.getAllTimeTopRatedHorrorBooks({
+      ...params,
+      page, // Use the validated page number
+    }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    keepPreviousData: true, // Keep previous data while fetching new data
   });
 };
 

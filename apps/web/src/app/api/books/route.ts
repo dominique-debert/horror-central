@@ -274,106 +274,87 @@ class OpenLibraryClient {
     maxYear?: number
     author?: string
     sortBy?: 'rating.desc' | 'first_publish_year.desc' | 'title.asc' | 'random'
+    limit?: number
   }): Promise<{ books: BookItem[], total: number, page: number, totalPages: number }> {
-    const { page = 1, minYear, maxYear, author, sortBy = 'first_publish_year.desc' } = params || {}
-    const limit = 20
+    const page = params?.page || 1;
+    const limit = params?.limit || 20;
+    const offset = (page - 1) * limit;
     
-    // Note: Complex filters removed to avoid Open Library API 500 errors
-    // Filtering will be done client-side instead
+    // Build the query parameters for OpenLibrary
+    const queryParams = new URLSearchParams();
     
-    // Simplified search strategies to avoid API errors
-    const queries = [
-      `subject:horror`,
-      `subject:supernatural`,
-      `subject:thriller`,
-      `subject:vampire`,
-      `subject:zombie`
-    ]
+    // Start with a basic horror query
+    queryParams.set('q', 'subject:horror');
     
-    const allBooks: BookItem[] = []
+    // Add pagination
+    queryParams.set('limit', limit.toString());
+    queryParams.set('offset', offset.toString());
     
-    for (const query of queries) {
-      try {
-        // Use simple query without complex filters to avoid 500 errors
-        const searchQuery = query
-        
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
-        
-        const response = await fetch(
-          `${this.baseUrl}/search.json?q=${encodeURIComponent(searchQuery)}&limit=20`,
-          {
-            headers: {
-              'User-Agent': 'Horror-Central/1.0 (horror-central@example.com)',
-            },
-            signal: controller.signal
-          }
-        )
-        
-        clearTimeout(timeoutId)
-
-        if (!response.ok) {
-          console.error(`API request failed: ${response.status} ${response.statusText}`)
-          continue
-        }
-
-        const data: OpenLibrarySearchResponse = await response.json()
-        
-        if (data.docs && data.docs.length > 0) {
-          const books = data.docs
-            .filter(book => book.title && book.author_name && book.author_name.length > 0 && book.first_publish_year)
-            .map(book => this.convertSearchResultToBookItem(book))
-          
-          allBooks.push(...books)
-        }
-      } catch (error) {
-        console.error(`Error with query: ${query}`, error)
-        continue
+    // Add sorting
+    if (params?.sortBy === 'rating.desc') {
+      queryParams.set('sort', 'rating desc');
+    } else if (params?.sortBy === 'title.asc') {
+      queryParams.set('sort', 'title_s asc');
+    } else {
+      // Default sort by publish year (newest first)
+      queryParams.set('sort', 'first_publish_year desc');
+    }
+    
+    // Add fields we need
+    queryParams.set('fields', 'key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median,ratings_average,ratings_count,subject,description');
+    
+    // Add author filter if provided
+    if (params?.author) {
+      queryParams.set('author', params.author);
+    }
+    
+    // Add year range filter if provided
+    if (params?.minYear || params?.maxYear) {
+      const minYear = params.minYear || 0;
+      const maxYear = params.maxYear || new Date().getFullYear();
+      queryParams.set('first_publish_year', `[${minYear} TO ${maxYear}]`);
+    }
+    
+    try {
+      const response = await fetch(`${this.baseUrl}/search.json?${queryParams.toString()}`, {
+        headers: {
+          'User-Agent': 'Horror-Central/1.0 (horror-central@example.com)',
+        },
+        // Add a 10 second timeout
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`OpenLibrary API returned ${response.status}: ${response.statusText}`);
       }
-    }
-
-    // Remove duplicates based on title and author
-    const uniqueBooks = allBooks.filter((book, index, self) => 
-      index === self.findIndex(b => b.title === book.title && b.author === book.author)
-    )
-    
-    // Apply client-side filtering
-    let filteredBooks = uniqueBooks
-    
-    if (minYear || maxYear) {
-      filteredBooks = filteredBooks.filter(book => {
-        if (minYear && book.year < minYear) return false
-        if (maxYear && book.year > maxYear) return false
-        return true
-      })
-    }
-    
-    if (author) {
-      filteredBooks = filteredBooks.filter(book => 
-        book.author.toLowerCase().includes(author.toLowerCase())
-      )
-    }
-    
-    // Apply sorting
-    if (sortBy === 'rating.desc') {
-      filteredBooks.sort((a, b) => b.rating - a.rating)
-    } else if (sortBy === 'first_publish_year.desc') {
-      filteredBooks.sort((a, b) => b.year - a.year)
-    } else if (sortBy === 'title.asc') {
-      filteredBooks.sort((a, b) => a.title.localeCompare(b.title))
-    }
-
-    // Pagination
-    const totalBooks = filteredBooks.length
-    const totalPages = Math.ceil(totalBooks / limit)
-    const startIndex = (page - 1) * limit
-    const paginatedBooks = filteredBooks.slice(startIndex, startIndex + limit)
-    
-    return {
-      books: paginatedBooks,
-      total: totalBooks,
-      page,
-      totalPages
+      
+      const data: OpenLibrarySearchResponse = await response.json();
+      
+      // Convert to our BookItem format
+      const books = data.docs
+        .filter(book => book.title && book.author_name && book.author_name.length > 0)
+        .map(book => this.convertSearchResultToBookItem(book));
+      
+      // Calculate pagination info
+      const total = data.numFound;
+      const totalPages = Math.ceil(total / limit);
+      
+      return {
+        books,
+        total,
+        page,
+        totalPages
+      };
+      
+    } catch (error) {
+      console.error('Error in getAllTimeTopRatedHorrorBooks:', error);
+      // Return empty results on error
+      return {
+        books: [],
+        total: 0,
+        page,
+        totalPages: 0
+      };
     }
   }
 }
