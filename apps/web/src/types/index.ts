@@ -22,6 +22,7 @@ export * from './components/ILanguageBadgeProps';
 
 // Book-related interfaces
 export type { IBookItem } from './IBookItem'
+export type { IBookDetails } from './IBookDetails'
 export type { IBookCardProps } from './IBookCardProps'
 
 // Movie-related interfaces
@@ -40,6 +41,10 @@ export type { IMediaCardProps, MediaType } from './IMediaCardProps'
 // OpenLibrary API interfaces
 export type { IOpenLibrarySearchDoc } from './IOpenLibrarySearchDoc'
 export type { IOpenLibrarySearchResponse } from './IOpenLibrarySearchResponse'
+export type { IOpenLibraryWork } from './IOpenLibraryWork'
+export type { IOpenLibraryAuthor } from './IOpenLibraryAuthor'
+export type { IOpenLibraryEdition } from './IOpenLibraryEdition'
 
 // Component prop interfaces
 export type { ISearchAndFilterBooksProps } from './ISearchAndFilterBooksProps'
+export type { IHeroSectionProps } from './IHeroSectionProps'

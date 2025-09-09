@@ -1,26 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-interface OpenLibraryWork {
-  key: string
-  title: string
-  authors?: Array<{
-    author: {
-      key: string
-    }
-  }>
-  first_publish_date?: string
-  covers?: number[]
-  description?: string | { type: string; value: string }
-  subjects?: string[]
-}
-
-interface OpenLibraryAuthor {
-  name: string
-}
-
-interface OpenLibraryEdition {
-  number_of_pages?: number
-}
+import type { IOpenLibraryWork, IOpenLibraryAuthor, IOpenLibraryEdition, IBookDetails } from '@/types'
 
 export async function GET(
   request: NextRequest,
@@ -41,7 +20,7 @@ export async function GET(
       return NextResponse.json({ error: 'Book not found' }, { status: 404 })
     }
 
-    const work: OpenLibraryWork = await workResponse.json()
+    const work: IOpenLibraryWork = await workResponse.json()
     
     // Fetch author details if available
     let authorName = 'Unknown Author'
@@ -56,7 +35,7 @@ export async function GET(
         })
         
         if (authorResponse.ok) {
-          const author: OpenLibraryAuthor = await authorResponse.json()
+          const author: IOpenLibraryAuthor = await authorResponse.json()
           authorName = author.name || 'Unknown Author'
         }
       } catch (error) {
@@ -77,7 +56,7 @@ export async function GET(
       if (editionsResponse.ok) {
         const editionsData = await editionsResponse.json()
         if (editionsData.entries && editionsData.entries.length > 0) {
-          const edition: OpenLibraryEdition = editionsData.entries[0]
+          const edition: IOpenLibraryEdition = editionsData.entries[0]
           pages = edition.number_of_pages || 0
         }
       }
@@ -107,7 +86,7 @@ export async function GET(
 
     // Extract genres from subjects
     const genres = work.subjects 
-      ? work.subjects.filter(subject => 
+      ? work.subjects.filter((subject: string) => 
           subject.toLowerCase().includes('horror') ||
           subject.toLowerCase().includes('thriller') ||
           subject.toLowerCase().includes('mystery') ||
@@ -116,7 +95,7 @@ export async function GET(
         ).slice(0, 5)
       : ['Horror']
 
-    const bookDetails = {
+    const bookDetails: IBookDetails = {
       id: work.key,
       title: work.title,
       posterUrl,
