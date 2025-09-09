@@ -27,6 +27,7 @@ export interface SearchAndFilterBooksProps {
   onSortByChange: (value: SortOption) => void
   availableDecades: string[]
   availableAuthors: string[]
+  isLoadingAuthors?: boolean
   className?: string
 }
 
@@ -43,7 +44,8 @@ export function SearchAndFilterBooks({
   onSortByChange,
   availableDecades = [],
   availableAuthors = [],
-  className = '',
+  isLoadingAuthors = false,
+  className,
 }: SearchAndFilterBooksProps) {
   const [showFilters, setShowFilters] = useState(false)
 
@@ -63,7 +65,7 @@ export function SearchAndFilterBooks({
   ]
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 mt-8 ${className}`}>
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -129,9 +131,10 @@ export function SearchAndFilterBooks({
             <Select
               value={selectedAuthor || ALL_VALUE}
               onValueChange={(value) => onAuthorChange(value === ALL_VALUE ? '' : value)}
+              disabled={isLoadingAuthors}
             >
               <SelectTrigger id="author-filter" className="w-full">
-                <SelectValue placeholder="Select author" />
+                <SelectValue placeholder={isLoadingAuthors ? 'Loading authors...' : 'Select author'} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_VALUE}>All Authors</SelectItem>

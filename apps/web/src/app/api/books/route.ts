@@ -417,6 +417,14 @@ export async function GET(request: Request) {
         const searchBooks = await openLibraryClient.searchBooks(query, limit)
         result = { books: searchBooks }
         break
+      case 'unique-authors':
+        const allBooks = await openLibraryClient.getAllTimeTopRatedHorrorBooks({ limit: 100 })
+        const authors = Array.from(new Set(
+          allBooks.books
+            .map(book => book.author)
+            .filter((author): author is string => !!author)
+        )).sort()
+        return NextResponse.json({ authors })
       default:
         const defaultBooks = await openLibraryClient.getTopRatedBooks(limit)
         result = { books: defaultBooks }

@@ -144,6 +144,26 @@ class OpenLibraryClient {
       return []
     }
   }
+
+  async getUniqueAuthors(limit: number = 100): Promise<string[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}?type=unique-authors&limit=${limit}`)
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      // Ensure we return an array of strings
+      if (data && Array.isArray(data.authors)) {
+        return data.authors.filter((author: any) => typeof author === 'string')
+      }
+      return []
+    } catch (error) {
+      console.error('Error fetching unique authors:', error)
+      return []
+    }
+  }
 }
 
 // Export singleton instance

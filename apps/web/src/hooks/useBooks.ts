@@ -24,3 +24,17 @@ export const useAllTimeTopRatedBooks = (params?: {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
+
+export const useBookAuthors = () => {
+  return useQuery({
+    queryKey: ['book-authors'],
+    queryFn: async () => {
+      console.log('Fetching authors...')
+      const authors = await openLibraryClient.getUniqueAuthors(100)
+      console.log('Fetched authors:', authors)
+      return authors
+    },
+    staleTime: 24 * 60 * 60 * 1000, // 1 day
+    gcTime: 24 * 60 * 60 * 1000, // 1 day
+  })
+};

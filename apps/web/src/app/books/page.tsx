@@ -5,28 +5,12 @@ import { useSearchParams } from 'next/navigation'
 import { PageHeader } from '@/components/PageHeader'
 import { SearchAndFilterBooks } from '@/components/SearchAndFilterBooks'
 import { MediaCard } from '@/components/ui/MediaCard'
-import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
-import { useAllTimeTopRatedBooks } from '@/hooks/useBooks'
+import { useAllTimeTopRatedBooks, useBookAuthors } from '@/hooks/useBooks'
 
 // Types
 type SortOption = 'rating.desc' | 'first_publish_year.desc' | 'title.asc' | 'author.asc'
 type FormatOption = 'all' | 'hardcover' | 'paperback' | 'ebook' | 'audiobook'
-
-interface BookItem {
-  id: string
-  title: string
-  posterUrl: string
-  rating: number
-  year: number
-  author: string
-  pages: number
-  description: string
-  genre: string[]
-  slug?: string
-  format?: FormatOption[]
-}
 
 export default function BooksPage() {
   const searchParams = useSearchParams()
@@ -46,19 +30,8 @@ export default function BooksPage() {
     (_, i) => `${currentDecade - i * 10}s`
   )
 
-  // Sample authors - in a real app, these would come from your API
-  const authors = [
-    'Stephen King',
-    'H.P. Lovecraft',
-    'Shirley Jackson',
-    'Clive Barker',
-    'Anne Rice',
-    'Dean Koontz',
-    'Peter Straub',
-    'Joe Hill',
-    'Paul Tremblay',
-    'Grady Hendrix'
-  ]
+  // Fetch authors using the useBookAuthors hook
+  const { data: authors = [], isLoading: isLoadingAuthors } = useBookAuthors()
 
   // Fetch books using the useAllTimeTopRatedBooks hook
   const { data, isLoading, error } = useAllTimeTopRatedBooks({
@@ -153,11 +126,12 @@ export default function BooksPage() {
         onSortByChange={setSortBy}
         availableDecades={decades}
         availableAuthors={authors}
+        isLoadingAuthors={isLoadingAuthors}
         className="mb-8"
       />
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {isLoading || isLoadingAuthors ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-3 animate-pulse">
               <div className="h-64 w-full bg-muted rounded-lg" />
@@ -168,7 +142,7 @@ export default function BooksPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
             {filteredBooks()
               .filter(book => book && book.posterUrl) // Filter out any undefined books or books without posterUrl
               .map((book) => ({
