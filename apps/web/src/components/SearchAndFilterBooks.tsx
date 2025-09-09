@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react';
-import { Check, ChevronsUpDown, Filter, X, BookOpen, Calendar, User, Star, ArrowUpDown, Search } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react';
+import { Check, ChevronsUpDown, Filter, X, Calendar, User, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -13,9 +13,6 @@ import { cn } from '@/lib/utils'
 // Constants for default values
 export const ALL_VALUE = 'all'
 
-// Book specific types
-type SortOption = 'rating.desc' | 'first_publish_year.desc' | 'title.asc' | 'author.asc'
-
 export interface SearchAndFilterBooksProps {
   searchTerm: string
   onSearchChange: (value: string) => void
@@ -23,8 +20,6 @@ export interface SearchAndFilterBooksProps {
   onDecadeChange: (value: string) => void
   selectedAuthor: string
   onAuthorChange: (value: string) => void
-  sortBy: SortOption
-  onSortByChange: (value: SortOption) => void
   availableDecades: string[]
   availableAuthors: string[]
   isLoadingAuthors?: boolean
@@ -38,28 +33,19 @@ export function SearchAndFilterBooks({
   onDecadeChange,
   selectedAuthor,
   onAuthorChange,
-  sortBy,
-  onSortByChange,
   availableDecades = [],
   availableAuthors = [],
-  isLoadingAuthors = false,
+  // isLoadingAuthors = false,
   className,
 }: SearchAndFilterBooksProps) {
   const [showFilters, setShowFilters] = useState(false)
   const [open, setOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
 
-  const sortOptions = [
-    { value: 'rating.desc' as const, label: 'Highest Rated', icon: <Star className="h-4 w-4 mr-2" /> },
-    { value: 'first_publish_year.desc' as const, label: 'Newest First', icon: <Calendar className="h-4 w-4 mr-2" /> },
-    { value: 'title.asc' as const, label: 'Title A-Z', icon: <BookOpen className="h-4 w-4 mr-2" /> },
-    { value: 'author.asc' as const, label: 'Author A-Z', icon: <User className="h-4 w-4 mr-2" /> },
-  ]
-
-  const fallbackAuthors = [
-    'Stephen King', 'Clive Barker', 'Anne Rice', 'H.P. Lovecraft', 'Shirley Jackson', 'Edgar Allan Poe', 'Bram Stoker', 'Mary Shelley', 'Robert R. McCammon', 'Peter Straub', 'Richard Matheson', 'Joe Hill', 'Ramsey Campbell', 'Brian Keene', 'Paul Tremblay', 'Grady Hendrix', 'Alma Katsu', 'V.C. Andrews', 'Thomas Ligotti', 'Laird Barron', 'Kathe Koja', 'Adam Nevill', 'Graham Masterton', 'John Langan', 'Sarah Pinborough', 'Josh Malerman', 'Caitlín R. Kiernan', 'Tananarive Due', 'Victor LaValle', 'Gemma Files', 'Michael McDowell', 'Elizabeth Hand', 'Christopher Golden', 'David Wong', 'Scott Smith', 'Mark Z. Danielewski', 'Dan Simmons', 'William Peter Blatty', 'Robert Bloch', 'Jack Ketchum', 'Poppy Z. Brite', 'Riley Sager', 'Alex Michaelides', 'Simone St. James', 'Silvia Moreno-Garcia', 'Stephen Graham Jones', 'Eric LaRocca', 'Hailey Piper', 'Gwendolyn Kiste', 'Rachel Harrison', 'Andrew Michael Hurley', 'Craig Davidson', 'Nick Cutter', 'Ania Ahlborn', 'Ronald Malfi', 'Tim Waggoner', 'Jonathan Janz', 'Hunter Shea', 'Kealan Patrick Burke', 'Kristopher Triana', 'Wrath James White', 'Edward Lee', 'Bentley Little', 'Lisa Tuttle', 'Lisa Morton', 'Lisa Unger', 'Lisa Jewell', 'Lisa Regan', 'Lisa Scottoline', 'Lisa Gardner', 'Lisa Genova', 'Lisa See', 'Lisa Wingate', 'Lisa Kleypas', 'Lisa Jackson', 'Lisa Renee Jones', 'Lisa Edmonds', 'Lisa Henry', 'Lisa Marie Rice', 'Lisa Shearin', 'Lisa Swallow', 'Lisa Mondello', 'Lisa Rayns', 'Lisa Ann Verge', 'Lisa Plumley', 'Lisa Bergren', 'Lisa Samson', 'Lisa Harris', 'Lisa Childs', 'Lisa Bingham', 'Lisa G. Riley', 'Lisa Cach', 'Lisa Alther', 'Lisa Tucker', 'Lisa D. Smith', 'Lisa McMann', 'Lisa Mangum', 'Lisa Desrochers', 'Lisa Schroeder', 'Lisa Papademetriou', 'Lisa Yee', 'Lisa Graff', 'Lisa Ann Sandell', 'Lisa Klein', 'Lisa Williams Kline', 'Lisa Rowe Fraustino', 'Lisa Jahn-Clough', 'Lisa Harkrader', 'Lisa Doan', 'Lisa Fiedler', 'Lisa Trumbauer', 'Lisa Campbell Ernst', 'Lisa Wheeler', 'Lisa Westberg Peters', 'Lisa Passen', 'Lisa McCourt', 'Lisa Tawn Bergren', 'Lisa Shulman', 'Lisa Moser', 'Lisa Broadie Cook', 'Lisa Kopelke', 'Lisa Jahn-Clough', 'Lisa Wheeler', 'Lisa Westberg Peters', 'Lisa Passen', 'Lisa McCourt', 'Lisa Tawn Bergren', 'Lisa Shulman', 'Lisa Moser', 'Lisa Broadie Cook', 'Lisa Kopelke'
-  ];
-  const isFallback = availableAuthors.length === 0 || (availableAuthors.length > 0 && availableAuthors.every(a => fallbackAuthors.includes(a)));
+  // const fallbackAuthors = [
+  //   'Stephen King', 'Clive Barker', 'Anne Rice', 'H.P. Lovecraft', 'Shirley Jackson', 'Edgar Allan Poe', 'Bram Stoker', 'Mary Shelley', 'Robert R. McCammon', 'Peter Straub', 'Richard Matheson', 'Joe Hill', 'Ramsey Campbell', 'Brian Keene', 'Paul Tremblay', 'Grady Hendrix', 'Alma Katsu', 'V.C. Andrews', 'Thomas Ligotti', 'Laird Barron', 'Kathe Koja', 'Adam Nevill', 'Graham Masterton', 'John Langan', 'Sarah Pinborough', 'Josh Malerman', 'Caitlín R. Kiernan', 'Tananarive Due', 'Victor LaValle', 'Gemma Files', 'Michael McDowell', 'Elizabeth Hand', 'Christopher Golden', 'David Wong', 'Scott Smith', 'Mark Z. Danielewski', 'Dan Simmons', 'William Peter Blatty', 'Robert Bloch', 'Jack Ketchum', 'Poppy Z. Brite', 'Riley Sager', 'Alex Michaelides', 'Simone St. James', 'Silvia Moreno-Garcia', 'Stephen Graham Jones', 'Eric LaRocca', 'Hailey Piper', 'Gwendolyn Kiste', 'Rachel Harrison', 'Andrew Michael Hurley', 'Craig Davidson', 'Nick Cutter', 'Ania Ahlborn', 'Ronald Malfi', 'Tim Waggoner', 'Jonathan Janz', 'Hunter Shea', 'Kealan Patrick Burke', 'Kristopher Triana', 'Wrath James White', 'Edward Lee', 'Bentley Little', 'Lisa Tuttle', 'Lisa Morton', 'Lisa Unger', 'Lisa Jewell', 'Lisa Regan', 'Lisa Scottoline', 'Lisa Gardner', 'Lisa Genova', 'Lisa See', 'Lisa Wingate', 'Lisa Kleypas', 'Lisa Jackson', 'Lisa Renee Jones', 'Lisa Edmonds', 'Lisa Henry', 'Lisa Marie Rice', 'Lisa Shearin', 'Lisa Swallow', 'Lisa Mondello', 'Lisa Rayns', 'Lisa Ann Verge', 'Lisa Plumley', 'Lisa Bergren', 'Lisa Samson', 'Lisa Harris', 'Lisa Childs', 'Lisa Bingham', 'Lisa G. Riley', 'Lisa Cach', 'Lisa Alther', 'Lisa Tucker', 'Lisa D. Smith', 'Lisa McMann', 'Lisa Mangum', 'Lisa Desrochers', 'Lisa Schroeder', 'Lisa Papademetriou', 'Lisa Yee', 'Lisa Graff', 'Lisa Ann Sandell', 'Lisa Klein', 'Lisa Williams Kline', 'Lisa Rowe Fraustino', 'Lisa Jahn-Clough', 'Lisa Harkrader', 'Lisa Doan', 'Lisa Fiedler', 'Lisa Trumbauer', 'Lisa Campbell Ernst', 'Lisa Wheeler', 'Lisa Westberg Peters', 'Lisa Passen', 'Lisa McCourt', 'Lisa Tawn Bergren', 'Lisa Shulman', 'Lisa Moser', 'Lisa Broadie Cook', 'Lisa Kopelke', 'Lisa Jahn-Clough', 'Lisa Wheeler', 'Lisa Westberg Peters', 'Lisa Passen', 'Lisa McCourt', 'Lisa Tawn Bergren', 'Lisa Shulman', 'Lisa Moser', 'Lisa Broadie Cook', 'Lisa Kopelke'
+  // ];
+  // const isFallback = availableAuthors.length === 0 || (availableAuthors.length > 0 && availableAuthors.every(a => fallbackAuthors.includes(a)));
 
   return (
     <div className={`space-y-4 mt-8 ${className}`}>
@@ -94,7 +80,7 @@ export function SearchAndFilterBooks({
       </div>
 
       {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
           {/* Decade Filter */}
           <div className="space-y-2">
             <Label htmlFor="decade-filter" className="flex items-center gap-2">
@@ -140,7 +126,10 @@ export function SearchAndFilterBooks({
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
+                <PopoverContent 
+                  className="p-0"
+                  style={{ width: 'var(--radix-popover-trigger-width)' }}
+                >
                   <Command>
                     <CommandInput 
                       placeholder="Search authors..." 
@@ -189,32 +178,6 @@ export function SearchAndFilterBooks({
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
-
-          {/* Sort By */}
-          <div className="space-y-2">
-            <Label htmlFor="sort-filter" className="flex items-center gap-2">
-              <ArrowUpDown className="h-4 w-4" />
-              Sort By
-            </Label>
-            <Select
-              value={sortBy}
-              onValueChange={(value: SortOption) => onSortByChange(value)}
-            >
-              <SelectTrigger id="sort-filter" className="w-full">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex items-center">
-                      {option.icon}
-                      {option.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
       )}
