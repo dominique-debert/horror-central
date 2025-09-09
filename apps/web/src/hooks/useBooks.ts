@@ -33,16 +33,38 @@ export const useAllTimeTopRatedBooks = (params?: {
   });
 };
 
-export const useBookAuthors = () => {
+export const useBookAuthors = (params?: {
+  limit?: number
+  sortBy?: 'title.asc' | 'author.asc'
+  minYear?: number
+  maxYear?: number
+}) => {
   return useQuery({
-    queryKey: ['book-authors'],
+    queryKey: ['book-authors', params],
     queryFn: async () => {
-      console.log('Fetching authors...')
-      const authors = await openLibraryClient.getUniqueAuthors(100)
-      console.log('Fetched authors:', authors)
-      return authors
+      try {
+        console.log('Fetching authors with params:', params);
+        return await openLibraryClient.getUniqueAuthors(
+          params?.limit || 100,
+          {
+            sortBy: params?.sortBy,
+            minYear: params?.minYear,
+            maxYear: params?.maxYear
+          }
+        );
+      } catch (error) {
+        console.error('Error in useBookAuthors:', error);
+        // Return a fallback list if there's an error
+        return [
+          'Stephen King',
+          'H.P. Lovecraft',
+          'Clive Barker',
+          'Anne Rice',
+          'Dean Koontz'
+        ].slice(0, params?.limit || 100);
+      }
     },
     staleTime: 24 * 60 * 60 * 1000, // 1 day
     gcTime: 24 * 60 * 60 * 1000, // 1 day
-  })
+  });
 };

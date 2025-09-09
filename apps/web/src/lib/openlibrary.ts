@@ -145,25 +145,61 @@ class OpenLibraryClient {
     }
   }
 
-  async getUniqueAuthors(limit: number = 100): Promise<string[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}?type=unique-authors&limit=${limit}`)
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      // Ensure we return an array of strings
-      if (data && Array.isArray(data.authors)) {
-        return data.authors.filter((author: any) => typeof author === 'string')
-      }
-      return []
-    } catch (error) {
-      console.error('Error fetching unique authors:', error)
-      return []
+async getUniqueAuthors(limit: number = 100, params?: {
+  sortBy?: 'title.asc' | 'author.asc',
+  minYear?: number,
+  maxYear?: number
+}): Promise<string[]> {
+  try {
+    // First try to get authors from our database or cache
+    const searchParams = new URLSearchParams();
+    searchParams.set('type', 'unique-authors');
+    searchParams.set('limit', limit.toString());
+    
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.minYear) searchParams.set('minYear', params.minYear.toString());
+    if (params?.maxYear) searchParams.set('maxYear', params.maxYear.toString());
+    
+    const response = await fetch(`${this.baseUrl}?${searchParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
     }
+
+    const data = await response.json();
+    if (data.authors && data.authors.length > 0) {
+      return data.authors;
+    }
+    
+    // Fallback to a static list of popular horror authors if the API fails
+    console.warn('No authors found from API, using fallback list');
+    return [
+      'Stephen King',
+      'H.P. Lovecraft',
+      'Clive Barker',
+      'Anne Rice',
+      'Dean Koontz',
+      'Shirley Jackson',
+      'Peter Straub',
+      'Richard Matheson',
+      'Joe Hill',
+      'Paul Tremblay',
+      'Grady Hendrix',
+      'Victor LaValle',
+      'Tananarive Due'
+    ].slice(0, limit);
+  } catch (error) {
+    console.error('Error fetching unique authors, using fallback:', error);
+    // Return a fallback list of authors
+    return [
+      'Stephen King',
+      'H.P. Lovecraft',
+      'Clive Barker',
+      'Anne Rice',
+      'Dean Koontz'
+    ].slice(0, limit);
   }
+}
 }
 
 // Export singleton instance

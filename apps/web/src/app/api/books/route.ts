@@ -357,6 +357,43 @@ class OpenLibraryClient {
       };
     }
   }
+
+  async getUniqueAuthors(params?: { minYear?: number; maxYear?: number; limit?: number; }): Promise<string[]> {
+    const limit = params?.limit || 100;
+    const minYear = params?.minYear;
+    const maxYear = params?.maxYear;
+    // Build query for horror books
+    const queryParams = new URLSearchParams();
+    queryParams.set('q', 'subject:horror');
+    queryParams.set('limit', limit.toString());
+    queryParams.set('fields', 'author_name,first_publish_year');
+    if (minYear || maxYear) {
+      const min = minYear || 0;
+      const max = maxYear || new Date().getFullYear();
+      queryParams.set('first_publish_year', `[${min} TO ${max}]`);
+    }
+    try {
+      const response = await fetch(`${this.baseUrl}/search.json?${queryParams.toString()}`, {
+        headers: {
+          'User-Agent': 'Horror-Central/1.0 (horror-central@example.com)',
+        },
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) {
+        throw new Error(`OpenLibrary API returned ${response.status}: ${response.statusText}`);
+      }
+      const data: OpenLibrarySearchResponse = await response.json();
+      const authors = Array.from(new Set(
+        (data.docs || [])
+          .flatMap(doc => doc.author_name || [])
+          .filter(a => !!a)
+      )).sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+      return authors;
+    } catch (error) {
+      console.error('Error in getUniqueAuthors:', error);
+      return [];
+    }
+  }
 }
 
 const openLibraryClient = new OpenLibraryClient()
@@ -398,14 +435,22 @@ export async function GET(request: Request) {
         const searchBooks = await openLibraryClient.searchBooks(query, limit)
         result = { books: searchBooks }
         break
-      case 'unique-authors':
-        const allBooks = await openLibraryClient.getAllTimeTopRatedHorrorBooks({ limit: 100 })
-        const authors = Array.from(new Set(
-          allBooks.books
-            .map(book => book.author)
-            .filter((author): author is string => !!author)
-        )).sort()
-        return NextResponse.json({ authors })
+      case 'unique-authors': {
+        try {
+          const minYear = searchParams.get('minYear') ? parseInt(searchParams.get('minYear')!) : undefined;
+          const maxYear = searchParams.get('maxYear') ? parseInt(searchParams.get('maxYear')!) : undefined;
+          const authors = await openLibraryClient.getUniqueAuthors({
+            minYear,
+            maxYear,
+            limit
+          });
+          console.log(`Found ${authors.length} unique authors`);
+          return NextResponse.json({ authors });
+        } catch (error) {
+          console.error('Error in unique-authors endpoint:', error);
+          return NextResponse.json({ authors: [] });
+        }
+      }
       default:
         const defaultBooks = await openLibraryClient.getTopRatedBooks(limit)
         result = { books: defaultBooks }

@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { SearchAndFilterBooks } from '@/components/SearchAndFilterBooks'
 import { MediaCard } from '@/components/ui/MediaCard'
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
-import { useAllTimeTopRatedBooks, useBookAuthors } from '@/hooks/useBooks'
+import { useAllTimeTopRatedBooks } from '@/hooks/useBooks'
 
 // Types
 type SortOption = 'rating.desc' | 'first_publish_year.desc' | 'title.asc' | 'author.asc'
@@ -26,6 +26,10 @@ export default function BooksPage() {
   })
   const itemsPerPage = 12
 
+  // Authors for the filter select
+  const [authors, setAuthors] = useState<string[]>([]);
+  const [isLoadingAuthors, setIsLoadingAuthors] = useState(false);
+
   // Available decades from 1970s to current decade
   const currentYear = new Date().getFullYear()
   const currentDecade = Math.floor(currentYear / 10) * 10
@@ -34,8 +38,26 @@ export default function BooksPage() {
     (_, i) => `${currentDecade - i * 10}s`
   )
 
-  // Fetch authors using the useBookAuthors hook
-  const { data: authors = [], isLoading: isLoadingAuthors } = useBookAuthors()
+  // Fetch authors for the filter select
+  useEffect(() => {
+    setIsLoadingAuthors(true);
+    const params = new URLSearchParams();
+    params.set('type', 'unique-authors');
+    params.set('limit', '1000');
+    if (selectedDecade && selectedDecade !== 'all') {
+      params.set('minYear', parseInt(selectedDecade).toString());
+    }
+    fetch(`/api/books?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => {
+        setAuthors(data.authors || []);
+        setIsLoadingAuthors(false);
+      })
+      .catch(() => {
+        setAuthors([]);
+        setIsLoadingAuthors(false);
+      });
+  }, [selectedDecade])
 
   // Fetch books using the useAllTimeTopRatedBooks hook
   const { data, isLoading, error } = useAllTimeTopRatedBooks({
