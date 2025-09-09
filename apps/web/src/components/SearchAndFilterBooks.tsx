@@ -15,7 +15,6 @@ export const ALL_VALUE = 'all'
 
 // Book specific types
 type SortOption = 'rating.desc' | 'first_publish_year.desc' | 'title.asc' | 'author.asc'
-type FormatOption = 'all' | 'hardcover' | 'paperback' | 'ebook' | 'audiobook'
 
 export interface SearchAndFilterBooksProps {
   searchTerm: string
@@ -24,8 +23,6 @@ export interface SearchAndFilterBooksProps {
   onDecadeChange: (value: string) => void
   selectedAuthor: string
   onAuthorChange: (value: string) => void
-  selectedFormat: FormatOption
-  onFormatChange: (value: FormatOption) => void
   sortBy: SortOption
   onSortByChange: (value: SortOption) => void
   availableDecades: string[]
@@ -41,8 +38,6 @@ export function SearchAndFilterBooks({
   onDecadeChange,
   selectedAuthor,
   onAuthorChange,
-  selectedFormat,
-  onFormatChange,
   sortBy,
   onSortByChange,
   availableDecades = [],
@@ -59,14 +54,6 @@ export function SearchAndFilterBooks({
     { value: 'first_publish_year.desc' as const, label: 'Newest First', icon: <Calendar className="h-4 w-4 mr-2" /> },
     { value: 'title.asc' as const, label: 'Title A-Z', icon: <BookOpen className="h-4 w-4 mr-2" /> },
     { value: 'author.asc' as const, label: 'Author A-Z', icon: <User className="h-4 w-4 mr-2" /> },
-  ]
-
-  const formatOptions = [
-    { value: 'all' as const, label: 'All Formats' },
-    { value: 'hardcover' as const, label: 'Hardcover' },
-    { value: 'paperback' as const, label: 'Paperback' },
-    { value: 'ebook' as const, label: 'E-book' },
-    { value: 'audiobook' as const, label: 'Audiobook' },
   ]
 
   const fallbackAuthors = [
@@ -107,7 +94,7 @@ export function SearchAndFilterBooks({
       </div>
 
       {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
           {/* Decade Filter */}
           <div className="space-y-2">
             <Label htmlFor="decade-filter" className="flex items-center gap-2">
@@ -116,7 +103,7 @@ export function SearchAndFilterBooks({
             </Label>
             <Select
               value={selectedDecade || ALL_VALUE}
-              onValueChange={(value) => onDecadeChange(value === ALL_VALUE ? '' : value)}
+              onValueChange={(value) => onDecadeChange(value === ALL_VALUE ? 'all' : value)}
             >
               <SelectTrigger id="decade-filter" className="w-full">
                 <SelectValue placeholder="Select decade" />
@@ -202,29 +189,6 @@ export function SearchAndFilterBooks({
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
-
-          {/* Format Filter */}
-          <div className="space-y-2">
-            <Label htmlFor="format-filter" className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              Format
-            </Label>
-            <Select
-              value={selectedFormat}
-              onValueChange={(value: FormatOption) => onFormatChange(value)}
-            >
-              <SelectTrigger id="format-filter" className="w-full">
-                <SelectValue placeholder="Select format" />
-              </SelectTrigger>
-              <SelectContent>
-                {formatOptions.map((format) => (
-                  <SelectItem key={format.value} value={format.value}>
-                    {format.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Sort By */}

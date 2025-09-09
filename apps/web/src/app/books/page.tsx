@@ -10,14 +10,12 @@ import { useAllTimeTopRatedBooks } from '@/hooks/useBooks'
 
 // Types
 type SortOption = 'rating.desc' | 'first_publish_year.desc' | 'title.asc' | 'author.asc'
-type FormatOption = 'all' | 'hardcover' | 'paperback' | 'ebook' | 'audiobook'
 
 export default function BooksPage() {
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDecade, setSelectedDecade] = useState('all')
   const [selectedAuthor, setSelectedAuthor] = useState('all')
-  const [selectedFormat, setSelectedFormat] = useState<FormatOption>('all')
   const [sortBy, setSortBy] = useState<SortOption>('rating.desc')
   const [currentPage, setCurrentPage] = useState(() => {
     // Get page from URL search params, default to 1
@@ -35,7 +33,7 @@ export default function BooksPage() {
   const currentDecade = Math.floor(currentYear / 10) * 10
   const decades = Array.from(
     { length: (currentDecade - 1970) / 10 + 1 },
-    (_, i) => `${currentDecade - i * 10}s`
+    (_, i) => `${currentDecade - i * 10}`
   )
 
   // Fetch authors for the filter select
@@ -45,7 +43,7 @@ export default function BooksPage() {
     params.set('type', 'unique-authors');
     params.set('limit', '1000');
     if (selectedDecade && selectedDecade !== 'all') {
-      params.set('minYear', parseInt(selectedDecade).toString());
+      params.set('minYear', selectedDecade);
     }
     fetch(`/api/books?${params.toString()}`)
       .then(res => res.json())
@@ -62,13 +60,13 @@ export default function BooksPage() {
   // Fetch books using the useAllTimeTopRatedBooks hook
   const { data, isLoading, error } = useAllTimeTopRatedBooks({
     page: currentPage,
-    minYear: selectedDecade ? parseInt(selectedDecade) : undefined,
+    minYear: selectedDecade && selectedDecade !== 'all' ? parseInt(selectedDecade) : undefined,
     author: selectedAuthor !== 'all' ? selectedAuthor : undefined,
     sortBy: sortBy,
     limit: itemsPerPage,
   })
 
-  // Filter books by search term and format
+  // Filter books by search term
   const filteredBooks = useCallback(() => {
     if (!data?.books) return []
     
@@ -78,13 +76,9 @@ export default function BooksPage() {
         book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.author.toLowerCase().includes(searchTerm.toLowerCase())
       
-      // Filter by format if specified
-      const matchesFormat = selectedFormat === 'all' || 
-        (book.format && book.format.includes(selectedFormat))
-      
-      return matchesSearch && matchesFormat
+      return matchesSearch
     })
-  }, [data, searchTerm, selectedFormat])
+  }, [data, searchTerm])
 
   // Update URL when page changes
   useEffect(() => {
@@ -101,22 +95,18 @@ export default function BooksPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, selectedDecade, selectedAuthor, selectedFormat, sortBy])
+  }, [searchTerm, selectedDecade, selectedAuthor, sortBy])
 
   // Handle search params from URL
   useEffect(() => {
     const search = searchParams.get('search')
     const decade = searchParams.get('decade')
     const author = searchParams.get('author')
-    const format = searchParams.get('format')
     const sort = searchParams.get('sort')
     
     if (search) setSearchTerm(search)
     if (decade) setSelectedDecade(decade)
     if (author) setSelectedAuthor(author)
-    if (format && ['all', 'hardcover', 'paperback', 'ebook', 'audiobook'].includes(format)) {
-      setSelectedFormat(format as FormatOption)
-    }
     if (sort && ['rating.desc', 'first_publish_year.desc', 'title.asc', 'author.asc'].includes(sort)) {
       setSortBy(sort as SortOption)
     }
@@ -128,12 +118,11 @@ export default function BooksPage() {
     if (searchTerm) params.set('search', searchTerm)
     if (selectedDecade !== 'all') params.set('decade', selectedDecade)
     if (selectedAuthor !== 'all') params.set('author', selectedAuthor)
-    if (selectedFormat !== 'all') params.set('format', selectedFormat)
     if (sortBy !== 'rating.desc') params.set('sort', sortBy)
     
     const url = `${window.location.pathname}?${params.toString()}`
     window.history.replaceState({}, '', url)
-  }, [searchTerm, selectedDecade, selectedAuthor, selectedFormat, sortBy])
+  }, [searchTerm, selectedDecade, selectedAuthor, sortBy])
 
   const getPaginationItems = () => {
     if (!data) return [];
@@ -204,8 +193,6 @@ export default function BooksPage() {
         onDecadeChange={setSelectedDecade}
         selectedAuthor={selectedAuthor}
         onAuthorChange={setSelectedAuthor}
-        selectedFormat={selectedFormat}
-        onFormatChange={setSelectedFormat}
         sortBy={sortBy}
         onSortByChange={setSortBy}
         availableDecades={decades}
