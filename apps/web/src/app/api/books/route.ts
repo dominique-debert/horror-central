@@ -56,7 +56,7 @@ class OpenLibraryClient {
     author?: string;
     sortBy?: 'rating.desc' | 'first_publish_year.desc' | 'title.asc' | 'random';
   }): Promise<{ books: BookItem[], total: number, page: number, totalPages: number }> {
-    const { page = 1, limit = 20, minYear, maxYear, author } = params || {};
+    const { page = 1, limit = 20, minYear, maxYear, author, sortBy = 'rating.desc' } = params || {};
 
     try {
       const queryParams = new URLSearchParams();
