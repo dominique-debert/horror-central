@@ -1,49 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Types
-interface BookItem {
-  id: string
-  title: string
-  posterUrl: string
-  rating: number
-  year: number
-  author: string
-  pages: number
-  description: string
-  genre: string[]
-  slug: string
-}
-
-// OpenLibrary API interfaces
-interface OpenLibrarySearchDoc {
-  key: string
-  type: string
-  title: string
-  author_name?: string[]
-  first_publish_year?: number
-  cover_i?: number
-  isbn?: string[]
-  subject?: string[]
-  publisher?: string[]
-  publish_year?: number[]
-  number_of_pages_median?: number
-  ratings_average?: number
-  ratings_count?: number
-  want_to_read_count?: number
-  already_read_count?: number
-  currently_reading_count?: number
-  readinglog_count?: number
-  edition_count?: number
-  language?: string[]
-  id_goodreads?: string[]
-  id_librarything?: string[]
-}
-
-interface OpenLibrarySearchResponse {
-  numFound: number
-  start: number
-  docs: OpenLibrarySearchDoc[]
-}
+import type { IBookItem, IOpenLibrarySearchDoc, IOpenLibrarySearchResponse } from '@/types'
 
 class OpenLibraryClient {
   private baseUrl = 'https://openlibrary.org'
@@ -54,9 +10,9 @@ class OpenLibraryClient {
     minYear?: number;
     maxYear?: number;
     author?: string;
-    sortBy?: 'rating.desc' | 'first_publish_year.desc' | 'title.asc' | 'random';
-  }): Promise<{ books: BookItem[], total: number, page: number, totalPages: number }> {
-    const { page = 1, limit = 20, minYear, maxYear, author, sortBy = 'rating.desc' } = params || {};
+    // sortBy?: 'rating.asc';
+  }): Promise<{ books: IBookItem[], total: number, page: number, totalPages: number }> {
+    const { page = 1, limit = 20, minYear, maxYear, author } = params || {};
 
     try {
       const queryParams = new URLSearchParams();
@@ -92,16 +48,21 @@ class OpenLibraryClient {
         };
       }
 
-      const data: OpenLibrarySearchResponse = await response.json();
+      const data: IOpenLibrarySearchResponse = await response.json();
       
-      const books: BookItem[] = data.docs
-        .filter(book => book.title && book.author_name && book.first_publish_year)
-        .map(book => ({
+      const books: IBookItem[] = data.docs
+        .filter((book: IOpenLibrarySearchDoc) => {
+          // Only include books that have all required data
+          return book.title && 
+                 book.author_name && 
+                 book.first_publish_year &&
+                 book.cover_i && // Must have a cover image
+                 book.ratings_average && book.ratings_average > 0; // Must have a rating > 0
+        })
+        .map((book: IOpenLibrarySearchDoc) => ({
           id: book.key,
           title: book.title,
-          posterUrl: book.cover_i 
-            ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
-            : '/images/book-placeholder.jpg',
+          posterUrl: `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`,
           rating: book.ratings_average || 0,
           year: book.first_publish_year || 0,
           author: book.author_name?.[0] || 'Unknown Author',
@@ -109,7 +70,19 @@ class OpenLibraryClient {
           description: `A horror book published in ${book.first_publish_year}`,
           genre: ['Horror'],
           slug: book.key.replace('/works/', ''),
-        }));
+        }))
+        .sort((a: IBookItem, b: IBookItem) => {
+          // Primary sort: by year (newest first)
+          if (b.year !== a.year) {
+            return b.year - a.year;
+          }
+          // Secondary sort: by rating (highest first)
+          if (b.rating !== a.rating) {
+            return b.rating - a.rating;
+          }
+          // Tertiary sort: alphabetically by title
+          return a.title.localeCompare(b.title);
+        });
 
       const totalPages = Math.ceil(data.numFound / limit);
 
@@ -160,12 +133,12 @@ class OpenLibraryClient {
         return [];
       }
 
-      const data: OpenLibrarySearchResponse = await response.json();
+      const data: IOpenLibrarySearchResponse = await response.json();
       
       const authors = new Set<string>();
-      data.docs.forEach(book => {
+      data.docs.forEach((book: IOpenLibrarySearchDoc) => {
         if (book.author_name && Array.isArray(book.author_name)) {
-          book.author_name.forEach(author => {
+          book.author_name.forEach((author: string) => {
             if (author && typeof author === 'string') {
               authors.add(author);
             }

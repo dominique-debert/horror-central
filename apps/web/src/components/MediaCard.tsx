@@ -3,18 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, Calendar, Play, Gamepad2, Tv } from 'lucide-react'
-
-export type MediaType = 'movie' | 'tv' | 'game'
-
-interface MediaCardProps {
-  id: string
-  title: string
-  imageUrl: string
-  rating: number
-  year: number
-  href: string
-  type: MediaType
-}
+import type { IMediaCardProps, MediaType } from '@/types'
 
 const getTypeIcon = (type: MediaType) => {
   switch (type) {
@@ -49,7 +38,7 @@ export function MediaCard({
   year,
   href,
   type,
-}: MediaCardProps) {
+}: IMediaCardProps) {
   const TypeIcon = getTypeIcon(type)
   const typeLabel = getTypeLabel(type)
 

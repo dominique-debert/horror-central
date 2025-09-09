@@ -9,22 +9,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import type { ISearchAndFilterBooksProps } from '@/types'
 
 // Constants for default values
 export const ALL_VALUE = 'all'
-
-export interface SearchAndFilterBooksProps {
-  searchTerm: string
-  onSearchChange: (value: string) => void
-  selectedDecade: string
-  onDecadeChange: (value: string) => void
-  selectedAuthor: string
-  onAuthorChange: (value: string) => void
-  availableDecades: string[]
-  availableAuthors: string[]
-  isLoadingAuthors?: boolean
-  className?: string
-}
 
 export function SearchAndFilterBooks({
   searchTerm,
@@ -37,7 +25,7 @@ export function SearchAndFilterBooks({
   availableAuthors = [],
   // isLoadingAuthors = false,
   className,
-}: SearchAndFilterBooksProps) {
+}: ISearchAndFilterBooksProps) {
   const [showFilters, setShowFilters] = useState(false)
   const [open, setOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')

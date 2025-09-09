@@ -3,17 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, Calendar, BookOpen } from 'lucide-react'
-
-interface BookCardProps {
-  id: string
-  title: string
-  imageUrl: string
-  rating: number
-  year: number
-  author: string
-  href: string
-  pages?: number
-}
+import type { IBookCardProps } from '@/types'
 
 export function BookCard({
   title,
@@ -23,7 +13,7 @@ export function BookCard({
   author,
   href,
   pages,
-}: BookCardProps) {
+}: IBookCardProps) {
   return (
     <Link 
       href={href}
