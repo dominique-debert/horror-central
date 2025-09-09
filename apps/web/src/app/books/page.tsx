@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { SearchAndFilterBooks } from '@/components/SearchAndFilterBooks'
-import { MediaCard } from '@/components/MediaCard'
+import { BookCard } from '@/components/BookCard'
 import { Button } from '@/components/ui/button'
 
 // Types
@@ -202,18 +202,21 @@ export default function BooksPage() {
                   : '/images/book-placeholder.jpg',
                 rating: book.rating,
                 year: book.year,
+                author: book.author,
+                pages: book.pages,
                 href: `/books/${book.slug}`
               }))
-              .map((book: { id: string; title: string; image: string; rating: number; year: number; href: string }) => (
-                <MediaCard
+              .map((book: { id: string; title: string; image: string; rating: number; year: number; author: string; pages: number; href: string }) => (
+                <BookCard
                   key={book.id}
                   id={book.id}
                   title={book.title}
                   imageUrl={book.image}
                   rating={book.rating}
                   year={book.year}
+                  author={book.author}
+                  pages={book.pages}
                   href={book.href}
-                  type="movie"
                 />
               ))}
           </div>
