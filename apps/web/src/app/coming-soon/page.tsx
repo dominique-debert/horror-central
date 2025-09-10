@@ -2,9 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Search, Filter, Calendar, Clock, Film, Tv, SortAsc, SortDesc, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
@@ -15,6 +13,9 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
 import { PageHeader } from '@/components/PageHeader';
 import { SearchAndFilter, ALL_VALUE } from '@/components/SearchAndFilter';
+import { MovieCard } from '@/components/ui/movie-card'
+import { tmdbApi } from '@/lib/tmdb'
+import { Badge } from '@/components/ui/badge'
 
 interface ComingSoonItem {
   id: string
@@ -312,16 +313,21 @@ export default function ComingSoonPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {sortedItems.map((item) => (
-                <Card key={item.id} className="bg-gray-900 border-gray-800 overflow-hidden hover:border-primary transition-colors h-full flex flex-col">
-                  <div className="relative aspect-[2/3] w-full">
-                    <Image
-                      src={item.poster || '/placeholder.svg'}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    />
-                  <Badge variant="secondary" className="text-xs absolute top-2 right-2">
+                <Link 
+                  key={item.id} 
+                  href={item.type === 'movie' ? `/details/movie/${item.originalData.id}` : `/tv/${item.originalData.id}`}
+                  className="group relative cursor-pointer transition-all duration-300 hover:scale-105 block"
+                >
+                  <Card className="bg-gray-900 border-gray-800 overflow-hidden hover:border-primary transition-colors h-full flex flex-col">
+                    <div className="relative aspect-[2/3] w-full">
+                      <Image
+                        src={item.poster || '/placeholder.svg'}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      />
+                    <Badge variant="secondary" className="text-xs absolute top-2 right-2">
                     { item.type.toUpperCase() }
                   </Badge>
                   </div>
@@ -361,6 +367,7 @@ export default function ComingSoonPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </Link>
               ))}
             </div>
 
