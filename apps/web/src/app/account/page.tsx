@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
-import { useCallback, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,20 +57,11 @@ export default function AccountPage() {
       if (Object.keys(updates).length > 0) {
         await apiUpdateProfile(token, updates);
         await refresh();
-        toast({
-          title: "Profile updated",
-          description: "Your profile has been updated successfully.",
-        });
+        toast.success("Your profile has been updated successfully.");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
+      toast.error("Failed to update profile. Please try again.");
     }
   };
 

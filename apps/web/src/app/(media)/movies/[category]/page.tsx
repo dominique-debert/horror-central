@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { MediaGrid } from '../../../../components/MediaGrid';
-import { MediaPagination } from '../../../../components/MediaPagination';
-import { getMovies } from '../../../../lib/tmdb/movies';
+import { MediaGrid } from '@/components/MediaGrid';
+import { MediaPagination } from '@/components/MediaPagination';
+import { getMovies } from '@/lib/tmdb/movies';
 
 const validCategories = ['popular', 'now-playing', 'top-rated', 'upcoming'];
 

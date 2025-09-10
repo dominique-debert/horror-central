@@ -1,88 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { 
+  ITMDBVideo,
+  ITMDBVideosResponse,
+  ITMDBMovieDetailsRoute,
+  ITMDBCredits,
+  ITMDBWatchProviders,
+  IWatchProvider
+} from '@/types'
 
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
-
-interface TMDBVideo {
-  id: string
-  key: string
-  name: string
-  site: string
-  type: string
-  official: boolean
-  published_at: string
-}
-
-interface TMDBVideosResponse {
-  results: TMDBVideo[]
-}
-
-interface TMDBMovieDetails {
-  id: number
-  title: string
-  overview: string
-  poster_path: string | null
-  backdrop_path: string | null
-  release_date: string
-  runtime: number | null
-  vote_average: number
-  vote_count: number
-  genres: Array<{ id: number; name: string }>
-  production_companies: Array<{ id: number; name: string }>
-  production_countries: Array<{ iso_3166_1: string; name: string }>
-  spoken_languages: Array<{ iso_639_1: string; name: string }>
-  budget: number
-  revenue: number
-  status: string
-  tagline: string
-  original_language: string
-  original_title: string
-  videos: TMDBVideosResponse
-}
-
-interface TMDBCredits {
-  cast: Array<{
-    id: number
-    name: string
-    character: string
-    profile_path: string | null
-  }>
-  crew: Array<{
-    id: number
-    name: string
-    job: string
-    department: string
-    profile_path: string | null
-  }>
-}
-
-interface TMDBWatchProviders {
-  results: {
-    [countryCode: string]: {
-      link: string
-      flatrate?: Array<{
-        logo_path: string
-        provider_id: number
-        provider_name: string
-      }>
-      rent?: Array<{
-        logo_path: string
-        provider_id: number
-        provider_name: string
-      }>
-      buy?: Array<{
-        logo_path: string
-        provider_id: number
-        provider_name: string
-      }>
-      ads?: Array<{
-        logo_path: string
-        provider_id: number
-        provider_name: string
-      }>
-    }
-  }
-}
 
 export async function GET(
   request: NextRequest,
@@ -100,10 +27,10 @@ export async function GET(
 
     // Fetch movie details, credits, videos, and watch providers in parallel
     const [movieResponse, creditsResponse, videosResponse, watchProvidersResponse] = await Promise.all([
-      fetch(`${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBMovieDetails>),
-      fetch(`${TMDB_BASE_URL}/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBCredits>),
-      fetch(`${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<TMDBVideosResponse>),
-      fetch(`${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`).then(res => res.json() as Promise<TMDBWatchProviders>)
+      fetch(`${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<ITMDBMovieDetailsRoute>),
+      fetch(`${TMDB_BASE_URL}/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<ITMDBCredits>),
+      fetch(`${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=en-US`).then(res => res.json() as Promise<ITMDBVideosResponse>),
+      fetch(`${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`).then(res => res.json() as Promise<ITMDBWatchProviders>)
     ]);
 
     const movieDetails = movieResponse;
@@ -160,16 +87,8 @@ export async function GET(
       }).format(amount)
     }
 
-    // Define types for watch providers
-    interface WatchProvider {
-      provider_name: string
-      logo_path: string
-      type: string
-      region: string
-    }
-
     // Process watch providers
-    const processedWatchProviders: WatchProvider[] = []
+    const processedWatchProviders: IWatchProvider[] = []
     const regions = ['US', 'GB', 'CA', 'AU'] // Priority regions
     
     for (const region of regions) {
@@ -183,7 +102,7 @@ export async function GET(
               logo_path: provider.logo_path,
               type,
               region
-            } as WatchProvider)
+            } as IWatchProvider)
           })
         }
 

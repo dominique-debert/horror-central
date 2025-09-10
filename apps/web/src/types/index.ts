@@ -48,3 +48,11 @@ export type { IOpenLibraryEdition } from './IOpenLibraryEdition'
 // Component prop interfaces
 export type { ISearchAndFilterBooksProps } from './ISearchAndFilterBooksProps'
 export type { IHeroSectionProps } from './IHeroSectionProps'
+
+// Export new TMDB route interfaces
+export * from './ITMDBVideo'
+export * from './ITMDBVideosResponse'
+export * from './ITMDBMovieDetailsRoute'
+export * from './ITMDBCredits'
+export * from './ITMDBWatchProviders'
+export * from './IWatchProvider'

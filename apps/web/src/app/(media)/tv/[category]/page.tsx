@@ -1,5 +1,5 @@
-import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import { MediaGrid } from '@/components/MediaGrid';
 import { MediaPagination } from '@/components/MediaPagination';
 import { getTVShows } from '@/lib/tmdb/tv';
@@ -26,12 +26,12 @@ const getTitleFromCategory = (category: string): string => {
 export async function generateMetadata({
   params,
 }: TVCategoryPageProps): Promise<Metadata> {
-  const category = params.category as TVCategory;
-  const title = getTitleFromCategory(category);
+  const { category } = await params;
+  const title = getTitleFromCategory(category as TVCategory);
 
   return {
-    title: `${title} TV Shows | FreakyHub`,
-    description: `Browse ${title} TV Shows on FreakyHub`,
+    title: `${title} TV Shows | Horror Central`,
+    description: `Browse ${title.toLowerCase()} horror TV shows and series`,
   };
 }
 
@@ -39,8 +39,9 @@ export default async function TVCategoryPage({
   params,
   searchParams,
 }: TVCategoryPageProps) {
-  const category = params.category as TVCategory;
-  const page = searchParams.page ? Number(searchParams.page) : 1;
+  const { category } = await params;
+  const resolvedSearchParams = await searchParams;
+  const page = resolvedSearchParams.page ? Number(resolvedSearchParams.page) : 1;
 
   if (!validCategories.includes(category as TVCategory)) {
     notFound();

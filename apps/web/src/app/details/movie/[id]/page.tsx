@@ -1,1 +1,1 @@
-// Check and clean up unused imports in details page
+// Check and fix async params in movie details page

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
 const IGDB_CLIENT_ID = process.env.IGDB_CLIENT_ID
 const IGDB_CLIENT_SECRET = process.env.IGDB_CLIENT_SECRET
