@@ -1,6 +1,5 @@
 // TMDB API Client for Horror Central
 import { IMediaItem } from "@/types/core/IMediaItem"
-import { MediaType } from "@/types/core/IMediaType"
 import { 
   ITMDBMovie, 
   ITMDBTVShow, 
@@ -576,3 +575,5 @@ export const tmdbTVToMediaItem = (show: ITMDBTVShow, genres: ITMDBGenre[] = []):
 
 // Export singleton instance
 export const tmdbClient = new TMDBClient()
+
+// Check and clean up unused imports in TMDB client

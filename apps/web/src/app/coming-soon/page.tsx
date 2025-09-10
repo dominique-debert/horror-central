@@ -3,18 +3,15 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Search, Filter, Calendar, Clock, Film, Tv, SortAsc, SortDesc, TrendingUp } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import Link from 'next/link'
 import { tmdbClient, getImageUrl } from '@/lib/tmdb'
 import type { ITMDBMovie, ITMDBTVShow } from '@/types'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
-import { PageHeader } from '@/components/PageHeader';
-import { SearchAndFilter, ALL_VALUE } from '@/components/SearchAndFilter';
-import { MovieCard } from '@/components/ui/movie-card'
-import { tmdbApi } from '@/lib/tmdb'
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious, PaginationButton, PaginationEllipsis } from '@/components/ui/pagination'
+import { PageHeader } from '@/components/PageHeader'
+import { SearchAndFilter, ALL_VALUE } from '@/components/SearchAndFilter'
 import { Badge } from '@/components/ui/badge'
 
 interface ComingSoonItem {
@@ -222,14 +219,6 @@ export default function ComingSoonPage() {
       return sortOrder === 'asc' ? comparison : -comparison;
     });
   }, [filteredItems, sortBy, sortOrder]);
-
-  const getDaysUntilRelease = (releaseDate: string) => {
-    const today = new Date()
-    const release = new Date(releaseDate)
-    const diffTime = release.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
-  }
 
   const formatReleaseDate = (releaseDate: string) => {
     return new Date(releaseDate).toLocaleDateString('en-US', {

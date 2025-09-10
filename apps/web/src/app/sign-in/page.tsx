@@ -21,8 +21,9 @@ export default function SignInPage() {
     try {
       await signIn(email, password);
       router.push(next);
-    } catch (e: any) {
-      setFormError(e?.message || "Invalid credentials");
+    } catch (e: unknown) {
+      console.error('Login error:', e)
+      setFormError(e instanceof Error ? e.message : 'An unexpected error occurred')
     }
   }
 

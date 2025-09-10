@@ -56,4 +56,7 @@ function Button({
   )
 }
 
+// Scan for unused files - checking if this file is imported anywhere
+// This appears to be a standard UI button component that should be kept
+
 export { Button, buttonVariants }
