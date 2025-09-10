@@ -17,6 +17,7 @@
     "@phalcode/ts-igdb-client": "^1.0.24",
     "@prisma/client": "^6.15.0",
     "@types/jsonwebtoken": "^9.0.10",
+    "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "hono": "^3.12.12",
     "jsonwebtoken": "^9.0.2",

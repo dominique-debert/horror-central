@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
@@ -9,10 +10,11 @@ const app = new Hono()
 
 // Middleware
 app.options('*', (c) => {
+  console.log('CORS preflight request:', c.req.method, c.req.url);
   return new Response(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': 'http://localhost:3000',
+      'Access-Control-Allow-Origin': '*', // Allow all origins for development
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Allow-Credentials': 'true',
@@ -23,7 +25,7 @@ app.options('*', (c) => {
 app.use(
   '*',
   cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: '*', // Allow all origins for development
     allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     exposeHeaders: ['Content-Length', 'X-Request-Id'],
