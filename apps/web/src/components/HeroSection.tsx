@@ -4,28 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Play, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import Image from "next/image"
 import { getBackdropUrl } from "@/lib/tmdb"
 import { LanguageBadge } from "@/components/ui/LanguageBadge"
 import { MediaTypeBadge } from "@/components/ui/MediaTypeBadge"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { fetchHeroContent } from "@/lib/utils/media"
-import { MediaItem } from "@/types/media"
-
-interface TMDBVideo {
-  id: string;
-  key: string;
-  name: string;
-  site: string;
-  type: string;
-  official: boolean;
-  published_at: string;
-}
-
-interface TMDBVideosResponse {
-  id: number;
-  results: TMDBVideo[];
-}
+import { IMediaItem } from "@/types/IMedia"
+import { ITMDBVideosResponse } from "@/types";
 
 type Trailer = {
   key: string;
@@ -37,7 +22,7 @@ export default function HeroSection() {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [selectedTrailer, setSelectedTrailer] = useState<Trailer | null>(null);
   const [trailers, setTrailers] = useState<Record<number, Trailer[]>>({});
-  const [heroMedia, setHeroMedia] = useState<MediaItem[]>([]);
+  const [heroMedia, setHeroMedia] = useState<IMediaItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const router = useRouter();
@@ -97,8 +82,8 @@ export default function HeroSection() {
         const mediaType = currentMedia.media_type || (currentMedia.title ? 'movie' : 'tv');
         const response = await fetch(`/api/${mediaType}/${currentMedia.id}/videos`);
         if (!response.ok) throw new Error('Failed to fetch trailers');
-        
-        const data: TMDBVideosResponse = await response.json();
+
+        const data: ITMDBVideosResponse = await response.json();
         const videoTrailers = data.results
           .filter(video => video.site === 'YouTube' && (video.type === 'Trailer' || video.type === 'Teaser'))
           .sort((a, b) => (a.official === b.official ? 0 : a.official ? -1 : 1))
@@ -142,9 +127,9 @@ export default function HeroSection() {
       if (!response.ok) {
         throw new Error('Failed to fetch trailers');
       }
-      
-      const data: TMDBVideosResponse = await response.json();
-      
+
+      const data: ITMDBVideosResponse = await response.json();
+
       // Get the first official trailer, or fall back to the first trailer
       const officialTrailer = data.results.find(
         video => video.site === 'YouTube' && video.type === 'Trailer' && video.official
@@ -203,7 +188,7 @@ export default function HeroSection() {
   }, [currentMedia, router]);
 
   // Get primary genre for badge
-  const getDisplayGenres = useCallback((media: MediaItem) => {
+  const getDisplayGenres = useCallback((media: IMediaItem) => {
     if (!media?.genre_ids?.length) return [];
     
     // Movie and TV show genres from TMDB
@@ -215,21 +200,21 @@ export default function HeroSection() {
       878: 'Sci-Fi',
       9648: 'Mystery',
       // TV show genres
-      10759: 'Action & Adventure',
-      16: 'Animation',
-      35: 'Comedy',
-      80: 'Crime',
-      99: 'Documentary',
-      18: 'Drama',
-      10751: 'Family',
-      10762: 'Kids',
-      10763: 'News',
-      10764: 'Reality',
-      10765: 'Sci-Fi & Fantasy',
-      10766: 'Soap',
-      10767: 'Talk',
-      10768: 'War & Politics',
-      37: 'Western'
+      // 10759: 'Action & Adventure',
+      // 16: 'Animation',
+      // 35: 'Comedy',
+      // 80: 'Crime',
+      // 99: 'Documentary',
+      // 18: 'Drama',
+      // 10751: 'Family',
+      // 10762: 'Kids',
+      // 10763: 'News',
+      // 10764: 'Reality',
+      // 10765: 'Sci-Fi & Fantasy',
+      // 10766: 'Soap',
+      // 10767: 'Talk',
+      // 10768: 'War & Politics',
+      // 37: 'Western'
     };
 
     return [...new Set(media.genre_ids)]
@@ -310,7 +295,7 @@ export default function HeroSection() {
           <ChevronLeft className="w-6 h-6" />
         </button>
         
-        <div className="container mx-auto px-4 z-10">
+        <div className="container mx-auto px-4 z-10 ml-6">
           <div className="max-w-3xl">
             
             {/* Title and Overview */}

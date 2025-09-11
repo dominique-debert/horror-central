@@ -1,6 +1,5 @@
 // Core Types
 export * from './core/IMediaItem';
-export * from './core/IMediaType';
 export * from './core/IFilterOptions';
 export * from './core/ISearchFilters';
 export * from './core/ISearchResults';
@@ -13,12 +12,14 @@ export * from './api/ITMDBMovieDetails';
 export * from './api/ITMDBTVDetails';
 export * from './api/ITMDBResponse';
 export * from './api/ITMDBWatchProviders';
+export * from './api/IIGDBGame';
 
 // Component Props
 export * from './components/IMediaCardProps';
 export * from './components/IHeroSectionProps';
 export * from './components/INewsArticle';
 export * from './components/ILanguageBadgeProps';
+export * from './components/IMediaCardProps'
 
 // Book-related interfaces
 export type { IBookItem } from './IBookItem'

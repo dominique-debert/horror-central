@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { MediaItem } from '@/types/media';
+import { MediaItem } from '@/types/IMedia';
 
 interface MediaGridProps {
   items: MediaItem[];

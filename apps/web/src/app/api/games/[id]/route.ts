@@ -1,33 +1,8 @@
 import { NextResponse } from 'next/server'
+import { IIGDBGame } from "@/types"
 
 const IGDB_CLIENT_ID = process.env.IGDB_CLIENT_ID
 const IGDB_CLIENT_SECRET = process.env.IGDB_CLIENT_SECRET
-
-interface IGDBGame {
-  id: number
-  name: string
-  summary?: string
-  cover?: {
-    id: number
-    url: string
-  }
-  first_release_date?: number
-  rating?: number
-  rating_count?: number
-  genres?: Array<{ id: number; name: string }>
-  platforms?: Array<{ id: number; name: string }>
-  involved_companies?: Array<{
-    id: number
-    company: { id: number; name: string }
-    developer: boolean
-    publisher: boolean
-  }>
-  game_modes?: Array<{ id: number; name: string }>
-  themes?: Array<{ id: number; name: string }>
-  keywords?: Array<{ id: number; name: string }>
-  storyline?: string
-  url?: string
-}
 
 async function getIGDBAccessToken() {
   const response = await fetch('https://id.twitch.tv/oauth2/token', {
@@ -85,7 +60,7 @@ export async function GET(
       )
     }
 
-    const games: IGDBGame[] = await response.json()
+    const games: IIGDBGame[] = await response.json()
     
     if (games.length === 0) {
       return NextResponse.json(

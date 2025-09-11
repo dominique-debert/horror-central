@@ -1,5 +1,5 @@
 import { fetchFromTMDB } from './client';
-import { MediaItem, PaginatedResponse } from '@/types/media';
+import { IMediaItem, IPaginatedResponse } from '@/types/IMedia';
 
 type TVListType = 'popular' | 'airing_today' | 'on_the_air' | 'top_rated' | 'airing-today' | 'on-the-air' | 'top-rated';
 
@@ -10,13 +10,13 @@ type TVListType = 'popular' | 'airing_today' | 'on_the_air' | 'top_rated' | 'air
 export async function getTVShows(
   listType: string,
   page: number = 1
-): Promise<PaginatedResponse<MediaItem>> {
+): Promise<IPaginatedResponse<IMediaItem>> {
   try {
     // Convert hyphens to underscores for the API endpoint
     const normalizedListType = listType.replace(/-/g, '_') as TVListType;
     const endpoint = `/tv/${normalizedListType}`;
     
-    const response = await fetchFromTMDB<PaginatedResponse<MediaItem>>(endpoint, {
+    const response = await fetchFromTMDB<IPaginatedResponse<IMediaItem>>(endpoint, {
       page,
       region: 'US',
     });
@@ -31,7 +31,7 @@ export async function getTVShows(
     }
 
     // Transform the API response to match our MediaItem type
-    const resultsWithType: MediaItem[] = response.results.map(item => ({
+    const resultsWithType: IMediaItem[] = response.results.map(item => ({
       id: item.id,
       title: item.name || item.original_name || 'Unknown Title',
       name: item.name || item.original_name || 'Unknown Title',
@@ -72,16 +72,16 @@ export async function getTVShows(
 
 export async function getTVShowDetails(id: string | number) {
   const endpoint = `/tv/${id}`;
-  return fetchFromTMDB<MediaItem>(endpoint, {
+  return fetchFromTMDB<IMediaItem>(endpoint, {
     append_to_response: 'videos,credits,recommendations,similar,content_ratings',
   });
 }
 
 export async function searchTVShows(query: string, page: number = 1) {
-  return fetchFromTMDB<PaginatedResponse<MediaItem>>('/search/tv', {
+  return fetchFromTMDB<IPaginatedResponse<IMediaItem>>('/search/tv', {
     query,
     page,
-    include_adult: false,
+    include_adult: false, 
     with_genres: '27' // Filter for horror genre
   });
 }
@@ -91,7 +91,7 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
   
   try {
     // First try the direct horror TV shows endpoint
-    let response = await fetchFromTMDB<PaginatedResponse<MediaItem>>('/discover/tv', {
+    let response = await fetchFromTMDB<IPaginatedResponse<IMediaItem>>('/discover/tv', {
       with_genres: '27', // Horror genre
       sort_by: 'popularity.desc',
       'vote_average.gte': '5.0',
@@ -104,7 +104,7 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
     
     // If no results, try with broader criteria
     if (response.results.length === 0) {
-      response = await fetchFromTMDB<PaginatedResponse<MediaItem>>('/discover/tv', {
+      response = await fetchFromTMDB<IPaginatedResponse<IMediaItem>>('/discover/tv', {
         sort_by: 'popularity.desc',
         with_keywords: 'horror,thriller,supernatural',
         'vote_average.gte': '4.5',
@@ -116,7 +116,7 @@ export async function getTopRatedHorrorTVShows(page: number = 1) {
     
     // If still no results, try getting popular TV shows
     if (response.results.length === 0) {
-      response = await fetchFromTMDB<PaginatedResponse<MediaItem>>('/tv/popular', {
+      response = await fetchFromTMDB<IPaginatedResponse<IMediaItem>>('/tv/popular', {
         page,
         region: 'US',
         with_original_language: 'en|ko|es|de|sv|da'

@@ -157,14 +157,6 @@ class TMDBClient {
     })
   }
 
-  // Get movie details by ID
-  async getMovieDetails(id: string): Promise<ITMDBMovieDetails> {
-    return this.request<ITMDBMovieDetails>(`/movie/${id}`, {
-      append_to_response: 'videos,credits,watch/providers',
-      language: 'en-US',
-    })
-  }
-
   // Get movie details including runtime and director
   async getMovieDetailsWithCredits(movieId: number): Promise<ITMDBMovieDetails> {
     return this.request<ITMDBMovieDetails>(`/movie/${movieId}`, {
@@ -181,7 +173,7 @@ class TMDBClient {
       sort_by: 'popularity.desc',
       include_adult: false,
       with_original_language: 'en|ko|es|de|sv|da',
-      'with_runtime.gte': 60 // Exclude short films (minimum 60 minutes)
+      'with_runtime.gte': 60
     })
   }
 

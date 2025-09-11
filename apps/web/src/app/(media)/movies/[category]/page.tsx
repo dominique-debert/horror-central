@@ -3,17 +3,13 @@ import { notFound } from 'next/navigation';
 import { MediaGrid } from '@/components/MediaGrid';
 import { MediaPagination } from '@/components/MediaPagination';
 import { getMovies } from '@/lib/tmdb/movies';
+import type { IMovieCategoryPageProps } from '@/types/components/IMovieCategoryPageProps';
 
 const validCategories = ['popular', 'now-playing', 'top-rated', 'upcoming'];
 
-type MovieCategoryPageProps = {
-  params: { category: string };
-  searchParams: { page?: string };
-};
-
 export async function generateMetadata({
   params,
-}: MovieCategoryPageProps): Promise<Metadata> {
+}: IMovieCategoryPageProps): Promise<Metadata> {
   // Ensure we're working with the latest params
   const { category } = await params;
   
@@ -43,7 +39,7 @@ export async function generateMetadata({
 export default async function MovieCategoryPage({
   params,
   searchParams,
-}: MovieCategoryPageProps) {
+}: IMovieCategoryPageProps) {
   // Ensure we're working with the latest params
   const { category } = await params;
   const page = Number((await searchParams).page) || 1;

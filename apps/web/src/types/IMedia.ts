@@ -1,4 +1,4 @@
-export interface MediaItem {
+export interface IMediaItem {
   id: number;
   title: string;
   name?: string;
@@ -20,7 +20,7 @@ export interface MediaItem {
   adult: boolean;
 }
 
-export interface PaginatedResponse<T> {
+export interface IPaginatedResponse<T> {
   page: number;
   results: T[];
   total_pages: number;

@@ -1,4 +1,4 @@
-import { MediaItem } from '@/types/media';
+import { MediaItem } from '@/types/IMedia';
 import { getPopularHorrorMovies } from '../tmdb/movies';
 import { getTopRatedHorrorTVShows } from '../tmdb/tv';
 

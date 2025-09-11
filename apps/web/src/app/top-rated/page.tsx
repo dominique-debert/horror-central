@@ -3,32 +3,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Star, Film, Calendar, Clock, Search, Filter } from "lucide-react"
+import { Star, Clock } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect, useMemo } from "react"
-import { tmdbClient, TMDBMovie, TMDBMovieDetails } from "@/lib/tmdb"
+import { tmdbClient } from "@/lib/tmdb"
 import { PageLayout } from "@/components/PageLayout"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
-interface TopRatedMovie {
-  id: number
-  title: string
-  description: string
-  posterUrl: string
-  rating: number
-  year: number
-  duration: string
-  director: string
-  genre: string[]
-  genreIds: number[]
-  awards?: string[]
-  criticsScore?: number
-  audienceScore?: number
-  slug: string
-  originalLanguage: string
-}
+import { ITMDBMovie } from "@/types/api/ITMDBMovie"
+import { ITMDBMovieDetails }  from "@/types/api/ITMDBMovieDetails"
+import { ITopRatedMovie } from "@/types/ITopRatedMovie"
 
 // TMDB Genre ID mappings for horror subgenres
 const GENRE_MAPPINGS: Record<number, string[]> = {
@@ -43,7 +26,7 @@ const GENRE_MAPPINGS: Record<number, string[]> = {
 }
 
 // Convert TMDB movie to TopRatedMovie format
-function tmdbMovieToTopRatedMovie(movie: TMDBMovie, details?: TMDBMovieDetails): TopRatedMovie {
+function tmdbMovieToTopRatedMovie(movie: ITMDBMovie, details?: ITMDBMovieDetails): ITopRatedMovie {
   const year = new Date(movie.release_date).getFullYear()
   const genres = movie.genre_ids.flatMap(id => GENRE_MAPPINGS[id] || [])
   const director = details?.credits?.crew.find(person => person.job === 'Director')?.name || 'Unknown'
@@ -70,17 +53,16 @@ function tmdbMovieToTopRatedMovie(movie: TMDBMovie, details?: TMDBMovieDetails):
 export default function TopRatedPage() {
   const [selectedGenre, setSelectedGenre] = useState("All")
   const [selectedDecade, setSelectedDecade] = useState("All")
-  const [sortBy, setSortBy] = useState<"rating" | "date" | "title">("rating")
+  const [sortBy, setSortBy] = useState<"rating" | "date" | "title" | "score" | "popularity">("rating")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [searchTerm, setSearchTerm] = useState("")
-  const [allTopRatedMovies, setAllTopRatedMovies] = useState<TopRatedMovie[]>([])
+  const [allTopRatedMovies, setAllTopRatedMovies] = useState<ITopRatedMovie[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMorePages, setHasMorePages] = useState(true)
   const [showFilters, setShowFilters] = useState(false)
-  const MOVIES_PER_PAGE = 20
 
   // Extract unique genres and decades for filters
   const availableGenres = useMemo(() => {

@@ -1,13 +1,12 @@
 import { fetchFromTMDB } from './client';
-import { MediaItem, PaginatedResponse } from '@/types/media';
+import { IMediaItem, IPaginatedResponse } from '@/types/IMedia';
 
 type MovieListType = 'popular' | 'now_playing' | 'top_rated' | 'upcoming';
 
 export async function getMovies(
   listType: MovieListType | string,
   page: number = 1
-): Promise<PaginatedResponse<MediaItem>> {
-  // Map URL-friendly category to TMDB endpoint
+): Promise<IPaginatedResponse<IMediaItem>> {
   const endpointMap: Record<string, string> = {
     'popular': '/movie/popular',
     'now-playing': '/movie/now_playing',
@@ -33,7 +32,7 @@ export async function getMovies(
     params.sort_by = 'popularity.desc';
   }
 
-  const response = await fetchFromTMDB<PaginatedResponse<MediaItem>>(endpoint, params);
+  const response = await fetchFromTMDB<IPaginatedResponse<IMediaItem>>(endpoint, params);
   
   // Add media_type to each item in the response
   const resultsWithType = response.results.map(item => ({
@@ -50,13 +49,13 @@ export async function getMovies(
 
 export async function getMovieDetails(id: string | number) {
   const endpoint = `/movie/${id}`;
-  return fetchFromTMDB<MediaItem>(endpoint, {
+  return fetchFromTMDB<IMediaItem>(endpoint, {
     append_to_response: 'videos,credits,recommendations,similar',
   });
 }
 
 export async function searchMovies(query: string, page: number = 1) {
-  return fetchFromTMDB<PaginatedResponse<MediaItem>>('/search/movie', {
+  return fetchFromTMDB<IPaginatedResponse<IMediaItem>>('/search/movie', {
     query,
     page,
     include_adult: false,
@@ -71,7 +70,7 @@ export async function getPopularHorrorMovies(page: number = 1) {
   const twoYearsAgo = new Date();
   twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
   
-  const response = await fetchFromTMDB<PaginatedResponse<MediaItem>>('/discover/movie', {
+  const response = await fetchFromTMDB<IPaginatedResponse<IMediaItem>>('/discover/movie', {
     sort_by: 'popularity.desc',
     with_genres: '27', // Horror genre ID
     'vote_count.gte': '30', // Lowered minimum votes to get more results
