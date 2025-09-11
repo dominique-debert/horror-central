@@ -1,37 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-interface IGDBGame {
-  id: number
-  name: string
-  summary?: string
-  cover?: {
-    id: number
-    url: string
-  }
-  first_release_date?: number
-  rating?: number
-  rating_count?: number
-  genres?: Array<{
-    id: number
-    name: string
-  }>
-  platforms?: Array<{
-    id: number
-    name: string
-    abbreviation?: string
-  }>
-  involved_companies?: Array<{
-    company: {
-      name: string
-    }
-    developer: boolean
-    publisher: boolean
-  }>
-  themes?: Array<{
-    id: number
-    name: string
-  }>
-}
+import { IIGDBGame } from "@/types"
 
 interface GameItem {
   id: string
@@ -92,7 +60,7 @@ class IGDBServerClient {
     }
   }
 
-  private async makeRequest(endpoint: string, query: string): Promise<IGDBGame[]> {
+  private async makeRequest(endpoint: string, query: string): Promise<IIGDBGame[]> {
     const accessToken = await this.getAccessToken()
     
     try {
@@ -117,7 +85,7 @@ class IGDBServerClient {
     }
   }
 
-  async getTopRatedHorrorGames(limit: number = 8): Promise<IGDBGame[]> {
+  async getTopRatedHorrorGames(limit: number = 8): Promise<IIGDBGame[]> {
     const currentYear = new Date().getFullYear()
     const startYear = currentYear - 1
     const startTimestamp = Math.floor(new Date(`${startYear}-01-01`).getTime() / 1000)
@@ -169,7 +137,7 @@ class IGDBServerClient {
     maxYear?: number
     platforms?: string[]
     sortBy?: 'rating.desc' | 'first_release_date.desc' | 'name.asc'
-  }): Promise<{ games: IGDBGame[], total: number, page: number, totalPages: number }> {
+  }): Promise<{ games: IIGDBGame[], total: number, page: number, totalPages: number }> {
     const { page = 1, minYear, maxYear, platforms, sortBy = 'rating.desc' } = params || {}
     const limit = 20
     const offset = (page - 1) * limit
@@ -274,7 +242,7 @@ class IGDBServerClient {
   }
 }
 
-function igdbGameToGameItem(game: IGDBGame): GameItem {
+function igdbGameToGameItem(game: IIGDBGame): GameItem {
   const coverUrl = game.cover?.url 
     ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}`
     : 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=450&fit=crop'
@@ -283,7 +251,7 @@ function igdbGameToGameItem(game: IGDBGame): GameItem {
     ? new Date(game.first_release_date * 1000).getFullYear()
     : new Date().getFullYear()
 
-  const platforms = game.platforms?.map(p => p.abbreviation || p.name).slice(0, 3) || ['PC']
+  const platforms = game.platforms?.map(p => ('abbreviation' in p ? p.abbreviation : p.name)).slice(0, 3) || ['PC']
   
   const genres = game.genres?.map(g => g.name) || ['Horror']
   
@@ -300,7 +268,7 @@ function igdbGameToGameItem(game: IGDBGame): GameItem {
     posterUrl: coverUrl,
     rating,
     year: releaseYear,
-    platform: platforms,
+    platform: platforms.filter((p): p is string => typeof p === 'string'),
     description: game.summary || `Experience the terror in ${game.name}, a critically acclaimed horror game.`,
     genre: genres,
     developer,
