@@ -1,1 +1,0 @@
-// Check and fix async params in movie details page
