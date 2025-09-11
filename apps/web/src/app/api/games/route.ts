@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { IIGDBGame } from "@/types"
-
-interface GameItem {
-  id: string
-  title: string
-  posterUrl: string
-  rating: number
-  year: number
-  platform: string[]
-  description: string
-  genre: string[]
-  developer?: string
-  slug: string
-}
+import { IGameItem } from '@/types'
 
 class IGDBServerClient {
   private baseUrl = 'https://api.igdb.com/v4'
@@ -242,7 +230,7 @@ class IGDBServerClient {
   }
 }
 
-function igdbGameToGameItem(game: IIGDBGame): GameItem {
+function igdbGameToGameItem(game: IIGDBGame): IGameItem {
   const coverUrl = game.cover?.url 
     ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}`
     : 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=450&fit=crop'

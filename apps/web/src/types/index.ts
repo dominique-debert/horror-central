@@ -13,6 +13,7 @@ export * from './api/ITMDBTVDetails';
 export * from './api/ITMDBResponse';
 export * from './api/ITMDBWatchProviders';
 export * from './api/IIGDBGame';
+export * from './api/IGameItem'
 
 // Component Props
 export * from './components/IMediaCardProps';
