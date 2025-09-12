@@ -9,7 +9,7 @@ export async function GET(
     const { id } = params
     
     // Fetch work details from OpenLibrary
-    const workResponse = await fetch(`https://openlibrary.org/works/${id}.json`, {
+    const workResponse = await fetch(`https://openlibrary.org//${id}.json`, {
       headers: {
         'User-Agent': 'Horror-Central/1.0 (horror-central@example.com)',
       },

@@ -25,30 +25,32 @@ export default function TopRatedTvShows() {
   )
 
   return (
-    <section className="py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-3xl font-bold text-white">Top Rated Horror TV Shows</h2>
-          <p className="text-gray-400 mt-1">
-            Discover the most acclaimed horror television series that have captivated audiences worldwide
-          </p>
+    <div className="container mx-auto mt-6 px-6">
+      <section className="py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-3xl font-bold text-white">Top Rated Horror TV Shows</h2>
+            <p className="text-gray-400 mt-1">
+              Discover the most acclaimed horror television series that have captivated audiences worldwide
+            </p>
+          </div>
+          <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+            <Link href="/tv/top-rated">
+              View All
+            </Link>
+          </Button>
         </div>
-        <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
-          <Link href="/tv/top-rated">
-            View All
-          </Link>
-        </Button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.isArray(shows) && shows.map((show: MediaItem) => (
-          <MediaCard
-            key={show.id}
-            type="tv"
-            item={show}
-          />
-        ))}
-      </div>
-    </section>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.isArray(shows) && shows.map((show: MediaItem) => (
+            <MediaCard
+              key={show.id}
+              type="tv"
+              item={show}
+            />
+          ))}
+        </div>
+      </section>
+  </div>
   )
 }

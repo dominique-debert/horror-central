@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function MediaLayout({ children }: { children: ReactNode }) {
-  return <div className="container mx-auto py-8">{children}</div>;
+  return <div className="container mx-auto mt-8 px-6">{children}</div>;
 }
