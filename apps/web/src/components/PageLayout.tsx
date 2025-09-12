@@ -3,7 +3,7 @@ import { PageHeader } from './PageHeader';
 import { SearchAndFilter } from './SearchAndFilter';
 
 type PageLayoutProps = {
-  title: ReactNode;
+  title: string;
   description: string;
   children: ReactNode;
   searchTerm?: string;
@@ -50,36 +50,36 @@ export function PageLayout({
   action,
 }: PageLayoutProps) {
   return (
-    <div className="container mx-auto mt-8 px-6">
-    <div className={`text-white ${className}`}>
-      <div className="px-0">
-        <PageHeader title={title} description={description} action={action} />
-        
-        {(onSearchChange || onGenreChange || onYearChange || onTypeChange || onSortByChange) && (
-          <SearchAndFilter
-            searchTerm={searchTerm}
-            onSearchChange={onSearchChange || (() => {})}
-            selectedGenre={selectedGenre}
-            onGenreChange={onGenreChange || (() => {})}
-            selectedYear={selectedYear}
-            onYearChange={onYearChange || (() => {})}
-            selectedType={selectedType}
-            onTypeChange={onTypeChange || (() => {})}
-            sortBy={sortBy}
-            onSortByChange={onSortByChange || (() => {})}
-            sortOrder={sortOrder}
-            onSortOrderChange={onSortOrderChange || (() => {})}
-            availableGenres={availableGenres}
-            availableYears={availableYears}
-            showFilters={showFilters}
-            onToggleFilters={onToggleFilters}
-            className=""
-          />
-        )}
+    <div className="container mt-8 px-6">
+      <div className={`text-white ${className}`}>
+        <div className="px-0">
+          <PageHeader title={title} description={description} action={action} />
+          
+          {(onSearchChange || onGenreChange || onYearChange || onTypeChange || onSortByChange) && (
+            <SearchAndFilter
+              searchTerm={searchTerm}
+              onSearchChange={onSearchChange || (() => {})}
+              selectedGenre={selectedGenre}
+              onGenreChange={onGenreChange || (() => {})}
+              selectedYear={selectedYear}
+              onYearChange={onYearChange || (() => {})}
+              selectedType={selectedType}
+              onTypeChange={onTypeChange || (() => {})}
+              sortBy={sortBy}
+              onSortByChange={onSortByChange || (() => {})}
+              sortOrder={sortOrder}
+              onSortOrderChange={onSortOrderChange || (() => {})}
+              availableGenres={availableGenres}
+              availableYears={availableYears}
+              showFilters={showFilters}
+              onToggleFilters={onToggleFilters}
+              className=""
+            />
+          )}
 
-        <main className="mt-8">{children}</main>
+          <main className="mt-8">{children}</main>
+        </div>
       </div>
-    </div>
     </div>
   );
 }

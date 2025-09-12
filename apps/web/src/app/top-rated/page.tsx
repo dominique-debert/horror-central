@@ -53,7 +53,7 @@ function tmdbMovieToTopRatedMovie(movie: ITMDBMovie, details?: ITMDBMovieDetails
 export default function TopRatedPage() {
   const [selectedGenre, setSelectedGenre] = useState("All")
   const [selectedDecade, setSelectedDecade] = useState("All")
-  const [sortBy, setSortBy] = useState<"rating" | "date" | "title" | "score" | "popularity">("rating")
+  const [sortBy, setSortBy] = useState<"date" | "title" | "score">("date")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [searchTerm, setSearchTerm] = useState("")
   const [allTopRatedMovies, setAllTopRatedMovies] = useState<ITopRatedMovie[]>([])

@@ -37,8 +37,8 @@ export function NavDropdown() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'block px-4 py-2 text-sm hover:bg-accent',
-                  isActive(item.href) ? 'bg-accent' : ''
+                  'block px-4 py-2 text-sm hover:bg-slate-700',
+                  isActive(item.href) ? 'bg-slate-700 font-semibold' : ''
                 )}
               >
                 {item.name}
@@ -60,8 +60,8 @@ export function NavDropdown() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'block px-4 py-2 text-sm hover:bg-accent',
-                  isActive(item.href) ? 'bg-accent' : ''
+                  'block px-4 py-2 text-sm hover:bg-slate-700',
+                  isActive(item.href) ? 'bg-slate-700 font-semibold' : ''
                 )}
               >
                 {item.name}

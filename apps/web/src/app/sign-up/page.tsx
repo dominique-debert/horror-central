@@ -22,8 +22,12 @@ export default function SignUpPage() {
     try {
       await signUp(email, password, name || undefined);
       router.push(next);
-    } catch (e: any) {
-      setFormError(e?.message || "Registration failed");
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setFormError(e.message);
+      } else {
+        setFormError("Registration failed");
+      }
     }
   }
 

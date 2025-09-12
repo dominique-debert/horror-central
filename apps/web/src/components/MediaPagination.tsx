@@ -90,7 +90,7 @@ export function MediaPagination({
   };
 
   return (
-    <div className={`flex items-center justify-center space-x-2 ${className}`}>
+    <div className={`flex items-center justify-center mt-10 mb-8 space-x-2 ${className}`}>
       <Button
         asChild
         variant="outline"
