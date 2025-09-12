@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { 
-  ITMDBVideo,
   ITMDBVideosResponse,
   ITMDBMovieDetailsRoute,
   ITMDBCredits,

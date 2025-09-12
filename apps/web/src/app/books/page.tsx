@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { SearchAndFilterBooks } from '@/components/SearchAndFilterBooks'
 import { BookCard } from '@/components/BookCard'
 import { Button } from '@/components/ui/button'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 // Types
 interface BookItem {
@@ -227,7 +228,7 @@ export default function BooksPage() {
                 onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                 className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
               >
-                Previous
+                <ChevronLeft className="mr-1" />
               </Button>
 
               <div className="flex gap-1">
@@ -252,7 +253,7 @@ export default function BooksPage() {
                 onClick={() => handlePageChange(Math.min(data.totalPages, currentPage + 1))}
                 className={currentPage === data.totalPages ? 'pointer-events-none opacity-50' : ''}
               >
-                Next
+                <ChevronRight className="ml-1" />
               </Button>
             </div>
           )}
