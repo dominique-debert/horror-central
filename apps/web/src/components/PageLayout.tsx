@@ -14,8 +14,8 @@ type PageLayoutProps = {
   onYearChange?: (value: string) => void;
   selectedType?: 'all' | 'movie' | 'tv';
   onTypeChange?: (value: 'all' | 'movie' | 'tv') => void;
-  sortBy?: 'date' | 'title' | 'score' | 'rating' | 'popularity';
-  onSortByChange?: (value: 'date' | 'title' | 'score' | 'rating' | 'popularity') => void;
+  sortBy?: 'date' | 'title' | 'score';
+  onSortByChange?: (value: 'date' | 'title' | 'score') => void;
   sortOrder?: 'asc' | 'desc';
   onSortOrderChange?: (value: 'asc' | 'desc') => void;
   availableGenres?: string[];
@@ -58,17 +58,17 @@ export function PageLayout({
         {(onSearchChange || onGenreChange || onYearChange || onTypeChange || onSortByChange) && (
           <SearchAndFilter
             searchTerm={searchTerm}
-            onSearchChange={onSearchChange}
+            onSearchChange={onSearchChange || (() => {})}
             selectedGenre={selectedGenre}
-            onGenreChange={onGenreChange}
+            onGenreChange={onGenreChange || (() => {})}
             selectedYear={selectedYear}
-            onYearChange={onYearChange}
+            onYearChange={onYearChange || (() => {})}
             selectedType={selectedType}
-            onTypeChange={onTypeChange}
+            onTypeChange={onTypeChange || (() => {})}
             sortBy={sortBy}
-            onSortByChange={onSortByChange}
+            onSortByChange={onSortByChange || (() => {})}
             sortOrder={sortOrder}
-            onSortOrderChange={onSortOrderChange}
+            onSortOrderChange={onSortOrderChange || (() => {})}
             availableGenres={availableGenres}
             availableYears={availableYears}
             showFilters={showFilters}

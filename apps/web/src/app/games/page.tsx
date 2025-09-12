@@ -160,19 +160,18 @@ export default function GamesPage() {
   const hasMoreToShow = displayedGames.length < filteredGames.length || hasMorePages
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-16">
+    <div className="container mx-auto mt-8 px-10">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div>
           <h1 className="text-5xl font-bold mb-4">Top Rated Horror Games</h1>
-          <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+          <p className="text-gray-400 text-lg max-w-3xl">
             Discover the most terrifying and acclaimed horror games of all time. From psychological thrillers to 
             survival horror masterpieces, experience interactive fear at its finest.
           </p>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-8 justify-center">
+        <div className="flex flex-wrap gap-4 mt-8 mb-8 justify-left">
           {/* Platform Filter */}
           <div className="flex items-center gap-2">
             <Gamepad2 className="w-4 h-4 text-red-400" />
@@ -241,7 +240,7 @@ export default function GamesPage() {
         </div>
 
         {/* Results count */}
-        <div className="text-center mb-8">
+        <div className="mb-8">
           <p className="text-gray-400">
             Showing {displayedGames.length} of {filteredGames.length} games
           </p>
@@ -273,7 +272,7 @@ export default function GamesPage() {
         {/* Games grid */}
         {!loading && !error && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {displayedGames.map((game, index) => (
                 <div key={game.id} className="relative">
                   {/* Ranking badge for top 3 */}
@@ -337,6 +336,5 @@ export default function GamesPage() {
           </>
         )}
       </div>
-    </div>
   )
 }

@@ -101,77 +101,81 @@ export default function LatestReviews() {
 
   if (loading) {
     return (
+      <div className="container mx-auto mt-6 px-6">
+        <section className="py-6 w-full bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-[2000px] mx-auto">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">Latest Reviews</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="aspect-[2/3] w-full bg-muted rounded-lg mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto mt-6 px-6">
       <section className="py-6 w-full bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-[2000px] mx-auto">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">Latest Reviews</h2>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">Latest Reviews</h2>
+                <p className="text-muted-foreground text-sm">
+                  Read what critics and audiences are saying about the latest horror releases
+                </p>
+              </div>
+              <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+                <Link href="/reviews">
+                  View All
+                </Link>
+              </Button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="aspect-[2/3] w-full bg-muted rounded-lg mb-2"></div>
-                  <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
+              {reviews.map((review) => (
+                <div key={review.id} className="group">
+                  <MediaCard
+                    id={review.id}
+                    title={review.title}
+                    year={review.year}
+                    rating={review.rating}
+                    imageUrl={review.imageUrl}
+                    type={review.type}
+                    href={`/movies/${review.id}`}
+                  />
+                  <div className="mt-2 p-2 bg-card rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="relative w-6 h-6 rounded-full overflow-hidden">
+                        <Image
+                          src={review.avatar}
+                          alt={review.author}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {review.author} • {review.date}
+                      </div>
+                    </div>
+                    <p className="mt-1 text-sm line-clamp-2 text-muted-foreground">
+                      {review.content}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </section>
-    )
-  }
-
-  return (
-    <section className="py-6 w-full bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-[2000px] mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">Latest Reviews</h2>
-              <p className="text-muted-foreground text-sm">
-                Read what critics and audiences are saying about the latest horror releases
-              </p>
-            </div>
-            <Button asChild variant="outline" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
-              <Link href="/reviews">
-                View All
-              </Link>
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {reviews.map((review) => (
-              <div key={review.id} className="group">
-                <MediaCard
-                  id={review.id}
-                  title={review.title}
-                  year={review.year}
-                  rating={review.rating}
-                  imageUrl={review.imageUrl}
-                  type={review.type}
-                  href={`/movies/${review.id}`}
-                />
-                <div className="mt-2 p-2 bg-card rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="relative w-6 h-6 rounded-full overflow-hidden">
-                      <Image
-                        src={review.avatar}
-                        alt={review.author}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {review.author} • {review.date}
-                    </div>
-                  </div>
-                  <p className="mt-1 text-sm line-clamp-2 text-muted-foreground">
-                    {review.content}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
   )
 }
