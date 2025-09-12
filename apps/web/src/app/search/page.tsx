@@ -145,9 +145,8 @@ export default function SearchPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6">
+    <div className="container mx-auto mt-8 px-10">
       <h1 className="mb-6 text-2xl font-bold">Search Results</h1>
-      
       {q ? (
         <>
           <div className="mb-6 flex flex-wrap gap-2 border-b pb-2">
@@ -283,6 +282,6 @@ export default function SearchPage() {
           </p>
         </div>
       )}
-    </main>
+    </div>
   )
 }
