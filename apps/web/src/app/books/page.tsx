@@ -150,7 +150,7 @@ export default function BooksPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-8 py-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-4">Error Loading Books</h1>
           <p className="text-gray-600 mb-4">
@@ -165,7 +165,7 @@ export default function BooksPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-8 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">Horror Books</h1>
         <p className="text-xl text-gray-600">

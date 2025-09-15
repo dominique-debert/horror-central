@@ -163,7 +163,7 @@ export default function GamesPage() {
     <div className="container mx-auto mt-8 px-10">
         {/* Header */}
         <div>
-          <h1 className="text-5xl font-bold mb-4">Top Rated Horror Games</h1>
+          <h1 className="text-4xl font-bold mb-4">Top Rated Horror Games</h1>
           <p className="text-gray-400 text-lg max-w-3xl">
             Discover the most terrifying and acclaimed horror games of all time. From psychological thrillers to 
             survival horror masterpieces, experience interactive fear at its finest.

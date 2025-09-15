@@ -24,7 +24,7 @@ export default function NewsArticle({ article }: NewsArticleProps) {
   return (
     <article className="min-h-screen bg-black text-white">
       {/* Header */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-8 py-8">
         <Link 
           href="/news" 
           className="inline-flex items-center text-gray-400 hover:text-white mb-8 transition-colors"

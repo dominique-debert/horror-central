@@ -205,7 +205,7 @@ export default function MediaDetailsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-8 py-8">
         <div className="animate-pulse">
           <div className="mb-6">
             <div className="h-8 bg-gray-700 rounded w-32 mb-4"></div>
@@ -231,7 +231,7 @@ export default function MediaDetailsPage() {
 
   if (error || !media) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-8 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Error</h1>
           <p className="text-gray-400 mb-6">{error || 'Media not found'}</p>
